@@ -11,13 +11,15 @@ import {
   Settings, 
   LogOut,
   Menu,
-  Printer
+  Printer,
+  Crown
 } from "lucide-react";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
 import { PRESS_CONFIG } from "@/lib/config";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { useEffect } from "react";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -62,10 +64,35 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { language, setLanguage, t } = useLanguage();
   const supabase = createClient();
+
+  // Check if user is super admin
+  useEffect(() => {
+    async function checkSuperAdmin() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role, tenant_id')
+            .eq('id', user.id)
+            .single();
+          
+          // Super admin = ADMIN role + no tenant_id
+          setIsSuperAdmin(profile?.role === 'ADMIN' && !profile?.tenant_id);
+        }
+      } catch (error) {
+        console.error('Error checking super admin:', error);
+        setIsSuperAdmin(false);
+      }
+    }
+    
+    checkSuperAdmin();
+  }, [supabase]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -74,6 +101,9 @@ export default function DashboardLayout({
 
   // Dynamic Title Mapping
   const getPageTitle = () => {
+    // Check for admin route first
+    if (pathname === "/admin") return "Super Admin";
+    
     const item = navItems.find(item => item.href === pathname);
     if (item) return t(item.name, item.telugu);
     
@@ -149,6 +179,32 @@ export default function DashboardLayout({
                 </Link>
               );
             })}
+
+            {/* Super Admin Menu Item - Only show for super admin */}
+            {isSuperAdmin && (
+              <Link
+                href="/admin"
+                onClick={() => setIsSidebarOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3.5 py-3 rounded-lg transition-all duration-200 group overflow-hidden whitespace-nowrap",
+                  pathname === "/admin" 
+                    ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md" 
+                    : "text-purple-200 hover:bg-purple-600/30 hover:text-white border border-purple-400/30"
+                )}
+              >
+                <Crown className={cn(
+                  "w-5 h-5 shrink-0 transition-transform",
+                  pathname === "/admin" ? "text-white scale-110" : "text-purple-300 group-hover:text-white group-hover:scale-110"
+                )} />
+                <div className={cn(
+                  "flex flex-col transition-all duration-300",
+                  isSidebarOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 pointer-events-none"
+                )}>
+                  <span className="text-sm font-medium">Super Admin</span>
+                  <span className="text-[10px] opacity-70">SaaS Management</span>
+                </div>
+              </Link>
+            )}
           </nav>
 
           {/* User Profile / Logout */}
