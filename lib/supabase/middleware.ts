@@ -73,13 +73,28 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
-    // Fetch tenant and onboarding status
+    // Fetch user profile to check role and tenant
     const { data: profile } = await supabase
       .from('profiles')
-      .select('tenant_id')
+      .select('tenant_id, role')
       .eq('id', user.id)
       .single();
 
+    // Super admin logic (ADMIN role with no tenant_id)
+    if (profile?.role === 'ADMIN' && !profile?.tenant_id) {
+      // Super admin can access admin routes
+      if (request.nextUrl.pathname.startsWith('/admin')) {
+        return response;
+      }
+      // Allow dashboard access for super admin
+      if (request.nextUrl.pathname.startsWith('/dashboard')) {
+        return response;
+      }
+      // Default redirect to dashboard
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
+    // Regular tenant user logic
     if (profile?.tenant_id) {
        // Attach tenant_id to headers for use in server components/actions
        response.headers.set('x-tenant-id', profile.tenant_id);

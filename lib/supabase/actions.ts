@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentTenant, checkOrderLimit } from "@/lib/tenant";
+import { isSuperAdmin } from "@/lib/superadmin";
 import { calculateGST } from "@/lib/gst";
 
 interface OrderData {
@@ -23,39 +24,97 @@ interface OrderData {
   hsnCode?: string;
 }
 
+interface CustomerData {
+  name: string;
+  phone: string;
+  tenant_id?: string;
+}
+
+interface OrderInsertData {
+  customer_id: string;
+  job_type: string;
+  quantity: number;
+  paper_type?: string;
+  size?: string;
+  instructions?: string;
+  delivery_date?: string | null;
+  total_amount: number;
+  advance_paid: number;
+  gst_type: string;
+  gst_rate: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  taxable_amount: number;
+  total_with_gst: number;
+  invoice_number?: string | null;
+  invoice_date?: string | null;
+  is_inter_state: boolean;
+  hsn_code?: string | null;
+  tenant_id?: string;
+}
+
+interface PaymentData {
+  order_id: string;
+  amount: number;
+  method: string;
+  tenant_id?: string;
+}
+
 export async function createOrder(data: OrderData) {
   const supabase = createClient();
-  const tenant = await getCurrentTenant(supabase);
+  const superAdmin = await isSuperAdmin(supabase);
   
-  if (!tenant) throw new Error("Unauthorized: Tenant context missing");
+  // For super admin, create orders without tenant restriction
+  // For regular users, require tenant context
+  let tenant;
+  if (superAdmin) {
+    // Super admin can create orders without tenant context
+    // Use a default/system tenant or null
+    tenant = null;
+  } else {
+    tenant = await getCurrentTenant(supabase);
+    if (!tenant) throw new Error("Unauthorized: Tenant context missing");
+  }
 
-  // 0. Plan Enforcement
-  const limitCheck = await checkOrderLimit(tenant);
-  if (!limitCheck.allowed) {
-    throw new Error(limitCheck.reason === 'limit_reached' ? "Monthly order limit reached for FREE plan." : "Subscription expired.");
+  // 0. Plan Enforcement (skip for super admin)
+  if (!superAdmin) {
+    const limitCheck = await checkOrderLimit(tenant);
+    if (!limitCheck.allowed) {
+      throw new Error(limitCheck.reason === 'limit_reached' ? "Monthly order limit reached for FREE plan." : "Subscription expired.");
+    }
   }
 
   // 1. Check if customer exists by phone
-  const { data: customer } = await supabase
+  let customerQuery = supabase
     .from("customers")
     .select("id")
-    .eq("phone", data.phone)
-    .eq("tenant_id", tenant.id)
-    .single();
+    .eq("phone", data.phone);
+  
+  // Only filter by tenant_id if not super admin
+  if (!superAdmin) {
+    customerQuery = customerQuery.eq("tenant_id", tenant.id);
+  }
+  
+  const { data: customer } = await customerQuery.single();
 
   let customerId = customer?.id;
 
   // 2. Auto-create customer if not found
   if (!customer) {
+    const customerData: CustomerData = {
+      name: data.customerName || data.phone,
+      phone: data.phone,
+    };
+    
+    // Only add tenant_id if not super admin
+    if (!superAdmin) {
+      customerData.tenant_id = tenant.id;
+    }
+
     const { data: newCustomer, error: newCustomerError } = await supabase
       .from("customers")
-      .insert({
-        name: data.customerName,
-        phone: data.phone,
-        tenant_id: tenant.id,
-        gstin: data.gstin || null,
-        is_gst_client: !!data.gstin,
-      })
+      .insert(customerData)
       .select("id")
       .single();
 
@@ -63,7 +122,7 @@ export async function createOrder(data: OrderData) {
     customerId = newCustomer.id;
   }
 
-  // 3. GST Calculations
+  // 3. Calculate GST if applicable
   let gst_type = 'NONE';
   let cgst = 0, sgst = 0, igst = 0;
   const taxable_amount = data.totalAmount;
@@ -78,60 +137,75 @@ export async function createOrder(data: OrderData) {
     gst_type = data.isInterState ? 'IGST' : 'CGST_SGST';
   }
 
-  // 4. Generate Invoice Number (RPC)
+  // 4. Generate invoice number if GST applied
   let invoice_number = null;
-  if (data.applyGST) {
-    const { data: invNo, error: rpcError } = await supabase.rpc('generate_invoice_number', { p_tenant_id: tenant.id });
-    if (rpcError) console.error("RPC Error:", rpcError);
-    invoice_number = invNo;
+  if (data.applyGST && !superAdmin) {
+    // Only generate invoice numbers for tenant users, not super admin
+    const { data: invoiceData } = await supabase.rpc('generate_invoice_number', {
+      p_tenant_id: tenant.id
+    });
+    invoice_number = invoiceData;
   }
 
   // 5. Create Order
+  const orderData: OrderInsertData = {
+    customer_id: customerId,
+    job_type: data.jobType,
+    quantity: data.quantity,
+    paper_type: data.paperType,
+    size: data.size,
+    instructions: data.instructions,
+    delivery_date: data.deliveryDate ? new Date(data.deliveryDate).toISOString() : null,
+    total_amount: data.totalAmount,
+    advance_paid: data.advancePaid,
+    // GST Fields
+    gst_type,
+    gst_rate: data.applyGST ? (data.gstRate || 0) : 0,
+    cgst,
+    sgst,
+    igst,
+    taxable_amount,
+    total_with_gst,
+    invoice_number,
+    invoice_date: data.applyGST && !superAdmin ? new Date().toISOString() : null,
+    is_inter_state: !!data.isInterState,
+    hsn_code: data.hsnCode || null,
+  };
+  
+  // Only add tenant_id if not super admin
+  if (!superAdmin) {
+    orderData.tenant_id = tenant.id;
+  }
+
   const { data: order, error: orderError } = await supabase
     .from("orders")
-    .insert({
-      customer_id: customerId,
-      job_type: data.jobType,
-      quantity: data.quantity,
-      paper_type: data.paperType,
-      size: data.size,
-      instructions: data.instructions,
-      delivery_date: data.deliveryDate || null,
-      total_amount: total_with_gst, // Keep compatibility for non-GST systems, but use below fields for SaaS
-      advance_paid: data.advancePaid,
-      status: "RECEIVED",
-      tenant_id: tenant.id,
-      // Multi-tenant GST Fields
-      gst_type,
-      gst_rate: data.gstRate || 0,
-      cgst,
-      sgst,
-      igst,
-      taxable_amount,
-      total_with_gst,
-      invoice_number,
-      invoice_date: data.applyGST ? new Date().toISOString() : null,
-      is_inter_state: !!data.isInterState,
-      hsn_code: data.hsnCode || null,
-    })
+    .insert(orderData)
     .select("id")
     .single();
 
   if (orderError) throw orderError;
 
-  // 6. Update tenant usage counter
-  await supabase.from('tenants')
-    .update({ orders_this_month: (tenant.orders_this_month || 0) + 1 })
-    .eq('id', tenant.id);
+  // 6. Update tenant usage counter (skip for super admin)
+  if (!superAdmin) {
+    await supabase.from('tenants')
+      .update({ orders_this_month: (tenant.orders_this_month || 0) + 1 })
+      .eq('id', tenant.id);
+  }
 
   // 7. Record Initial Payment if any
   if (data.advancePaid > 0) {
-    await supabase.from("payments").insert({
+    const paymentData: PaymentData = {
       order_id: order.id,
       amount: data.advancePaid,
       method: "cash",
-      tenant_id: tenant.id,
-    });
+    };
+    
+    // Only add tenant_id if not super admin
+    if (!superAdmin) {
+      paymentData.tenant_id = tenant.id;
+    }
+    
+    await supabase.from("payments").insert(paymentData);
   }
 
   return order;
@@ -139,17 +213,26 @@ export async function createOrder(data: OrderData) {
 
 export async function getOrders(filter: { status?: string; search?: string } = {}) {
   const supabase = createClient();
-  const tenant = await getCurrentTenant(supabase);
-  if (!tenant) throw new Error("Unauthorized");
-
+  const superAdmin = await isSuperAdmin(supabase);
+  
   let query = supabase
     .from("orders")
     .select(`
       *,
       customers (*)
-    `)
-    .eq("tenant_id", tenant.id)
-    .order("created_at", { ascending: false });
+    `);
+
+  // If not super admin, filter by tenant
+  if (!superAdmin) {
+    const tenant = await getCurrentTenant(supabase);
+    if (!tenant) throw new Error("Unauthorized");
+    query = query.eq("tenant_id", tenant.id);
+  } else {
+    // For super admin, show orders without tenant restriction
+    // This will show all orders including those with null tenant_id
+  }
+
+  query = query.order("created_at", { ascending: false });
 
   if (filter.status && filter.status !== "ALL") {
     query = query.eq("status", filter.status);
@@ -162,44 +245,77 @@ export async function getOrders(filter: { status?: string; search?: string } = {
 
 export async function getOrder(id: string) {
   const supabase = createClient();
-  const tenant = await getCurrentTenant(supabase);
-  if (!tenant) throw new Error("Unauthorized");
-
-  const { data, error } = await supabase
+  const superAdmin = await isSuperAdmin(supabase);
+  
+  let query = supabase
     .from("orders")
     .select(`
       *,
       customers (*)
     `)
-    .eq("id", id)
-    .eq("tenant_id", tenant.id)
-    .single();
+    .eq("id", id);
 
+  // If not super admin, ensure tenant access
+  if (!superAdmin) {
+    const tenant = await getCurrentTenant(supabase);
+    if (!tenant) throw new Error("Unauthorized");
+    query = query.eq("tenant_id", tenant.id);
+  }
+
+  const { data, error } = await query.single();
   if (error) throw error;
   return data;
 }
 
 export async function updateOrderStatus(orderId: string, status: string) {
   const supabase = createClient();
-  const tenant = await getCurrentTenant(supabase);
-  if (!tenant) throw new Error("Unauthorized");
-
-  const { data, error } = await supabase
+  const superAdmin = await isSuperAdmin(supabase);
+  
+  let query = supabase
     .from("orders")
     .update({ status })
-    .eq("id", orderId)
-    .eq("tenant_id", tenant.id)
-    .select()
-    .single();
+    .eq("id", orderId);
 
+  // If not super admin, ensure tenant access
+  if (!superAdmin) {
+    const tenant = await getCurrentTenant(supabase);
+    if (!tenant) throw new Error("Unauthorized");
+    query = query.eq("tenant_id", tenant.id);
+  }
+
+  const { data, error } = await query.select().single();
   if (error) throw error;
   return data;
 }
 
 export async function updateOrder(id: string, data: OrderData) {
   const supabase = createClient();
-  const tenant = await getCurrentTenant(supabase);
-  if (!tenant) throw new Error("Unauthorized");
+  const superAdmin = await isSuperAdmin(supabase);
+  
+  // Get tenant context
+  let tenant;
+  if (superAdmin) {
+    // For updates, super admin also needs tenant context
+    const { data: existingOrder } = await supabase
+      .from("orders")
+      .select("tenant_id")
+      .eq("id", id)
+      .single();
+    
+    if (!existingOrder) throw new Error("Order not found");
+    
+    // Get tenant details
+    const { data: tenantData } = await supabase
+      .from("tenants")
+      .select("*")
+      .eq("id", existingOrder.tenant_id)
+      .single();
+    
+    tenant = tenantData;
+  } else {
+    tenant = await getCurrentTenant(supabase);
+    if (!tenant) throw new Error("Unauthorized");
+  }
 
   // Re-calculate GST for update
   let gst_type = 'NONE';
@@ -216,7 +332,7 @@ export async function updateOrder(id: string, data: OrderData) {
     gst_type = data.isInterState ? 'IGST' : 'CGST_SGST';
   }
 
-  const { error } = await supabase
+  const { data: order, error } = await supabase
     .from("orders")
     .update({
       job_type: data.jobType,
@@ -224,12 +340,12 @@ export async function updateOrder(id: string, data: OrderData) {
       paper_type: data.paperType,
       size: data.size,
       instructions: data.instructions,
-      delivery_date: data.deliveryDate || null,
-      total_amount: total_with_gst,
+      delivery_date: data.deliveryDate ? new Date(data.deliveryDate).toISOString() : null,
+      total_amount: data.totalAmount,
       advance_paid: data.advancePaid,
-      // Multi-tenant GST Fields
+      // GST Fields
       gst_type,
-      gst_rate: data.gstRate || 0,
+      gst_rate: data.applyGST ? data.gstRate : 0,
       cgst,
       sgst,
       igst,
@@ -239,7 +355,10 @@ export async function updateOrder(id: string, data: OrderData) {
       hsn_code: data.hsnCode || null,
     })
     .eq("id", id)
-    .eq("tenant_id", tenant.id);
+    .eq("tenant_id", tenant.id)
+    .select()
+    .single();
 
   if (error) throw error;
+  return order;
 }
