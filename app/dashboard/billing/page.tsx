@@ -11,14 +11,26 @@ import {
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 
 import { useLanguage } from "@/lib/context/LanguageContext";
+
+interface Order {
+  id: string;
+  friendly_id?: string;
+  created_at: string;
+  total_amount: number;
+  advance_paid: number;
+  status: string;
+  customers?: {
+    name: string;
+  } | null;
+}
 
 export default function BillingPage() {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState({
     totalRevenue: 0,
     outstandingBalance: 0,
@@ -29,6 +41,7 @@ export default function BillingPage() {
     async function fetchBillingData() {
       setLoading(true);
       try {
+        const supabase = createClient();
         const { data, error } = await supabase
           .from("orders")
           .select("*, customers(name)")
@@ -36,9 +49,9 @@ export default function BillingPage() {
         
         if (error) throw error;
 
-        const rev = (data || []).reduce((acc, ord) => acc + Number(ord.advance_paid), 0);
-        const bal = (data || []).reduce((acc, ord) => acc + (Number(ord.total_amount) - Number(ord.advance_paid)), 0);
-        const pendingCount = (data || []).filter(ord => (Number(ord.total_amount) - Number(ord.advance_paid)) > 0).length;
+        const rev = (data || []).reduce((acc, ord) => acc + Number(ord.advance_paid || 0), 0);
+        const bal = (data || []).reduce((acc, ord) => acc + (Number(ord.total_amount || 0) - Number(ord.advance_paid || 0)), 0);
+        const pendingCount = (data || []).filter(ord => (Number(ord.total_amount || 0) - Number(ord.advance_paid || 0)) > 0).length;
 
         setOrders(data || []);
         setStats({
@@ -63,10 +76,19 @@ export default function BillingPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-end items-end">
-        <Link href="/dashboard/orders" className="bg-primary text-white px-4 py-2 rounded-lg flex items-center gap-2  hover:bg-primary/90 transition-all">
-          <Plus className="w-4 h-4" /> {t("New Transaction", "కొత్త లావాదేవీ")}
-        </Link>
+      <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 uppercase tracking-tighter">{t("Billing & Finance", "బిల్లింగ్ మరియు ఫైనాన్స్")}</h1>
+          <p className="text-[10px] text-gray-400 uppercase tracking-widest">{t("Revenue & Tax Management", "రాబడి మరియు పన్ను నిర్వహణ")}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard/billing/gst-reports" className="bg-white text-primary border border-primary/20 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-primary/5 transition-all">
+            <TrendingUp className="w-4 h-4" /> {t("GST Reports", "GST నివేదికలు")}
+          </Link>
+          <Link href="/dashboard/orders" className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
+            <Plus className="w-4 h-4" /> {t("New Transaction", "కొత్త లావాదేవీ")}
+          </Link>
+        </div>
       </div>
 
       {loading ? (

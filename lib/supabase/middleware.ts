@@ -58,16 +58,47 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protected routes check: /dashboard or /
-  const isDashboardRoute = request.nextUrl.pathname.startsWith("/dashboard") || request.nextUrl.pathname === "/";
-  if (isDashboardRoute && !user) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
+  // Handle Protected Routes
+  const isDashboardRoute = request.nextUrl.pathname.startsWith("/dashboard");
+  const isOnboardingRoute = request.nextUrl.pathname.startsWith("/onboarding");
+  const isAuthRoute = request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup";
 
-  // Redirect from login or root if already authenticated to /dashboard
-  const isAuthRoute = request.nextUrl.pathname === "/login";
-  if ((isAuthRoute || request.nextUrl.pathname === "/") && user) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  if (!user) {
+    if (isDashboardRoute || isOnboardingRoute) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+  } else {
+    // User is authenticated
+    if (isAuthRoute || request.nextUrl.pathname === "/") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
+    // Fetch tenant and onboarding status
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('tenant_id')
+      .eq('id', user.id)
+      .single();
+
+    if (profile?.tenant_id) {
+       // Attach tenant_id to headers for use in server components/actions
+       response.headers.set('x-tenant-id', profile.tenant_id);
+
+       const { data: tenant } = await supabase
+         .from('tenants')
+         .select('onboarding_complete')
+         .eq('id', profile.tenant_id)
+         .single();
+
+       if (tenant) {
+         if (!tenant.onboarding_complete && !isOnboardingRoute && !request.nextUrl.pathname.startsWith('/api')) {
+           return NextResponse.redirect(new URL("/onboarding", request.url));
+         }
+         if (tenant.onboarding_complete && isOnboardingRoute) {
+           return NextResponse.redirect(new URL("/dashboard", request.url));
+         }
+       }
+    }
   }
 
   return response;

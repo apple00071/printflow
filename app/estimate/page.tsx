@@ -5,7 +5,6 @@ import {
   Calculator, 
   ArrowLeft, 
   Info, 
-  IndianRupee,
   ChevronRight,
   TrendingUp,
   Tag
@@ -157,6 +156,7 @@ export default function PriceEstimatorPage() {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function cn(...inputs: any[]) {
   return inputs.filter(Boolean).join(" ");
 }

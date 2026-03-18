@@ -6,23 +6,39 @@ import {
   Printer, 
   MessageSquare, 
   CheckCircle2, 
-  Clock, 
-  Truck, 
   Edit3,
-  IndianRupee,
   FileText,
-  Loader2
+  Loader2,
+  IndianRupee
 } from "lucide-react";
 import Link from "next/link";
-import { formatCurrency, formatDate } from "@/lib/utils/format";
+import { formatCurrency } from "@/lib/utils/format";
 import { PRESS_CONFIG } from "@/lib/config";
 import { getOrder, updateOrderStatus } from "@/lib/supabase/actions";
 
 import { useLanguage } from "@/lib/context/LanguageContext";
 
+interface Order {
+  id: string;
+  friendly_id?: string;
+  job_type: string;
+  customers: {
+    name: string;
+    phone: string;
+  };
+  total_amount: number;
+  advance_paid: number;
+  status: string;
+  quantity: number;
+  paper_type?: string;
+  size?: string;
+  delivery_date?: string;
+  instructions?: string;
+}
+
 export default function OrderDetailsPage({ params }: { params: { id: string } }) {
   const { t, language } = useLanguage();
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
@@ -50,10 +66,11 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
   }, [params.id]);
 
   const handleStatusUpdate = async (newStatus: string) => {
+    if (!order) return;
     setUpdating(true);
     try {
       await updateOrderStatus(order.id, newStatus);
-      setOrder({ ...order, status: newStatus });
+      setOrder({ ...order, status: newStatus } as Order);
     } catch (err) {
       console.error("Error updating status:", err);
     } finally {
@@ -254,6 +271,6 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
   );
 }
 
-function cn(...inputs: any[]) {
+function cn(...inputs: unknown[]) {
   return inputs.filter(Boolean).join(" ");
 }

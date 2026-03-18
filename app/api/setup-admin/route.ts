@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/admin";
 
 export async function GET() {
   const username = "Apple"; // provided by user
@@ -6,6 +6,7 @@ export async function GET() {
   const email = "apple@applegraphics.local";
 
   try {
+    const supabaseAdmin = createClient();
     // 1. Create User in Auth
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -33,7 +34,8 @@ export async function GET() {
     if (profileError) throw profileError;
 
     return new Response("Admin created successfully! You can now login with Username: Apple", { status: 200 });
-  } catch (error: any) {
-    return new Response(`Error: ${error.message}`, { status: 500 });
+  } catch (error: unknown) {
+    const err = error as Error;
+    return new Response(`Error: ${err.message}`, { status: 500 });
   }
 }

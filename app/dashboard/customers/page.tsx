@@ -5,7 +5,6 @@ import {
   Users, 
   Search, 
   Phone, 
-  IndianRupee, 
   History,
   TrendingUp,
   AlertCircle,
@@ -13,14 +12,28 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/format";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase/client";
-
+import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/lib/context/LanguageContext";
+
+interface CustomerOrder {
+  total_amount: number;
+  advance_paid: number;
+}
+
+interface Customer {
+  id: string;
+  name: string;
+  phone: string;
+  orders: CustomerOrder[];
+  total_orders: number;
+  business_value: number;
+  balance: number;
+}
 
 export default function CustomersPage() {
   const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
-  const [customers, setCustomers] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalCustomers: 0,
@@ -32,6 +45,7 @@ export default function CustomersPage() {
     async function fetchCustomersData() {
       setLoading(true);
       try {
+        const supabase = createClient();
         // Fetch customers and their basic order data for calculation
         const { data, error } = await supabase
           .from("customers")
@@ -47,8 +61,8 @@ export default function CustomersPage() {
 
         // Process data to calculate totals and per-customer stats
         const processedCustomers = (data || []).map(customer => {
-          const customerBusiness = customer.orders.reduce((acc: number, ord: any) => acc + Number(ord.total_amount), 0);
-          const customerPaid = customer.orders.reduce((acc: number, ord: any) => acc + Number(ord.advance_paid), 0);
+          const customerBusiness = customer.orders.reduce((acc: number, ord: { total_amount: number }) => acc + Number(ord.total_amount), 0);
+          const customerPaid = customer.orders.reduce((acc: number, ord: { advance_paid: number }) => acc + Number(ord.advance_paid), 0);
           const customerBalance = customerBusiness - customerPaid;
           
           return {

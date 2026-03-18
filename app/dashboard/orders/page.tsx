@@ -8,20 +8,33 @@ import {
   Filter, 
   MoreVertical,
   Calendar,
-  User,
   Phone,
   Loader2
 } from "lucide-react";
-import { formatCurrency, formatDate } from "@/lib/utils/format";
+import { formatCurrency } from "@/lib/utils/format";
 import { getOrders } from "@/lib/supabase/actions";
 
 import { useLanguage } from "@/lib/context/LanguageContext";
+
+interface Order {
+  id: string;
+  friendly_id?: string;
+  customers?: {
+    name: string;
+    phone: string;
+  } | null;
+  job_type: string;
+  quantity: number;
+  status: string;
+  total_amount: number;
+  advance_paid: number;
+}
 
 export default function OrdersPage() {
   const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   const orderStatuses = [
@@ -49,7 +62,7 @@ export default function OrdersPage() {
       }
     }
     fetchOrders();
-  }, [statusFilter]); // Re-fetch on status change. Search is filtered client-side for now for speed.
+  }, [statusFilter, searchQuery]); // Re-fetch on status change or search change
 
   // Client-side search filtering
   const filteredOrders = orders.filter(o => 
@@ -190,6 +203,6 @@ export default function OrdersPage() {
   );
 }
 
-function cn(...inputs: any[]) {
+function cn(...inputs: unknown[]) {
   return inputs.filter(Boolean).join(" ");
 }

@@ -14,7 +14,6 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>("en");
-  const [isLoaded, setIsLoaded] = useState(false);
 
   console.log("LanguageProvider Rendering, language:", language);
 
@@ -24,7 +23,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     if (savedLang) {
       setLanguageState(savedLang);
     }
-    setIsLoaded(true);
+    if (savedLang) {
+      setLanguageState(savedLang);
+    }
   }, []);
 
   const setLanguage = (lang: Language) => {

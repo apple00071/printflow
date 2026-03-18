@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { 
@@ -11,11 +11,10 @@ import {
   Settings, 
   LogOut,
   Menu,
-  X,
   Printer
 } from "lucide-react";
 import { useLanguage } from "@/lib/context/LanguageContext";
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import { PRESS_CONFIG } from "@/lib/config";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -66,6 +65,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { language, setLanguage, t } = useLanguage();
+  const supabase = createClient();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();

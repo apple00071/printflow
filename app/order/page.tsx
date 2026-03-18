@@ -5,8 +5,6 @@ import {
   Printer, 
   Send, 
   User, 
-  Phone, 
-  FileText, 
   Layout, 
   CheckCircle2,
   ArrowRight
@@ -102,7 +100,7 @@ export default function PublicOrderPage() {
             <h1 className="text-2xl  tracking-tight">{PRESS_CONFIG.name}</h1>
           </div>
           <h2 className="text-xl ">New Order Request / కొత్త ఆర్డర్ రిక్వెస్ట్</h2>
-          <p className="text-white/60 text-sm">Chirala's Trusted Printing Partner</p>
+          <p className="text-white/60 text-sm">Chirala&apos;s Trusted Printing Partner</p>
         </div>
       </header>
 

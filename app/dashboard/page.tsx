@@ -12,24 +12,50 @@ import { formatCurrency } from "@/lib/utils/format";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import DashboardCharts from "@/components/dashboard/DashboardCharts";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
+import { getCurrentTenant } from "@/lib/tenant";
+
+interface StatCard {
+  label: string;
+  value: string;
+  icon: React.ElementType;
+  color: string;
+}
+
+interface Order {
+  id: string;
+  friendly_id?: string;
+  created_at: string;
+  total_amount: number;
+  status: string;
+  customers: {
+    name: string;
+  };
+}
 
 export default function DashboardPage() {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<any[]>([]);
-  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [stats, setStats] = useState<StatCard[]>([]);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [chartData, setChartData] = useState<{ name: string; value: number; color: string }[]>([]);
+  const [tenant, setTenant] = useState<{ plan: string; orders_this_month: number } | null>(null);
 
   useEffect(() => {
     async function fetchDashboardData() {
       setLoading(true);
       try {
+        const supabase = createClient();
+        const currentTenant = await getCurrentTenant(supabase);
+        setTenant(currentTenant);
+
         const today = new Date().toISOString().split('T')[0];
 
         // 1. Fetch Orders
         const { data: dbOrders, error: orderError } = await supabase
           .from("orders")
-          .select("*, customers(name)");
+          .select("*, customers(name)")
+          .order('created_at', { ascending: false });
         
         if (orderError) throw orderError;
 
@@ -41,9 +67,9 @@ export default function DashboardPage() {
         if (custError) throw custError;
 
         // 3. Process Stats
-        const todayOrders = dbOrders.filter(o => o.created_at.startsWith(today));
-        const todayRevenue = todayOrders.reduce((acc, curr) => acc + Number(curr.total_amount), 0);
-        const pendingCount = dbOrders.filter(o => o.status !== 'DELIVERED').length;
+        const todayOrders = (dbOrders || []).filter(o => o.created_at.startsWith(today));
+        const todayRevenue = todayOrders.reduce((acc, curr) => acc + Number(curr.total_amount || 0), 0);
+        const pendingCount = (dbOrders || []).filter(o => o.status !== 'DELIVERED').length;
 
         setStats([
           { label: t("Today's Orders", "నేటి ఆర్డర్లు"), value: todayOrders.length.toString(), icon: ShoppingBag, color: "bg-blue-500" },
@@ -52,23 +78,23 @@ export default function DashboardPage() {
           { label: t("Total Customers", "కస్టమర్లు"), value: (customerCount || 0).toString(), icon: Users, color: "bg-purple-500" },
         ]);
 
-        setRecentOrders(dbOrders.slice(0, 5));
+        setRecentOrders((dbOrders || []).slice(0, 5));
 
         // 4. Group by Job Type for Chart
-        const jobGroups = dbOrders.reduce((acc: any, curr) => {
+        const jobGroups = (dbOrders || []).reduce((acc: Record<string, number>, curr) => {
           const type = curr.job_type || 'Other';
-          acc[type] = (acc[type] || 0) + Number(curr.total_amount);
+          acc[type] = (acc[type] || 0) + Number(curr.total_amount || 0);
           return acc;
         }, {});
 
         const chartColors = ["#1e3a5f", "#f97316", "#10b981", "#8b5cf6", "#ef4444", "#ec4899", "#14b8a6"];
-        const chartData = Object.keys(jobGroups).map((name, i) => ({
+        const localChartData = Object.keys(jobGroups).map((name, i) => ({
           name,
           value: jobGroups[name],
           color: chartColors[i % chartColors.length]
         })).sort((a, b) => b.value - a.value).slice(0, 6);
 
-        setChartData(chartData);
+        setChartData(localChartData);
       } catch (err) {
         console.error("Dashboard error:", err);
       } finally {
@@ -76,9 +102,7 @@ export default function DashboardPage() {
       }
     }
     fetchDashboardData();
-  }, [t]); // Add t to dependencies to update labels on change
-
-  const [chartData, setChartData] = useState<any[]>([]);
+  }, [t]); 
 
   return (
     <div className="space-y-8">
@@ -100,6 +124,39 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
+
+      {/* Usage Meter & Plan Status */}
+      {!loading && tenant && (
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-tight">{t("Monthly Usage", "నెలవారీ వినియోగం")}</h2>
+              <p className="text-[10px] text-gray-400 uppercase tracking-widest">{tenant.plan === 'FREE' ? t("Free Plan Limit: 50 Orders", "ఉచిత ప్లాన్ పరిమితి: 50 ఆర్డర్లు") : t("Unlimited Pro Plan", "అపరిమిత ప్రో ప్లాన్")}</p>
+            </div>
+            <div className="text-right">
+              <span className="text-sm font-black text-primary">{tenant.orders_this_month || 0}</span>
+              <span className="text-xs text-gray-300"> / {tenant.plan === 'FREE' ? 50 : '∞'}</span>
+            </div>
+          </div>
+          {tenant.plan === 'FREE' && (
+            <div className="space-y-2">
+              <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full transition-all duration-1000 ${
+                    ((tenant.orders_this_month || 0) / 50) > 0.8 ? 'bg-red-500' : 'bg-primary'
+                  }`}
+                  style={{ width: `${Math.min(((tenant.orders_this_month || 0) / 50) * 100, 100)}%` }}
+                />
+              </div>
+              {((tenant.orders_this_month || 0) / 50) > 0.8 && (
+                <p className="text-[10px] text-red-500 font-bold animate-pulse uppercase tracking-tighter">
+                  {t("Warning: You are approaching your monthly limit. Upgrade soon!", "హెచ్చరిక: మీరు మీ నెలవారీ పరిమితికి చేరుకుంటున్నారు. త్వరలో అప్‌గ్రేడ్ చేయండి!")}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

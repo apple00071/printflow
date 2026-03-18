@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import { PRESS_CONFIG } from "@/lib/config";
 import { useLanguage } from "@/lib/context/LanguageContext";
 
@@ -12,7 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,8 +44,9 @@ export default function LoginPage() {
       if (signInError) throw signInError;
       
       window.location.href = "/dashboard";
-    } catch (err: any) {
-      setError(err.message || t("Invalid credentials", "తప్పుడు వివరాలు"));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || t("Invalid credentials", "తప్పుడు వివరాలు"));
     } finally {
       setLoading(false);
     }

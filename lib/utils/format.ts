@@ -12,15 +12,16 @@ export const formatCurrency = (amount: number) => {
 export const formatDate = (date: Date | string | number) => {
   try {
     return format(new Date(date), "dd/MM/yyyy");
-  } catch (error) {
-    return "N/A";
+  } catch {
+    return String(date); // Assuming dateStr was a typo and meant to return the original date as a string
   }
 };
 
-export const formatDateTime = (date: Date | string | number) => {
+export function formatDateTime(dateStr: string) {
   try {
-    return format(new Date(date), "dd/MM/yyyy HH:mm");
-  } catch (error) {
-    return "N/A";
+    const date = new Date(dateStr);
+    return date.toLocaleString();
+  } catch {
+    return dateStr;
   }
-};
+}

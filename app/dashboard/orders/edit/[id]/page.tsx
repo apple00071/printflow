@@ -12,10 +12,14 @@ import {
   Upload,
   Calendar,
   IndianRupee,
-  Loader2
+  Loader2,
+  Receipt
 } from "lucide-react";
 import Link from "next/link";
 import { getOrder, updateOrder } from "@/lib/supabase/actions";
+import { createClient } from "@/lib/supabase/client";
+import { getCurrentTenant } from "@/lib/tenant";
+import { calculateGST } from "@/lib/gst";
 import { useLanguage } from "@/lib/context/LanguageContext";
 
 export default function EditOrderPage({ params }: { params: { id: string } }) {
@@ -47,7 +51,31 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
     deliveryDate: "",
     totalAmount: 0,
     advancePaid: 0,
+    // GST Fields
+    applyGST: false,
+    gstRate: 0,
+    isInterState: false,
+    gstin: "",
+    hsnCode: "",
   });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [gstRates, setGstRates] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function init() {
+      const supabase = createClient();
+      const currentTenant = await getCurrentTenant(supabase);
+      if (currentTenant) {
+        const { data: rates } = await supabase
+          .from('gst_rates')
+          .select('*')
+          .eq('tenant_id', currentTenant.id);
+        setGstRates(rates || []);
+      }
+    }
+    init();
+  }, []);
 
   useEffect(() => {
     async function fetchOrder() {
@@ -63,8 +91,13 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
             size: order.size || "",
             instructions: order.instructions || "",
             deliveryDate: order.delivery_date || "",
-            totalAmount: order.total_amount,
+            totalAmount: order.taxable_amount || order.total_amount,
             advancePaid: order.advance_paid,
+            applyGST: order.gst_type !== 'NONE',
+            gstRate: order.gst_rate || 0,
+            isInterState: order.is_inter_state || false,
+            gstin: order.customers?.gstin || "",
+            hsnCode: order.hsn_code || "",
           });
         }
       } catch (err) {
@@ -75,6 +108,8 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
     }
     fetchOrder();
   }, [params.id]);
+
+  const gstCalc = calculateGST(formData.totalAmount, formData.gstRate, formData.isInterState);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -234,6 +269,63 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
           </div>
         </section>
 
+        {/* GST Section */}
+        <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
+          <div className="flex items-center justify-between border-b border-gray-50 pb-3 mb-4">
+            <div className="flex items-center gap-2">
+              <Receipt className="w-5 h-5 text-primary" />
+              <h2 className=" text-gray-900 uppercase tracking-wide text-sm">{t("GST Configuration", "GST వివరాలు")}</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-gray-500 uppercase">{t("Apply GST", "GST వర్తింపజేయి")}</label>
+              <input 
+                type="checkbox" 
+                checked={formData.applyGST}
+                onChange={(e) => setFormData({...formData, applyGST: e.target.checked})}
+                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+            </div>
+          </div>
+
+          {formData.applyGST && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-2">
+              <div className="space-y-1">
+                <label className="text-xs text-gray-500 uppercase">{t("GST Rate", "GST శాతం")}</label>
+                <select
+                  value={formData.gstRate}
+                  onChange={(e) => setFormData({...formData, gstRate: parseFloat(e.target.value)})}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
+                >
+                  <option value="0">0% (Nil)</option>
+                  {gstRates.map((rate) => (
+                    <option key={rate.id} value={rate.rate}>{rate.label} ({rate.rate}%)</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-3 mt-6">
+                <input 
+                  type="checkbox" 
+                  id="interstate"
+                  checked={formData.isInterState}
+                  onChange={(e) => setFormData({...formData, isInterState: e.target.checked})}
+                  className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                <label htmlFor="interstate" className="text-sm text-gray-700">{t("Inter-state Supply (IGST)", "అంతరాష్ట్ర సరఫరా (IGST)")}</label>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-gray-500 uppercase">HSN Code</label>
+                <input
+                  type="text"
+                  value={formData.hsnCode}
+                  onChange={(e) => setFormData({...formData, hsnCode: e.target.value})}
+                  placeholder="e.g. 4911"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
+                />
+              </div>
+            </div>
+          )}
+        </section>
+
         {/* Pricing Section */}
         <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
           <div className="flex items-center gap-2 border-b border-gray-50 pb-3 mb-4">
@@ -242,7 +334,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="space-y-1">
-              <label className="text-xs text-gray-500 uppercase">{t("Total Amount", "మొత్తం ధర")}</label>
+              <label className="text-xs text-gray-500 uppercase">{formData.applyGST ? t("Taxable Amount", "పన్ను విధించదగిన మొత్తం") : t("Total Amount", "మొత్తం ధర")}</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">₹</span>
                 <input
@@ -254,6 +346,20 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
                 />
               </div>
             </div>
+
+            {formData.applyGST && (
+              <div className="bg-primary/5 p-4 rounded-xl border border-primary/10 space-y-2">
+                <div className="flex justify-between text-[10px] uppercase text-gray-500">
+                  <span>{formData.isInterState ? "IGST" : "CGST + SGST"} ({formData.gstRate}%)</span>
+                  <span>₹ {formData.isInterState ? gstCalc.igst : (gstCalc.cgst + gstCalc.sgst)}</span>
+                </div>
+                <div className="flex justify-between font-bold text-sm text-primary">
+                  <span>{t("Total with GST", "మొత్తం GST కలిపి")}</span>
+                  <span>₹ {gstCalc.totalWithGST}</span>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-1">
               <label className="text-xs text-gray-500 uppercase">{t("Advance Paid", "అడ్వాన్స్")}</label>
               <div className="relative">
@@ -268,7 +374,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
             </div>
             <div className="bg-gray-50 p-4 rounded-lg flex flex-col justify-center border border-gray-100">
                <p className="text-[10px] text-gray-400 uppercase">{t("Balance Due", "మిగిలిన మొత్తం")}</p>
-               <p className="text-xl text-primary">₹ {formData.totalAmount - formData.advancePaid}</p>
+               <p className="text-xl text-primary">₹ {formData.applyGST ? (gstCalc.totalWithGST - formData.advancePaid) : (formData.totalAmount - formData.advancePaid)}</p>
             </div>
           </div>
         </section>

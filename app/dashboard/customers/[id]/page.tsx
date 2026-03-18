@@ -8,26 +8,44 @@ import {
   IndianRupee, 
   Clock, 
   History,
-  MoreVertical,
   Loader2,
   UserCircle
 } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 
 import { useLanguage } from "@/lib/context/LanguageContext";
 
+interface Customer {
+  id: string;
+  name: string;
+  phone: string;
+  created_at: string;
+}
+
+interface Order {
+  id: string;
+  friendly_id?: string;
+  job_type: string;
+  quantity: number;
+  total_amount: number;
+  advance_paid: number;
+  status: string;
+  created_at: string;
+}
+
 export default function CustomerProfilePage({ params }: { params: { id: string } }) {
   const { t } = useLanguage();
-  const [customer, setCustomer] = useState<any>(null);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchCustomerData() {
       setLoading(true);
       try {
+        const supabase = createClient();
         // 1. Fetch Customer
         const { data: cust, error: custErr } = await supabase
           .from("customers")

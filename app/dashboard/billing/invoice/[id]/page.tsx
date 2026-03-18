@@ -1,32 +1,64 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Printer, ArrowLeft, CheckCircle2, IndianRupee, Loader2 } from "lucide-react";
+import { Printer, ArrowLeft, Loader2, Landmark, Mail, Phone, MapPin } from "lucide-react";
 import Link from "next/link";
-import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils/format";
-import { PRESS_CONFIG } from "@/lib/config";
+import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { getOrder } from "@/lib/supabase/actions";
-
+import { createClient } from "@/lib/supabase/client";
+import { getCurrentTenant } from "@/lib/tenant";
+import { amountInWords } from "@/lib/utils";
 import { useLanguage } from "@/lib/context/LanguageContext";
+
+interface Order {
+  id: string;
+  invoice_number: string;
+  invoice_date: string;
+  job_type: string;
+  quantity: number;
+  taxable_amount: number;
+  total_amount: number;
+  advance_paid: number;
+  gst_type: string;
+  gst_rate: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  hsn_code?: string;
+  size?: string;
+  paper_type?: string;
+  customers: {
+    name: string;
+    phone: string;
+    gstin?: string;
+  };
+}
 
 export default function InvoicePage({ params }: { params: { id: string } }) {
   const { t } = useLanguage();
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<Order | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [tenant, setTenant] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchOrder() {
+    async function fetchData() {
       setLoading(true);
       try {
-        const data = await getOrder(params.id);
-        setOrder(data);
+        const supabase = createClient();
+        const [orderData, tenantData] = await Promise.all([
+          getOrder(params.id),
+          getCurrentTenant(supabase)
+        ]);
+        setOrder(orderData as Order);
+        setTenant(tenantData);
       } catch (err) {
         console.error("Error fetching invoice data:", err);
       } finally {
         setLoading(false);
       }
     }
-    fetchOrder();
+    fetchData();
   }, [params.id]);
 
   const handlePrint = () => {
@@ -40,17 +72,17 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
     </div>
   );
 
-  if (!order) return (
+  if (!order || !tenant) return (
     <div className="min-h-screen flex flex-col items-center justify-center p-20 text-gray-400 text-center">
        <h2 className="text-2xl text-gray-900 mb-2 uppercase">{t("Invoice Not Found", "ఇన్వాయిస్ కనుగొనబడలేదు")}</h2>
-       <p className="mb-6">{t("The order ID provided does not exist in our system.", "అందించిన ఆర్డర్ ఐడి మా సిస్టమ్‌లో లేదు.")}</p>
+       <p className="mb-6">{t("The order ID provided does not exist or you don't have access.", "అందించిన ఆర్డర్ ఐడి లేదు లేదా మీకు యాక్సెస్ లేదు.")}</p>
        <Link href="/dashboard/orders" className="bg-primary text-white px-8 py-3 rounded-xl shadow-lg shadow-primary/20">{t("Back to Orders", "ఆర్డర్‌లకు తిరిగి వెళ్లండి")}</Link>
     </div>
   );
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 print:bg-white print:p-0">
-      <div className="max-w-full mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6">
         {/* Actions - Hidden on Print */}
         <div className="flex items-center justify-between print:hidden">
           <Link 
@@ -62,7 +94,7 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
           </Link>
           <button 
             onClick={handlePrint}
-            className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
+            className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all font-bold"
           >
             <Printer className="w-4 h-4" />
             {t("Print Invoice", "ప్రింట్ బిల్")}
@@ -70,122 +102,179 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
         </div>
 
         {/* Invoice Body */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden print:shadow-none print:border-none print:rounded-none">
-          {/* Header */}
-          <div className="bg-primary text-white p-8 sm:p-12 flex flex-col sm:flex-row justify-between gap-8">
-            <div className="space-y-2">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
-                  <Printer className="w-8 h-8 text-primary" />
-                </div>
-                <div>
-                  <h1 className="text-2xl uppercase tracking-tighter">{PRESS_CONFIG.name}</h1>
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-white/60">{t("Quality Printing Services", "క్వాలిటీ ప్రింటింగ్ సర్వీసెస్")}</p>
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden print:shadow-none print:border print:border-gray-200 print:rounded-none">
+          {/* Header Section */}
+          <div className="p-8 sm:p-12 border-b-8 border-primary relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32" />
+            
+            <div className="flex flex-col md:flex-row justify-between gap-8 relative z-10">
+              <div className="space-y-4">
+                {tenant.logo_url ? (
+                  <img src={tenant.logo_url} alt={tenant.name} className="h-16 w-auto object-contain mb-4" />
+                ) : (
+                  <div className="flex items-center gap-3 mb-4">
+                    <Printer className="w-10 h-10 text-primary" />
+                    <h1 className="text-3xl font-black text-gray-900 tracking-tighter uppercase">{tenant.name}</h1>
+                  </div>
+                )}
+                
+                <div className="space-y-1.5 text-xs text-gray-500">
+                  {tenant.city && <p className="flex items-center gap-2"><MapPin className="w-3 h-3" /> {tenant.city}, {tenant.state}</p>}
+                  {tenant.phone && <p className="flex items-center gap-2"><Phone className="w-3 h-3" /> {tenant.phone}</p>}
+                  {tenant.email && <p className="flex items-center gap-2"><Mail className="w-3 h-3" /> {tenant.email}</p>}
+                  {tenant.gst_number && <p className="font-bold text-gray-700">GSTIN: {tenant.gst_number}</p>}
                 </div>
               </div>
-              <div className="text-xs text-white/70 space-y-1">
-                <p>{PRESS_CONFIG.address}</p>
-                <p>{t("Phone", "ఫోన్")}: {PRESS_CONFIG.phone} | UPI: {PRESS_CONFIG.upiId}</p>
+
+              <div className="md:text-right space-y-4">
+                <h2 className="text-5xl font-black text-primary/10 uppercase tracking-tighter absolute top-0 right-0 hidden md:block">{t("Invoice", "ఇన్వాయిస్")}</h2>
+                <div className="pt-12 md:pt-16">
+                  <p className="text-sm font-bold text-gray-900">{t("Invoice #", "ఇన్వాయిస్ నంబర్:")} <span className="text-primary">{order.invoice_number || "Draft"}</span></p>
+                  <p className="text-xs text-gray-500">{t("Date", "తేదీ")}: {formatDate(order.invoice_date || order.id)}</p>
+                </div>
               </div>
-            </div>
-            <div className="text-right flex flex-col justify-end">
-              <h2 className="text-4xl uppercase text-white/20 mb-2">{t("Invoice", "ఇన్వాయిస్")}</h2>
-              <p className="text-sm uppercase tracking-tight"> {order.friendly_id || `# ${order.id.split('-')[0]}`}</p>
-              <p className="text-xs text-white/60 tracking-wide">{t("DATE", "తేదీ")}: {formatDate(order.created_at)}</p>
             </div>
           </div>
 
-          <div className="p-8 sm:p-12 space-y-10">
-            {/* Customer & Order Summary */}
-            <div className="grid grid-cols-2 gap-8">
-              <div className="space-y-3">
-                <h3 className="text-[10px] text-gray-400 uppercase tracking-widest border-b border-gray-50 pb-2">{t("Bill To", "కస్టమర్")}</h3>
-                <div className="space-y-1">
-                  <p className="text-lg text-gray-900">{order.customers.name}</p>
-                  <p className="text-sm text-primary">{order.customers.phone}</p>
-                  <p className="text-xs text-gray-500">CHIRALA, AP</p>
-                </div>
+          <div className="p-8 sm:p-12 space-y-12">
+            {/* Customer Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-gray-50 p-6 rounded-2xl border border-gray-100">
+              <div className="space-y-2">
+                <h3 className="text-[10px] text-gray-400 uppercase tracking-widest border-b border-gray-200 pb-2 mb-2">{t("Bill To", "కస్టమర్")}</h3>
+                <p className="text-lg font-bold text-gray-900">{order.customers.name}</p>
+                <p className="text-sm text-gray-600">{order.customers.phone}</p>
+                {order.customers.gstin && <p className="text-xs font-bold text-primary mt-1">GSTIN: {order.customers.gstin}</p>}
               </div>
-              <div className="space-y-3">
-                <h3 className="text-[10px] text-gray-400 uppercase tracking-widest border-b border-gray-50 pb-2">{t("Job Description", "పని వివరాలు")}</h3>
-                <div className="space-y-1">
-                  <p className="text-sm text-gray-900 leading-tight">{order.job_type}</p>
-                  <p className="text-xs text-gray-500 uppercase tracking-tighter">{t("Qty", "క్వాంటిటీ")}: {order.quantity} | {t("Size", "సైజు")}: {order.size || t("Standard", "స్టాండర్డ్")}</p>
-                  <p className="text-xs text-gray-500 italic">{t("Paper", "పేపర్")}: {order.paper_type || t("N/A", "లేదు")}</p>
-                </div>
+              <div className="space-y-2">
+                <h3 className="text-[10px] text-gray-400 uppercase tracking-widest border-b border-gray-200 pb-2 mb-2">{t("Order Meta", "ఆర్డర్ వివరాలు")}</h3>
+                <p className="text-sm text-gray-700"><span className="text-gray-400 uppercase text-[9px] tracking-wider">{t("Job Type", "పని రకం")}:</span> {order.job_type}</p>
+                <p className="text-sm text-gray-700"><span className="text-gray-400 uppercase text-[9px] tracking-wider">{t("Dimensions", "సైజు")}:</span> {order.size || "Standard"}</p>
+                {order.hsn_code && <p className="text-sm text-gray-700"><span className="text-gray-400 uppercase text-[9px] tracking-wider">HSN/SAC:</span> {order.hsn_code}</p>}
               </div>
             </div>
 
-            {/* Table */}
-            <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+            {/* Main Table */}
+            <div className="overflow-hidden">
                <table className="w-full text-left">
-                  <thead className="bg-gray-50 text-[10px] text-gray-400 uppercase tracking-widest border-b border-gray-100">
+                  <thead className="text-[10px] text-gray-400 uppercase tracking-widest border-b-2 border-gray-100">
                     <tr>
-                      <th className="px-6 py-4">{t("Description", "వివరణ")}</th>
-                      <th className="px-6 py-4 text-center">{t("Qty", "క్వాంటిటీ")}</th>
-                      <th className="px-6 py-4 text-right">{t("Amount", "ధర")}</th>
+                      <th className="px-4 py-4">{t("Item Description", "వివరణ")}</th>
+                      <th className="px-4 py-4 text-center">{t("Qty", "క్వాంటిటీ")}</th>
+                      <th className="px-4 py-4 text-right">{t("Taxable Value", "పన్ను విలువ")}</th>
+                      {order.gst_type !== 'NONE' && (
+                        <th className="px-4 py-4 text-right">{t("GST", "GST")} (%)</th>
+                      )}
+                      <th className="px-4 py-4 text-right font-bold">{t("Amount", "ధర")}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50 text-sm text-gray-700">
+                  <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
                     <tr>
-                      <td className="px-6 py-8 text-gray-900">{t("Printing of", "ప్రింటింగ్:")} {order.job_type}</td>
-                      <td className="px-6 py-8 text-center">{order.quantity}</td>
-                      <td className="px-6 py-8 text-right text-primary">{formatCurrency(order.total_amount)}</td>
+                      <td className="px-4 py-8">
+                        <p className="font-bold text-gray-900">{order.job_type}</p>
+                        <p className="text-xs text-gray-500 mt-1">{order.paper_type || "Standard Printing"}</p>
+                      </td>
+                      <td className="px-4 py-8 text-center">{order.quantity}</td>
+                      <td className="px-4 py-8 text-right font-medium">{formatCurrency(order.taxable_amount || order.total_amount)}</td>
+                      {order.gst_type !== 'NONE' && (
+                        <td className="px-4 py-8 text-right">{order.gst_rate}%</td>
+                      )}
+                      <td className="px-4 py-8 text-right font-black text-gray-900">{formatCurrency(order.total_amount)}</td>
                     </tr>
                   </tbody>
                </table>
             </div>
 
-            {/* Footer Summary */}
-            <div className="flex flex-col sm:flex-row justify-between gap-12 pt-6">
-              <div className="max-w-xs space-y-4">
-                 <div className="p-4 bg-gray-50/50 rounded-2xl border border-gray-100">
-                    <h4 className="text-[10px] text-gray-400 uppercase tracking-widest mb-3 border-b border-gray-100 pb-2 flex items-center gap-2">
-                       <CheckCircle2 className="w-3 h-3 text-green-500" />
-                       {t("Terms & Conditions", "నిబంధనలు & షరతులు")}
-                    </h4>
-                    <p className="text-[9px] text-gray-400 leading-relaxed italic">
-                      {t("1. Goods once sold will not be taken back.", "1. అమ్మిన వస్తువులు తిరిగి తీసుకోబడవు.")}<br />
-                      {t("2. We are not responsible for any delay in transport.", "2. రవాణాలో జరిగే ఆలస్యానికి మేము బాధ్యులం కాదు.")}<br />
-                      {t("3. Subject to Chirala Jurisdiction only.", "3. వివాదాలు చీరాల కోర్టు పరిధిలోకి మాత్రమే వస్తాయి.")}
-                    </p>
+            {/* Calculations & Summary */}
+            <div className="flex flex-col md:flex-row justify-between gap-12 border-t border-gray-100 pt-8">
+               <div className="flex-1 space-y-6">
+                 <div>
+                    <h4 className="text-[10px] text-gray-400 uppercase tracking-widest mb-2">{t("Amount in words", "అక్షరాలలో మొత్తం")}</h4>
+                    <p className="text-sm font-bold text-gray-800 italic bg-gray-50 p-3 rounded-lg border border-gray-100">{amountInWords(order.total_amount)}</p>
                  </div>
-              </div>
+                 
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                   <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
+                      <h4 className="text-[10px] text-primary uppercase tracking-widest mb-2 flex items-center gap-2">
+                         <Landmark className="w-3 h-3" />
+                         {t("Payment Details", "చెల్లింపు వివరాలు")}
+                      </h4>
+                      <p className="text-[10px] text-gray-700 whitespace-pre-line leading-relaxed">
+                        {tenant.bank_details || t("Bank: Not Provided", "బ్యాంక్ వివరాలు లేవు")}
+                        {tenant.upi_id && `\nUPI: ${tenant.upi_id}`}
+                      </p>
+                   </div>
+                   <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                      <h4 className="text-[10px] text-gray-400 uppercase tracking-widest mb-2">{t("Terms", "షరతులు")}</h4>
+                      <p className="text-[9px] text-gray-400 leading-tight italic">
+                        {t("1. Goods once sold will not be taken back.", "1. అమ్మిన వస్తువులు తిరిగి తీసుకోబడవు.")}<br/>
+                        {t("2. All disputes subject to Chirala jurisdiction.", "2. వివాదాలు చీరాల కోర్టు పరిధిలోకి వస్తాయి.")}
+                      </p>
+                   </div>
+                 </div>
+               </div>
 
-              <div className="w-full sm:w-64 space-y-3">
-                <div className="flex justify-between items-center text-sm px-2">
-                  <span className="text-gray-500 uppercase tracking-tighter">{t("Sub Total", "మొత్తం")}</span>
-                  <span className="text-gray-900">{formatCurrency(order.total_amount)}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm text-green-600 px-2 italic">
-                  <span className="text-gray-500 uppercase tracking-tighter italic">(-) {t("Advance Paid", "చెల్లించిన అడ్వాన్స్")}</span>
-                  <span className="italic">-{formatCurrency(order.advance_paid)}</span>
-                </div>
-                <div className="pt-4 border-t-4 border-primary flex justify-between items-center bg-primary text-white p-5 rounded-2xl shadow-xl shadow-primary/20">
-                  <span className="text-[10px] uppercase tracking-widest">{t("Balance Due", "బకాయి")}</span>
-                  <span className="text-2xl">{formatCurrency(order.total_amount - order.advance_paid)}</span>
-                </div>
-              </div>
+               <div className="w-full md:w-80 space-y-3">
+                  <div className="space-y-2 px-2 border-b border-gray-100 pb-4 mb-4">
+                    <div className="flex justify-between text-xs">
+                       <span className="text-gray-500">{t("Sub Total", "మొత్తం")}</span>
+                       <span className="font-bold">{formatCurrency(order.taxable_amount || order.total_amount)}</span>
+                    </div>
+                    {order.gst_type === 'CGST_SGST' && (
+                      <>
+                        <div className="flex justify-between text-xs text-gray-500">
+                           <span>CGST ({order.gst_rate / 2}%)</span>
+                           <span>{formatCurrency(order.cgst)}</span>
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-500">
+                           <span>SGST ({order.gst_rate / 2}%)</span>
+                           <span>{formatCurrency(order.sgst)}</span>
+                        </div>
+                      </>
+                    )}
+                    {order.gst_type === 'IGST' && (
+                      <div className="flex justify-between text-xs text-gray-500">
+                         <span>IGST ({order.gst_rate}%)</span>
+                         <span>{formatCurrency(order.igst)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex justify-between items-center bg-primary text-white p-6 rounded-2xl shadow-2xl shadow-primary/30 transform scale-105 origin-right">
+                    <span className="text-[10px] font-black uppercase tracking-widest">{t("Grand Total", "మొత్తం చెల్లించాల్సింది")}</span>
+                    <span className="text-3xl font-black">{formatCurrency(order.total_amount)}</span>
+                  </div>
+
+                  <div className="pt-8 space-y-2 px-4 italic">
+                    <div className="flex justify-between text-sm text-green-600">
+                       <span className="text-gray-400 uppercase text-[9px] tracking-widest">{t("Advance Paid", "అడ్వాన్స్")}</span>
+                       <span className="font-bold">-{formatCurrency(order.advance_paid)}</span>
+                    </div>
+                    <div className="flex justify-between text-lg font-black text-primary pt-2 border-t border-dashed border-gray-200">
+                       <span className="text-gray-400 uppercase text-[9px] tracking-widest font-normal">{t("Balance Due", "బకాయి")}</span>
+                       <span>{formatCurrency(order.total_amount - order.advance_paid)}</span>
+                    </div>
+                  </div>
+               </div>
             </div>
 
-            {/* Signatures */}
-            <div className="pt-20 flex justify-between items-end">
-               <div className="text-center space-y-6">
-                  <div className="w-32 border-b border-gray-200" />
-                  <p className="text-[10px] text-gray-400 uppercase">{t("Customer Sign", "కస్టమర్ సంతకం")}</p>
+            {/* Signature Area */}
+            <div className="pt-24 flex justify-between items-end">
+               <div className="text-center space-y-4">
+                  <div className="w-40 border-b border-gray-200 mx-auto" />
+                  <p className="text-[10px] text-gray-400 uppercase tracking-widest">{t("Customer's Sign", "కస్టమర్ సంతకం")}</p>
                </div>
                <div className="text-center space-y-2">
-                  <p className="text-[10px] text-primary uppercase tracking-widest">{t("For", "కోసం")} {PRESS_CONFIG.name}</p>
-                  <p className="text-[8px] text-gray-400 italic mb-6">{t("Authorized Signatory", "అధికారిక సంతకం")}</p>
-                  <div className="w-32 border-b border-gray-200" />
+                  <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">{t("For", "కోసం")} {tenant.name}</p>
+                  <p className="text-[8px] text-gray-400 italic mb-8">{t("Authorized Signatory", "అధికారిక సంతకం")}</p>
+                  <div className="w-48 border-b-2 border-primary mx-auto" />
                </div>
             </div>
           </div>
         </div>
 
-        {/* Footer Info */}
-        <p className="text-center text-[10px] text-gray-400 uppercase tracking-[0.2em] print:mt-12">
-           {t("Generated on", "రూపొందించబడింది")} {formatDateTime(new Date())} • chirala, ap, india
+        {/* Browser Message - Hidden on Print */}
+        <p className="text-center text-[10px] text-gray-400 uppercase tracking-widest animate-pulse print:hidden">
+           {t("Generated via PrintFlow SaaS • Modern Printing Management", "ప్రింట్‌ఫ్లో SaaS ద్వారా రూపొందించబడింది")}
         </p>
       </div>
     </div>
