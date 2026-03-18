@@ -1,0 +1,296 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { 
+  ArrowLeft, 
+  Save, 
+  User, 
+  Phone, 
+  Hash, 
+  FileText, 
+  Upload,
+  Calendar,
+  IndianRupee,
+  Loader2
+} from "lucide-react";
+import Link from "next/link";
+import { getOrder, updateOrder } from "@/lib/supabase/actions";
+import { useLanguage } from "@/lib/context/LanguageContext";
+
+export default function EditOrderPage({ params }: { params: { id: string } }) {
+  const { t } = useLanguage();
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const jobTypes = [
+    { id: "Business Cards", label: t("Business Cards", "విజిటింగ్ కార్డ్స్") },
+    { id: "Banners", label: t("Banners", "బ్యానర్లు") },
+    { id: "Letterheads", label: t("Letterheads", "లెటర్ హెడ్స్") },
+    { id: "Wedding Cards", label: t("Wedding Cards", "శుభలేఖలు") },
+    { id: "Pamphlets", label: t("Pamphlets", "పాంప్లెట్స్") },
+    { id: "Stickers", label: t("Stickers", "స్టిక్కర్లు") },
+    { id: "Flex Prints", label: t("Flex Prints", "ఫ్లెక్స్ ప్రింట్లు") },
+    { id: "Other", label: t("Other", "ఇతర పనులు") },
+  ];
+
+  // Form State
+  const [formData, setFormData] = useState({
+    customerName: "",
+    phone: "",
+    jobType: "Business Cards",
+    quantity: 1,
+    paperType: "",
+    size: "",
+    instructions: "",
+    deliveryDate: "",
+    totalAmount: 0,
+    advancePaid: 0,
+  });
+
+  useEffect(() => {
+    async function fetchOrder() {
+      try {
+        const order = await getOrder(params.id);
+        if (order) {
+          setFormData({
+            customerName: order.customers?.name || "",
+            phone: order.customers?.phone || "",
+            jobType: order.job_type,
+            quantity: order.quantity,
+            paperType: order.paper_type || "",
+            size: order.size || "",
+            instructions: order.instructions || "",
+            deliveryDate: order.delivery_date || "",
+            totalAmount: order.total_amount,
+            advancePaid: order.advance_paid,
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching order for edit:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchOrder();
+  }, [params.id]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    
+    try {
+      await updateOrder(params.id, formData);
+      router.push(`/dashboard/orders/${params.id}`);
+    } catch (error) {
+      console.error("Error updating order:", error);
+      alert(t("Failed to update order. Please try again.", "ఆర్డర్ అప్‌డేట్ చేయడం విఫలమైంది. దయచేసి మళ్ళీ ప్రయత్నించండి."));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center p-20 text-gray-400">
+       <Loader2 className="w-10 h-10 animate-spin mb-4 text-primary" />
+       <p className="text-sm">{t("Loading Order Data...", "ఆర్డర్ వివరాలు లోడ్ అవుతున్నాయి...")}</p>
+    </div>
+  );
+
+  return (
+    <div className="max-w-full mx-auto space-y-6">
+      <div className="flex items-center gap-4">
+        <Link href={`/dashboard/orders/${params.id}`} className="p-2 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200 group">
+          <ArrowLeft className="w-5 h-5 text-gray-500 group-hover:text-primary" />
+        </Link>
+        <div>
+          <h1 className="text-2xl text-gray-900">{t("Edit Order", "ఆర్డర్ సవరించండి")}</h1>
+          <p className="text-gray-500 text-sm">{t("Update order details for", "ఆర్డర్ వివరాలు సవరించండి:")} {formData.customerName}</p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6 pb-20">
+        {/* Customer Information Section */}
+        <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
+          <div className="flex items-center gap-2 border-b border-gray-50 pb-3 mb-4">
+            <User className="w-5 h-5 text-primary" />
+            <h2 className="text-gray-900 uppercase tracking-wide text-sm">{t("Customer Details", "కస్టమర్ వివరాలు")}</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase">{t("Customer Name", "పేరు")}</label>
+              <div className="relative cursor-not-allowed">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  disabled
+                  value={formData.customerName}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-500 outline-none"
+                />
+              </div>
+              <p className="text-[10px] text-gray-400 italic pl-1">{t("Name and phone cannot be changed", "పేరు మరియు ఫోన్ మార్చలేరు")}</p>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase">{t("Phone Number", "ఫోన్ నంబర్")}</label>
+              <div className="relative cursor-not-allowed">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="tel"
+                  disabled
+                  value={formData.phone}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-500 outline-none"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Job Details Section */}
+        <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
+          <div className="flex items-center gap-2 border-b border-gray-50 pb-3 mb-4">
+            <FileText className="w-5 h-5 text-primary" />
+            <h2 className="text-gray-900 uppercase tracking-wide text-sm">{t("Job Details", "ఆర్డర్ వివరాలు")}</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase">{t("Job Type", "పని రకం")}</label>
+              <select
+                value={formData.jobType}
+                onChange={(e) => setFormData({...formData, jobType: e.target.value})}
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
+              >
+                {jobTypes.map((type) => (
+                  <option key={type.id} value={type.id}>{type.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase">{t("Quantity", "పరిమాణం")}</label>
+              <div className="relative">
+                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="number"
+                  min="1"
+                  required
+                  value={formData.quantity}
+                  onChange={(e) => setFormData({...formData, quantity: parseInt(e.target.value) || 0})}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase">{t("Delivery Date", "డెలివరీ తేదీ")}</label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="date"
+                  value={formData.deliveryDate}
+                  onChange={(e) => setFormData({...formData, deliveryDate: e.target.value})}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase">{t("Paper Type", "కాగితం రకం")}</label>
+              <input
+                type="text"
+                placeholder={t("e.g. 300 GSM Matte", "ఉదా: 300 GSM Matte")}
+                value={formData.paperType}
+                onChange={(e) => setFormData({...formData, paperType: e.target.value})}
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase">{t("Size", "సైజు")}</label>
+              <input
+                type="text"
+                placeholder={t("e.g. A4, 10x12", "ఉదా: A4, 10x12")}
+                value={formData.size}
+                onChange={(e) => setFormData({...formData, size: e.target.value})}
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase">{t("Design File", "ఫైల్")}</label>
+              <button 
+                type="button"
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 border border-dashed border-gray-300 rounded-lg text-xs text-gray-600 transition-colors"
+              >
+                <Upload className="w-3 h-3" />
+                {t("Upload File", "ఫైల్ అప్‌లోడ్")}
+              </button>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-gray-500 uppercase">{t("Special Instructions", "సూచనలు")}</label>
+            <textarea
+              rows={3}
+              value={formData.instructions}
+              onChange={(e) => setFormData({...formData, instructions: e.target.value})}
+              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none resize-none"
+              placeholder={t("e.g. Laminate after printing, edge cutting needed", "ఉదా: ప్రింటింగ్ తర్వాత లామినేట్ చేయండి")}
+            />
+          </div>
+        </section>
+
+        {/* Pricing Section */}
+        <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
+          <div className="flex items-center gap-2 border-b border-gray-50 pb-3 mb-4">
+            <IndianRupee className="w-5 h-5 text-primary" />
+            <h2 className="text-gray-900 uppercase tracking-wide text-sm">{t("Pricing & Payment", "ధర మరియు చెల్లింపు")}</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase">{t("Total Amount", "మొత్తం ధర")}</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">₹</span>
+                <input
+                  type="number"
+                  required
+                  value={formData.totalAmount}
+                  onChange={(e) => setFormData({...formData, totalAmount: parseFloat(e.target.value) || 0})}
+                  className="w-full pl-8 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase">{t("Advance Paid", "అడ్వాన్స్")}</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">₹</span>
+                <input
+                  type="number"
+                  value={formData.advancePaid}
+                  onChange={(e) => setFormData({...formData, advancePaid: parseFloat(e.target.value) || 0})}
+                  className="w-full pl-8 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none text-green-600"
+                />
+              </div>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg flex flex-col justify-center border border-gray-100">
+               <p className="text-[10px] text-gray-400 uppercase">{t("Balance Due", "మిగిలిన మొత్తం")}</p>
+               <p className="text-xl text-primary">₹ {formData.totalAmount - formData.advancePaid}</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Action Buttons */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 flex justify-end gap-4 lg:relative lg:bg-transparent lg:border-none lg:px-0">
+          <Link 
+            href={`/dashboard/orders/${params.id}`}
+            className="px-6 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 lg:bg-white"
+          >
+            {t("Cancel", "రద్దు")}
+          </Link>
+          <button
+            type="submit"
+            disabled={saving}
+            className="px-8 py-2 bg-orange text-white text-sm rounded-lg shadow-lg shadow-orange/20 hover:bg-orange/90 active:scale-95 transition-all flex items-center gap-2"
+          >
+            <Save className="w-4 h-4" />
+            <span>{saving ? t("Updating...", "అప్‌డేట్ అవుతోంది...") : t("Update Order", "ఆర్డర్ అప్‌డేట్ చేయండి")}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
