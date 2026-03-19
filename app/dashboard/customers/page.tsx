@@ -13,6 +13,7 @@ import {
 import { formatCurrency } from "@/lib/utils/format";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { getCurrentTenant } from "@/lib/tenant";
 import { useLanguage } from "@/lib/context/LanguageContext";
 
 interface CustomerOrder {
@@ -46,7 +47,9 @@ export default function CustomersPage() {
       setLoading(true);
       try {
         const supabase = createClient();
-        // Fetch customers and their basic order data for calculation
+        const currentTenant = await getCurrentTenant(supabase);
+        
+        // Fetch customers and their basic order data for calculation (filtered by tenant)
         const { data, error } = await supabase
           .from("customers")
           .select(`
@@ -55,7 +58,8 @@ export default function CustomersPage() {
               total_amount,
               advance_paid
             )
-          `);
+          `)
+          .eq('tenant_id', currentTenant?.id);
         
         if (error) throw error;
 

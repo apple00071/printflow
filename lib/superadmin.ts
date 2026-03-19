@@ -1,12 +1,15 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from './supabase/server'
+import { createClient as createAdminClient } from './supabase/admin'
 
 export async function isSuperAdmin(supabase?: SupabaseClient) {
   const client = supabase || createClient()
   const { data: { user } } = await client.auth.getUser()
   if (!user) return false
 
-  const { data: profile } = await client
+  // Use admin client to bypass RLS for profile checking
+  const adminClient = createAdminClient()
+  const { data: profile } = await adminClient
     .from('profiles')
     .select('role, tenant_id')
     .eq('id', user.id)
@@ -21,7 +24,9 @@ export async function getCurrentUserWithRole(supabase?: SupabaseClient) {
   const { data: { user } } = await client.auth.getUser()
   if (!user) return null
 
-  const { data: profile } = await client
+  // Use admin client to bypass RLS for profile checking
+  const adminClient = createAdminClient()
+  const { data: profile } = await adminClient
     .from('profiles')
     .select('role, tenant_id, username, name')
     .eq('id', user.id)

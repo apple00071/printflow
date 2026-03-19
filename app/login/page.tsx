@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { PRESS_CONFIG } from "@/lib/config";
 import { useLanguage } from "@/lib/context/LanguageContext";
@@ -23,17 +24,22 @@ export default function LoginPage() {
       
       // If it doesn't look like an email, treat as username
       if (!email.includes("@")) {
-        const { data, error: profileError } = await supabase
-          .from("profiles")
-          .select("id")
-          .ilike("username", email)
-          .maybeSingle();
+        // Special handling for Apple super admin
+        if (email.toLowerCase() === 'apple') {
+          emailToUse = 'apple@admin.com';
+        } else {
+          const { data, error: profileError } = await supabase
+            .from("profiles")
+            .select("id")
+            .ilike("username", email)
+            .maybeSingle();
 
-        if (profileError || !data) {
-          throw new Error(t("Username not found", "యూజర్ నేమ్ కనుగొనబడలేదు"));
+          if (profileError || !data) {
+            throw new Error(t("Username not found", "యూజర్ నేమ్ కనుగొనబడలేదు"));
+          }
+          
+          emailToUse = `${email.toLowerCase()}@applegraphics.local`;
         }
-        
-        emailToUse = `${email.toLowerCase()}@applegraphics.local`;
       }
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -43,7 +49,26 @@ export default function LoginPage() {
 
       if (signInError) throw signInError;
       
-      window.location.href = "/dashboard";
+      // Check user role to determine redirect
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role, tenant_id')
+          .eq('id', user.id)
+          .single();
+        
+        // Redirect based on role
+        if (profile?.role === 'ADMIN' && !profile?.tenant_id) {
+          // Super admin - redirect to admin dashboard
+          window.location.href = "/admin";
+        } else {
+          // Regular user/tenant - redirect to regular dashboard
+          window.location.href = "/dashboard";
+        }
+      } else {
+        window.location.href = "/dashboard";
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message || t("Invalid credentials", "తప్పుడు వివరాలు"));

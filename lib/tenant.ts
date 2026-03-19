@@ -4,6 +4,7 @@ export async function getCurrentTenant(supabase: SupabaseClient) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
+  // Use regular client to respect RLS for tenant checking
   const { data: profile } = await supabase
     .from('profiles')
     .select('tenant_id')

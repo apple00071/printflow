@@ -36,6 +36,7 @@ export default function PublicOrderPage() {
     quantity: 1,
     size: "",
     instructions: "",
+    designFile: null as File | null,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -182,7 +183,22 @@ export default function PublicOrderPage() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs  text-gray-700">Special Notes / ఇతర వివరాలు</label>
+                  <label className="text-xs  text-gray-700">Design File / డిర్డ్ ప్ర్ (Optional)</label>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.ai,.psd,.eps,.svg"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setFormData({...formData, designFile: file});
+                        console.log('Design file uploaded:', file.name, 'Size:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
+                      }
+                    }}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs  text-gray-700">Instructions / సూచనలు (Optional)</label>
                   <textarea
                     rows={3}
                     value={formData.instructions}

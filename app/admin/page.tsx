@@ -1,24 +1,27 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Building2, Users, TrendingUp, Plus, MoreHorizontal, CreditCard, Settings } from "lucide-react";
+import { Building2, Users, TrendingUp, Plus, MoreHorizontal, CreditCard, Settings, BarChart3, UserCheck, Shield } from "lucide-react";
 import Link from "next/link";
 
 interface Tenant {
   id: string;
   name: string;
   slug: string;
+  email: string;
   business_type: string;
   city: string;
   state: string;
-  plan: string;
-  plan_status: string;
-  orders_this_month: number;
-  created_at: string;
-  email: string;
   phone: string;
-  onboarding_complete: boolean;
-  profiles: {
+  subscription_tier: string;
+  subscription_status: string;
+  created_at: string;
+  // Mapped fields for frontend compatibility
+  plan?: string;
+  plan_status?: string;
+  orders_this_month?: number;
+  onboarding_complete?: boolean;
+  profiles?: {
     id: string;
     username: string;
     name: string;
@@ -29,6 +32,17 @@ export default function AdminDashboard() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createFormData, setCreateFormData] = useState({
+    name: '',
+    email: '',
+    plan: 'FREE',
+    business_type: 'Printing Press',
+    city: '',
+    state: '',
+    phone: ''
+  });
+  const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState('');
   const [activeTab, setActiveTab] = useState<'overview' | 'tenants' | 'subscriptions'>('overview');
 
   useEffect(() => {
@@ -49,13 +63,53 @@ export default function AdminDashboard() {
     }
   }
 
+  async function handleCreateTenant() {
+    setIsCreating(true);
+    setCreateError('');
+    
+    try {
+      const response = await fetch('/api/admin/tenants', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(createFormData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Success - show credentials
+        alert(`Tenant created successfully!\n\nBusiness: ${data.tenant.name}\nEmail: ${createFormData.email}\nPassword: ${data.tenant.tempPassword}\n\nPlease save these credentials.`);
+        
+        setShowCreateModal(false);
+        setCreateFormData({
+          name: '',
+          email: '',
+          plan: 'FREE',
+          business_type: 'Printing Press',
+          city: '',
+          state: '',
+          phone: ''
+        });
+        await fetchTenants(); // Refresh the list
+      } else {
+        setCreateError(data.error || 'Failed to create tenant');
+      }
+    } catch (error) {
+      setCreateError('Network error. Please try again.');
+    } finally {
+      setIsCreating(false);
+    }
+  }
+
   const stats = {
     totalTenants: tenants.length,
-    activeTenants: tenants.filter(t => t.plan_status === 'ACTIVE').length,
+    activeTenants: tenants.filter(t => (t.plan_status || t.subscription_status) === 'ACTIVE').length,
     totalOrders: tenants.reduce((sum, t) => sum + (t.orders_this_month || 0), 0),
-    proPlans: tenants.filter(t => t.plan === 'PRO').length,
-    freePlans: tenants.filter(t => t.plan === 'FREE').length,
-    monthlyRevenue: tenants.filter(t => t.plan === 'PRO').length * 999, // ₹999 per PRO plan
+    proPlans: tenants.filter(t => (t.plan || t.subscription_tier) === 'PRO').length,
+    freePlans: tenants.filter(t => (t.plan || t.subscription_tier) === 'FREE').length,
+    monthlyRevenue: tenants.filter(t => (t.plan || t.subscription_tier) === 'PRO').length * 999, // ₹999 per PRO plan
   };
 
   return (
@@ -69,6 +123,20 @@ export default function AdminDashboard() {
               <p className="text-sm text-gray-500">SaaS Platform Management</p>
             </div>
             <div className="flex items-center space-x-4">
+              <Link 
+                href="/admin/analytics"
+                className="text-gray-600 hover:text-gray-900 flex items-center"
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Analytics
+              </Link>
+              <Link 
+                href="/admin/tenants"
+                className="text-gray-600 hover:text-gray-900 flex items-center"
+              >
+                <UserCheck className="w-4 h-4 mr-2" />
+                Tenants
+              </Link>
               <Link 
                 href="/dashboard" 
                 className="text-gray-600 hover:text-gray-900 flex items-center"
@@ -190,32 +258,41 @@ export default function AdminDashboard() {
             {/* Quick Actions */}
             <div className="bg-white rounded-xl shadow-sm border p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Link 
+                  href="/admin/analytics"
+                  className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors block"
+                >
+                  <BarChart3 className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-gray-900 text-center">View Analytics</p>
+                  <p className="text-xs text-gray-500 text-center">Detailed platform metrics</p>
+                </Link>
+                
+                <Link 
+                  href="/admin/tenants"
+                  className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors block"
+                >
+                  <UserCheck className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-gray-900 text-center">Manage Tenants</p>
+                  <p className="text-xs text-gray-500 text-center">Customer accounts</p>
+                </Link>
+                
                 <button
                   onClick={() => setShowCreateModal(true)}
-                  className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                  className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors"
                 >
-                  <Plus className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-gray-900">Create New Tenant</p>
-                  <p className="text-xs text-gray-500">Add new SaaS customer</p>
+                  <Plus className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-gray-900 text-center">Create New Tenant</p>
+                  <p className="text-xs text-gray-500 text-center">Add new SaaS customer</p>
                 </button>
                 
                 <Link 
                   href="/dashboard"
-                  className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors block"
+                  className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-colors block"
                 >
-                  <Settings className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-gray-900">Manage Business</p>
-                  <p className="text-xs text-gray-500">Your printing operations</p>
-                </Link>
-                
-                <Link 
-                  href="/"
-                  className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors block"
-                >
-                  <TrendingUp className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-gray-900">View Landing Page</p>
-                  <p className="text-xs text-gray-500">See customer-facing site</p>
+                  <Settings className="w-8 h-8 text-orange-600 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-gray-900 text-center">Business Dashboard</p>
+                  <p className="text-xs text-gray-500 text-center">Your printing operations</p>
                 </Link>
               </div>
             </div>
@@ -289,9 +366,15 @@ export default function AdminDashboard() {
                             <div className="text-sm text-gray-500">{tenant.business_type}</div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{tenant.profiles.name}</div>
-                          <div className="text-sm text-gray-500">{tenant.profiles.username}</div>
+                        <td className="py-3 px-4">
+                          <div className="text-sm">
+                            <div className="font-medium text-gray-900">
+                              {tenant.profiles?.name || 'No Admin'}
+                            </div>
+                            <div className="text-gray-500">
+                              {tenant.profiles?.username || 'N/A'}
+                            </div>
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           <div>{tenant.email}</div>
@@ -392,35 +475,118 @@ export default function AdminDashboard() {
             <p className="text-gray-600 mb-4">
               This will create a new SaaS customer who can subscribe to your platform.
             </p>
+            
+            {createError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {createError}
+              </div>
+            )}
+            
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
-                <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter business name" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Business Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={createFormData.name}
+                  onChange={(e) => setCreateFormData(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter business name"
+                />
               </div>
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Admin Email</label>
-                <input type="email" className="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="admin@business.com" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tenant Admin Email *</label>
+                <input
+                  type="email"
+                  required
+                  value={createFormData.email}
+                  onChange={(e) => setCreateFormData(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="owner@business.com"
+                />
+                <p className="text-xs text-gray-500 mt-1">This will be the primary admin for this tenant's business</p>
               </div>
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Initial Plan</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                  <option value="FREE">Free Plan</option>
-                  <option value="PRO">Pro Plan (₹999/month)</option>
+                <select
+                  value={createFormData.plan}
+                  onChange={(e) => setCreateFormData(prev => ({ ...prev, plan: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="FREE">Free Plan (50 orders/month)</option>
+                  <option value="PRO">Pro Plan (₹999/month - Unlimited)</option>
                 </select>
               </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Business Type</label>
+                <select
+                  value={createFormData.business_type}
+                  onChange={(e) => setCreateFormData(prev => ({ ...prev, business_type: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="Printing Press">Printing Press</option>
+                  <option value="Digital Printing">Digital Printing</option>
+                  <option value="Offset Printing">Offset Printing</option>
+                  <option value="Screen Printing">Screen Printing</option>
+                  <option value="Commercial Printing">Commercial Printing</option>
+                </select>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                  <input
+                    type="text"
+                    value={createFormData.city}
+                    onChange={(e) => setCreateFormData(prev => ({ ...prev, city: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Mumbai"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+                  <input
+                    type="text"
+                    value={createFormData.state}
+                    onChange={(e) => setCreateFormData(prev => ({ ...prev, state: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Maharashtra"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <input
+                  type="tel"
+                  value={createFormData.phone}
+                  onChange={(e) => setCreateFormData(prev => ({ ...prev, phone: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="+91 98765 43210"
+                />
+              </div>
             </div>
+            
             <div className="flex space-x-3 mt-6">
               <button
-                onClick={() => setShowCreateModal(false)}
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setCreateError('');
+                }}
                 className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 transition-colors"
               >
                 Cancel
               </button>
               <button
-                onClick={() => setShowCreateModal(false)}
-                className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                onClick={handleCreateTenant}
+                disabled={isCreating || !createFormData.name || !createFormData.email}
+                className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Create Tenant
+                {isCreating ? 'Creating...' : 'Create Tenant'}
               </button>
             </div>
           </div>

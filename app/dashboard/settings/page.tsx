@@ -6,15 +6,21 @@ import {
   MapPin, 
   Phone, 
   Hash, 
-  Printer, 
+  Printer,
   Save,
-  Loader2
+  Loader2,
+  Users,
+  Shield,
+  Crown,
+  Mail,
+  Calendar
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
 import { getCurrentTenant } from "@/lib/tenant";
+import ProfileSettings from "@/components/dashboard/ProfileSettings";
 import Script from "next/script";
 
 export default function SettingsPage() {
@@ -25,7 +31,6 @@ export default function SettingsPage() {
     { id: "business", label: t("Business Details", "బిజినెస్ వివరాలు"), icon: Settings },
     { id: "subscription", label: t("Subscription", "సబ్‌స్క్రిప్షన్"), icon: Hash },
     { id: "profile", label: t("My Profile", "నా ప్రొఫైల్"), icon: User },
-    { id: "print", label: t("Printing Config", "ప్రింటింగ్ కాన్ఫిగ్"), icon: Printer },
   ];
 
   const [loading, setLoading] = useState(false);
@@ -147,16 +152,16 @@ export default function SettingsPage() {
                     <div className="bg-primary p-8 rounded-3xl text-white shadow-xl shadow-primary/20 space-y-6">
                        <div className="space-y-2">
                           <p className="text-[10px] uppercase tracking-[0.2em] opacity-60 font-bold">{t("Current Plan", "ప్రస్తుత ప్లాన్")}</p>
-                          <h3 className="text-3xl font-black italic tracking-tighter uppercase">{tenant?.plan || 'FREE'}</h3>
+                          <h3 className="text-3xl font-black italic tracking-tighter uppercase">{tenant?.subscription_tier || 'FREE'}</h3>
                        </div>
                        
                        <div className="space-y-4 pt-4">
                           <div className="flex justify-between items-end border-b border-white/10 pb-4">
                              <div className="space-y-1">
                                 <p className="text-[10px] uppercase opacity-60">{t("Usage this month", "ఈ నెల వినియోగం")}</p>
-                                <p className="text-xl font-bold">{tenant?.orders_this_month || 0} / {tenant?.plan === 'FREE' ? '50' : '∞'}</p>
+                                <p className="text-xl font-bold">{tenant?.orders_this_month || 0} / {tenant?.subscription_tier === 'FREE' ? '50' : '∞'}</p>
                              </div>
-                             {tenant?.plan === 'FREE' && (
+                             {tenant?.subscription_tier === 'FREE' && (
                                <p className="text-[10px] bg-white/20 px-2 py-1 rounded font-bold uppercase tracking-widest leading-none">
                                   {Math.round(((tenant?.orders_this_month || 0) / 50) * 100)}%
                                </p>
@@ -165,14 +170,14 @@ export default function SettingsPage() {
                           <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
                              <div 
                                 className="h-full bg-white transition-all duration-1000" 
-                                style={{ width: `${tenant?.plan === 'FREE' ? Math.min(((tenant?.orders_this_month || 0) / 50) * 100, 100) : 100}%` }}
+                                style={{ width: `${tenant?.subscription_tier === 'FREE' ? Math.min(((tenant?.orders_this_month || 0) / 50) * 100, 100) : 100}%` }}
                              />
                           </div>
                        </div>
                     </div>
 
                     {/* Upgrade Options */}
-                    {tenant?.plan === 'FREE' ? (
+                    {tenant?.subscription_tier === 'FREE' ? (
                       <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between space-y-6">
                          <div className="space-y-2">
                             <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter">{t("Unlock Pro", "ప్రీమియం పొందండి")}</h3>
@@ -207,7 +212,92 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {activeTab !== "business" && (
+            {activeTab === "team" && (
+              <div className="p-8 space-y-8">
+                 <div className="border-b border-gray-100 pb-6">
+                    <h2 className="text-xl font-black text-gray-900 uppercase tracking-tighter">{t("Team Management", "టీమ్ మేనేజ్‌మెంట్")}</h2>
+                    <p className="text-xs text-gray-400 uppercase tracking-widest">{t("Manage your team members and their permissions", "మీ టీమ్ సభ్యులు మరియు వారి అనుమతులను నిర్వహించండి")}</p>
+                 </div>
+
+                 <div className="space-y-6">
+                    {/* Current User (Tenant Admin) */}
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-100">
+                       <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                             <div className="bg-blue-500 p-3 rounded-full text-white">
+                                <Crown className="w-6 h-6" />
+                             </div>
+                             <div>
+                                <h3 className="font-bold text-gray-900">{t("Tenant Admin", "టెనంట్ అడ్మిన్")}</h3>
+                                <p className="text-sm text-gray-600">{t("You have full access to all business settings", "మీకు అన్ని వ్యాపార సెట్టింగ్‌లకు పూర్తి ప్రాప్యం ఉంది")}</p>
+                             </div>
+                          </div>
+                          <div className="bg-blue-100 px-3 py-1 rounded-full">
+                             <span className="text-xs font-medium text-blue-800">{t("OWNER", "యజమాని")}</span>
+                          </div>
+                       </div>
+                    </div>
+
+                    {/* Add Team Members Section */}
+                    <div className="bg-white p-6 rounded-2xl border border-gray-200">
+                       <div className="flex items-center justify-between mb-4">
+                          <h3 className="font-semibold text-gray-900">{t("Team Members", "టీమ్ సభ్యులు")}</h3>
+                          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors">
+                             {t("Add Member", "సభ్యుడిని జోడించండి")}
+                          </button>
+                       </div>
+                       
+                       <div className="text-center py-8 text-gray-500">
+                          <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                          <p>{t("No additional team members yet", "ఇంకా అదనపు టీమ్ సభ్యులు లేరు")}</p>
+                          <p className="text-sm text-gray-400 mt-2">{t("Add team members to help manage your printing business", "మీ ప్రింటింగ్ వ్యాపారాన్ని నిర్వహించడంలో సహాయం చేయడానికి టీమ్ సభ్యులను జోడించండి")}</p>
+                       </div>
+                    </div>
+
+                    {/* Role Permissions Info */}
+                    <div className="bg-gray-50 p-6 rounded-2xl border border-dashed border-gray-200">
+                       <h3 className="font-semibold text-gray-900 mb-4">{t("Available Roles", "అందుబాటులో ఉన్న పాత్రలు")}</h3>
+                       <div className="space-y-3">
+                          <div className="flex items-start space-x-3">
+                             <div className="bg-blue-100 p-2 rounded-lg mt-1">
+                                <Crown className="w-4 h-4 text-blue-600" />
+                             </div>
+                             <div className="flex-1">
+                                <h4 className="font-medium text-gray-900">{t("Tenant Admin", "టెనంట్ అడ్మిన్")}</h4>
+                                <p className="text-sm text-gray-600">{t("Full access to business settings, billing, and team management", "వ్యాపార సెట్టింగ్‌లు, బిల్లింగ్ మరియు టీమ్ మేనేజ్‌మెంట్‌కు పూర్తి ప్రాప్యం")}</p>
+                             </div>
+                          </div>
+                          
+                          <div className="flex items-start space-x-3">
+                             <div className="bg-green-100 p-2 rounded-lg mt-1">
+                                <Shield className="w-4 h-4 text-green-600" />
+                             </div>
+                             <div className="flex-1">
+                                <h4 className="font-medium text-gray-900">{t("Manager", "మేనేజర్")}</h4>
+                                <p className="text-sm text-gray-600">{t("Can manage orders, customers, and view reports", "ఆర్డర్‌లు, కస్టమర్‌లను నిర్వహించగలరు మరియు నివేదికలను వీక్షించగలరు")}</p>
+                             </div>
+                          </div>
+                          
+                          <div className="flex items-start space-x-3">
+                             <div className="bg-gray-100 p-2 rounded-lg mt-1">
+                                <User className="w-4 h-4 text-gray-600" />
+                             </div>
+                             <div className="flex-1">
+                                <h4 className="font-medium text-gray-900">{t("Staff", "సిబ్బంది")}</h4>
+                                <p className="text-sm text-gray-600">{t("Can manage orders and customers only", "ఆర్డర్‌లు మరియు కస్టమర్‌లను మాత్రమే నిర్వహించగలరు")}</p>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+            )}
+
+            {activeTab === "profile" && (
+               <ProfileSettings />
+            )}
+
+            {activeTab !== "business" && activeTab !== "subscription" && activeTab !== "profile" && (
                <div className="flex flex-col items-center justify-center p-20 text-center space-y-4">
                   <div className="bg-gray-50 p-6 rounded-full">
                      <Settings className="w-12 h-12 text-gray-300 animate-spin-slow" />

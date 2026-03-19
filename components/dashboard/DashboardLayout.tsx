@@ -12,7 +12,8 @@ import {
   LogOut,
   Menu,
   Printer,
-  Crown
+  Crown,
+  User
 } from "lucide-react";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
@@ -49,6 +50,12 @@ const navItems = [
     telugu: "బిల్లింగ్",
     href: "/dashboard/billing",
     icon: Receipt,
+  },
+  {
+    name: "Team",
+    telugu: "టీమ్",
+    href: "/dashboard/team",
+    icon: Users,
   },
   {
     name: "Settings",

@@ -49,22 +49,105 @@ export default function DashboardPage() {
         const currentTenant = await getCurrentTenant(supabase);
         setTenant(currentTenant);
 
+        // Check if user is super admin
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role, tenant_id')
+          .eq('id', user?.id)
+          .single();
+        
+        const isSuperAdmin = profile?.role === 'ADMIN' && !profile?.tenant_id;
+        
+        if (isSuperAdmin) {
+          console.log('Super admin accessing tenant dashboard - showing overview of all data');
+          // For super admin, show all data across all tenants
+          
+          const today = new Date().toISOString().split('T')[0];
+
+          // 1. Fetch ALL Orders (super admin can see all)
+          const { data: dbOrders, error: orderError } = await supabase
+            .from("orders")
+            .select("*, customers(name)")
+            .order('created_at', { ascending: false });
+          
+          if (orderError) {
+            console.error('Dashboard - Order error:', orderError);
+            throw orderError;
+          }
+
+          // 2. Fetch ALL Customers Count (super admin can see all)
+          const { count: customerCount, error: custError } = await supabase
+            .from("customers")
+            .select("*", { count: 'exact', head: true });
+          
+          if (custError) {
+            console.error('Dashboard - Customer error:', custError);
+            throw custError;
+          }
+
+          // 3. Process Stats for ALL data
+          const todayOrders = (dbOrders || []).filter(o => o.created_at.startsWith(today));
+          const todayRevenue = todayOrders.reduce((acc, curr) => acc + Number(curr.total_amount || 0), 0);
+          const pendingCount = (dbOrders || []).filter(o => o.status !== 'DELIVERED').length;
+
+          setStats([
+            { label: t("Today's Orders", "నేటి ఆర్డర్లు"), value: todayOrders.length.toString(), icon: ShoppingBag, color: "bg-blue-500" },
+            { label: t("Pending Orders", "పెండింగ్ ఆర్డర్లు"), value: pendingCount.toString(), icon: Clock, color: "bg-orange" },
+            { label: t("Today's Revenue", "నేటి ఆదాయం"), value: formatCurrency(todayRevenue), icon: IndianRupee, color: "bg-green-500" },
+            { label: t("Total Customers", "మొత్తం కస్టమర్లు"), value: customerCount?.toString() || "0", icon: Users, color: "bg-purple" }
+          ]);
+
+          setRecentOrders(dbOrders?.slice(0, 5) || []);
+          
+          // Process chart data for all orders
+          const statusCounts = (dbOrders || []).reduce((acc, order) => {
+            acc[order.status] = (acc[order.status] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>);
+
+          const chartData = Object.entries(statusCounts).map(([status, count]) => ({
+            name: status,
+            value: Number(count),
+            color: status === 'DELIVERED' ? '#10b981' : status === 'PENDING' ? '#f59e0b' : '#3b82f6'
+          }));
+
+          setChartData(chartData);
+          setLoading(false);
+          return;
+        }
+
+        // Regular tenant user logic continues...
+        if (!currentTenant) {
+          console.error('No tenant found for dashboard');
+          setLoading(false);
+          return;
+        }
+
         const today = new Date().toISOString().split('T')[0];
 
-        // 1. Fetch Orders
+        // 1. Fetch Orders (filtered by tenant)
         const { data: dbOrders, error: orderError } = await supabase
           .from("orders")
           .select("*, customers(name)")
+          .eq('tenant_id', currentTenant.id)
           .order('created_at', { ascending: false });
         
-        if (orderError) throw orderError;
+        if (orderError) {
+          console.error('Dashboard - Order error:', orderError);
+          throw orderError;
+        }
 
-        // 2. Fetch Customers Count
+        // 2. Fetch Customers Count (filtered by tenant)
         const { count: customerCount, error: custError } = await supabase
           .from("customers")
-          .select("*", { count: 'exact', head: true });
+          .select("*", { count: 'exact', head: true })
+          .eq('tenant_id', currentTenant.id);
         
-        if (custError) throw custError;
+        if (custError) {
+          console.error('Dashboard - Customer error:', custError);
+          throw custError;
+        }
 
         // 3. Process Stats
         const todayOrders = (dbOrders || []).filter(o => o.created_at.startsWith(today));
@@ -106,6 +189,19 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      {/* Super Admin Indicator */}
+      {tenant === null && (
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+            <h3 className="text-purple-900 font-semibold">Super Admin View</h3>
+          </div>
+          <p className="text-purple-700 text-sm mt-1">
+            You are viewing the business dashboard with data from all tenants
+          </p>
+        </div>
+      )}
+      
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {loading ? (

@@ -14,7 +14,7 @@ import {
 import Link from "next/link";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { createClient } from "@/lib/supabase/client";
-
+import { getCurrentTenant } from "@/lib/tenant";
 import { useLanguage } from "@/lib/context/LanguageContext";
 
 interface Customer {
@@ -46,21 +46,25 @@ export default function CustomerProfilePage({ params }: { params: { id: string }
       setLoading(true);
       try {
         const supabase = createClient();
-        // 1. Fetch Customer
+        const currentTenant = await getCurrentTenant(supabase);
+        
+        // 1. Fetch Customer (filtered by tenant)
         const { data: cust, error: custErr } = await supabase
           .from("customers")
           .select("*")
           .eq("id", params.id)
+          .eq('tenant_id', currentTenant?.id)
           .single();
         
         if (custErr) throw custErr;
         setCustomer(cust);
 
-        // 2. Fetch Customer Orders
+        // 2. Fetch Customer Orders (filtered by tenant)
         const { data: ords, error: ordsErr } = await supabase
           .from("orders")
           .select("*")
           .eq("customer_id", params.id)
+          .eq('tenant_id', currentTenant?.id)
           .order("created_at", { ascending: false });
         
         if (ordsErr) throw ordsErr;

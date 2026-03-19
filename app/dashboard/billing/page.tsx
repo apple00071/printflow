@@ -12,7 +12,7 @@ import {
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-
+import { getCurrentTenant } from "@/lib/tenant";
 import { useLanguage } from "@/lib/context/LanguageContext";
 
 interface Order {
@@ -42,9 +42,12 @@ export default function BillingPage() {
       setLoading(true);
       try {
         const supabase = createClient();
+        const currentTenant = await getCurrentTenant(supabase);
+        
         const { data, error } = await supabase
           .from("orders")
           .select("*, customers(name)")
+          .eq('tenant_id', currentTenant?.id)
           .order("created_at", { ascending: false });
         
         if (error) throw error;
