@@ -189,9 +189,36 @@ export default function PublicOrderPage() {
                     accept=".pdf,.jpg,.jpeg,.png,.ai,.psd,.eps,.svg"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
+                      console.log('File input change detected:', {
+                        file: file ? file.name : 'No file selected',
+                        size: file ? file.size : 0,
+                        type: file ? file.type : 'unknown'
+                      });
+                      
                       if (file) {
+                        // Validate file size (max 10MB)
+                        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+                        if (file.size > maxSize) {
+                          alert('File size must be less than 10MB. Current size: ' + ((file.size / 1024 / 1024).toFixed(2)) + 'MB');
+                          return;
+                        }
+                        
+                        // Validate file type
+                        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/ai', 'application/psd', 'application/eps', 'image/svg+xml'];
+                        if (!allowedTypes.includes(file.type)) {
+                          alert('Invalid file type. Please upload PDF, JPG, PNG, AI, PSD, EPS, or SVG files only.');
+                          return;
+                        }
+                        
                         setFormData({...formData, designFile: file});
-                        console.log('Design file uploaded:', file.name, 'Size:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
+                        console.log('Design file successfully uploaded:', {
+                          name: file.name,
+                          size: (file.size / 1024 / 1024).toFixed(2) + 'MB',
+                          type: file.type
+                        });
+                      } else {
+                        setFormData({...formData, designFile: null});
+                        console.log('File cleared');
                       }
                     }}
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none"
