@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Building2, Users, TrendingUp, Plus, MoreHorizontal, CreditCard, Settings, Search, Filter, ArrowUpDown } from "lucide-react";
+import { Building2, Users, TrendingUp, Plus, MoreHorizontal, CreditCard, Settings, Search, ArrowUpDown } from "lucide-react";
 import Link from "next/link";
 
 interface Tenant {
@@ -60,8 +60,8 @@ export default function TenantsPage() {
         const data = await response.json();
         setTenants(data);
       }
-    } catch (error) {
-      console.error('Error fetching tenants:', error);
+    } catch {
+      console.error('Error fetching tenants');
     } finally {
       setLoading(false);
     }
@@ -98,7 +98,7 @@ export default function TenantsPage() {
       } else {
         setCreateError(data.error || 'Failed to create tenant');
       }
-    } catch (error) {
+    } catch {
       setCreateError('Network error. Please try again.');
     } finally {
       setIsCreating(false);
@@ -425,7 +425,7 @@ export default function TenantsPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="owner@business.com"
                 />
-                <p className="text-xs text-gray-500 mt-1">This will be the primary admin for this tenant's business</p>
+                <p className="text-xs text-gray-500 mt-1">This will be the primary admin for this tenant&apos;s business</p>
               </div>
               
               <div>

@@ -12,8 +12,7 @@ import {
   LogOut,
   Menu,
   Printer,
-  Crown,
-  User
+  Crown
 } from "lucide-react";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { createClient } from "@/lib/supabase/client";

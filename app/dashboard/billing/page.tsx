@@ -14,6 +14,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { getCurrentTenant } from "@/lib/tenant";
 import { useLanguage } from "@/lib/context/LanguageContext";
+import AddPaymentModal from "@/components/dashboard/AddPaymentModal";
 
 interface Order {
   id: string;
@@ -36,38 +37,41 @@ export default function BillingPage() {
     outstandingBalance: 0,
     pendingPayments: 0
   });
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+  const fetchBillingData = async () => {
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const currentTenant = await getCurrentTenant(supabase);
+      
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*, customers(name)")
+        .eq('tenant_id', currentTenant?.id)
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+
+      const rev = (data || []).reduce((acc, ord) => acc + Number(ord.advance_paid || 0), 0);
+      const bal = (data || []).reduce((acc, ord) => acc + (Number(ord.total_amount || 0) - Number(ord.advance_paid || 0)), 0);
+      const pendingCount = (data || []).filter(ord => (Number(ord.total_amount || 0) - Number(ord.advance_paid || 0)) > 0).length;
+
+      setOrders(data || []);
+      setStats({
+        totalRevenue: rev,
+        outstandingBalance: bal,
+        pendingPayments: pendingCount
+      });
+    } catch {
+      console.error("Error fetching billing data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchBillingData() {
-      setLoading(true);
-      try {
-        const supabase = createClient();
-        const currentTenant = await getCurrentTenant(supabase);
-        
-        const { data, error } = await supabase
-          .from("orders")
-          .select("*, customers(name)")
-          .eq('tenant_id', currentTenant?.id)
-          .order("created_at", { ascending: false });
-        
-        if (error) throw error;
-
-        const rev = (data || []).reduce((acc, ord) => acc + Number(ord.advance_paid || 0), 0);
-        const bal = (data || []).reduce((acc, ord) => acc + (Number(ord.total_amount || 0) - Number(ord.advance_paid || 0)), 0);
-        const pendingCount = (data || []).filter(ord => (Number(ord.total_amount || 0) - Number(ord.advance_paid || 0)) > 0).length;
-
-        setOrders(data || []);
-        setStats({
-          totalRevenue: rev,
-          outstandingBalance: bal,
-          pendingPayments: pendingCount
-        });
-      } catch (err) {
-        console.error("Error fetching billing data:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchBillingData();
   }, []);
 
@@ -81,16 +85,19 @@ export default function BillingPage() {
     <div className="space-y-8">
       <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 uppercase tracking-tighter">{t("Billing & Finance", "బిల్లింగ్ మరియు ఫైనాన్స్")}</h1>
+          <h1 className="text-xl font-medium text-gray-900 uppercase tracking-tighter">{t("Billing & Finance", "బిల్లింగ్ మరియు ఫైనాన్స్")}</h1>
           <p className="text-[10px] text-gray-400 uppercase tracking-widest">{t("Revenue & Tax Management", "రాబడి మరియు పన్ను నిర్వహణ")}</p>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/dashboard/billing/gst-reports" className="bg-white text-primary border border-primary/20 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-primary/5 transition-all">
+          <Link href="/dashboard/billing/gst-reports" className="bg-white text-primary border border-primary/20 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-primary/5 transition-all">
             <TrendingUp className="w-4 h-4" /> {t("GST Reports", "GST నివేదికలు")}
           </Link>
-          <Link href="/dashboard/orders" className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
+          <button 
+            onClick={() => setIsPaymentModalOpen(true)}
+            className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+          >
             <Plus className="w-4 h-4" /> {t("New Transaction", "కొత్త లావాదేవీ")}
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -174,12 +181,25 @@ export default function BillingPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <Link 
-                          href={`/dashboard/billing/invoice/${ord.id}`}
-                          className="text-primary text-xs  flex items-center justify-end gap-1 hover:underline"
-                        >
-                          <FileText className="w-3 h-3" /> {t("INVOICE", "ఇన్వాయిస్")}
-                        </Link>
+                        <div className="flex items-center justify-end gap-3">
+                          {balance > 0 && (
+                            <button 
+                              onClick={() => {
+                                setSelectedOrder(ord);
+                                setIsPaymentModalOpen(true);
+                              }}
+                              className="text-primary text-[10px] font-medium border border-primary/20 px-2 py-1 rounded hover:bg-primary/5 transition-colors uppercase tracking-wider"
+                            >
+                              {t("PAY", "పేమెంట్")}
+                            </button>
+                          )}
+                          <Link 
+                            href={`/dashboard/billing/invoice/${ord.id}`}
+                            className="text-gray-400 hover:text-primary text-xs flex items-center gap-1 transition-colors"
+                          >
+                            <FileText className="w-3 h-3" /> {t("INVOICE", "ఇన్వాయిస్")}
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -189,6 +209,20 @@ export default function BillingPage() {
           </div>
         )}
       </div>
+
+      {isPaymentModalOpen && (
+        <AddPaymentModal
+          orderId={selectedOrder?.id}
+          balanceDue={selectedOrder ? (Number(selectedOrder.total_amount) - Number(selectedOrder.advance_paid)) : undefined}
+          onClose={() => {
+            setIsPaymentModalOpen(false);
+            setSelectedOrder(null);
+          }}
+          onSuccess={() => {
+            fetchBillingData();
+          }}
+        />
+      )}
     </div>
   );
 }

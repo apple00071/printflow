@@ -22,8 +22,13 @@ export default function OnboardingPage() {
   
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [tenant, setTenant] = useState<any>(null);
+  interface Tenant {
+    id: string;
+    name: string;
+    phone?: string;
+    state?: string;
+  }
+  const [tenant, setTenant] = useState<Tenant | null>(null);
   
   const [formData, setFormData] = useState({
     business_type: "",
@@ -82,6 +87,7 @@ export default function OnboardingPage() {
 
   const completeOnboarding = async () => {
     setLoading(true);
+    if (!tenant) return;
     try {
       // 1. Update Tenant
       const { error: tenantError } = await supabase
@@ -128,8 +134,8 @@ export default function OnboardingPage() {
       }
 
       router.push("/dashboard");
-    } catch (err) {
-      console.error(err);
+    } catch {
+      console.error("Error completing onboarding");
       alert("Error completing onboarding");
     } finally {
       setLoading(false);

@@ -15,6 +15,7 @@ import { formatCurrency } from "@/lib/utils/format";
 import { getOrders } from "@/lib/supabase/actions";
 
 import { useLanguage } from "@/lib/context/LanguageContext";
+import { cn } from "@/lib/utils";
 
 interface Order {
   id: string;
@@ -55,13 +56,14 @@ export default function OrdersPage() {
           search: searchQuery 
         });
         setOrders(data || []);
-      } catch (err) {
-        console.error("Error fetching orders:", err);
+      } catch {
+        console.error("Error fetching orders");
       } finally {
         setLoading(false);
       }
     }
     fetchOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, searchQuery]); // Re-fetch on status change or search change
 
   // Client-side search filtering
@@ -203,6 +205,3 @@ export default function OrdersPage() {
   );
 }
 
-function cn(...inputs: unknown[]) {
-  return inputs.filter(Boolean).join(" ");
-}

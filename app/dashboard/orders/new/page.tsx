@@ -12,8 +12,11 @@ import {
   Upload,
   Calendar,
   IndianRupee,
-  Receipt
+  Receipt,
+  X,
+  File as FileIcon
 } from "lucide-react";
+import { useRef } from "react";
 import Link from "next/link";
 import { createOrder } from "@/lib/supabase/actions";
 import { createClient } from "@/lib/supabase/client";
@@ -55,7 +58,12 @@ export default function NewOrderPage() {
     isInterState: false,
     gstin: "",
     hsnCode: "",
+    file_url: "",
   });
+  
+  const [uploading, setUploading] = useState(false);
+  const [fileName, setFileName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [gstRates, setGstRates] = useState<{ id: string; label: string; rate: number; is_default: boolean }[]>([]);
 
@@ -79,6 +87,41 @@ export default function NewOrderPage() {
     }
     init();
   }, []);
+  
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploading(true);
+    setFileName(file.name);
+    
+    try {
+      const supabase = createClient();
+      const tenant = await getCurrentTenant(supabase);
+      if (!tenant) throw new Error("Tenant not found");
+      
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${tenant.id}/orders/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('printflow-files')
+        .upload(filePath, file);
+        
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('printflow-files')
+        .getPublicUrl(filePath);
+        
+      setFormData(prev => ({ ...prev, file_url: publicUrl }));
+    } catch {
+      console.error("Upload error");
+      alert(t("Failed to upload file", "ఫైల్ అప్‌లోడ్ విఫలమైంది"));
+      setFileName("");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,8 +130,8 @@ export default function NewOrderPage() {
     try {
       await createOrder(formData);
       router.push("/dashboard/orders");
-    } catch (error) {
-      console.error("Error creating order:", error);
+    } catch {
+      console.error("Error creating order");
       alert(t("Failed to create order. Please try again.", "ఆర్డర్ సృష్టించడం విఫలమైంది. దయచేసి మళ్ళీ ప్రయత్నించండి."));
     } finally {
       setLoading(false);
@@ -114,7 +157,7 @@ export default function NewOrderPage() {
         <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
           <div className="flex items-center gap-2 border-b border-gray-50 pb-3 mb-4">
             <User className="w-5 h-5 text-primary" />
-            <h2 className=" text-gray-900 uppercase tracking-wide text-sm">{t("Customer Details", "కస్టమర్ వివరాలు")}</h2>
+            <h2 className="font-medium text-gray-900 uppercase tracking-wide text-sm">{t("Customer Details", "కస్టమర్ వివరాలు")}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
@@ -152,7 +195,7 @@ export default function NewOrderPage() {
         <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
           <div className="flex items-center gap-2 border-b border-gray-50 pb-3 mb-4">
             <FileText className="w-5 h-5 text-primary" />
-            <h2 className=" text-gray-900 uppercase tracking-wide text-sm">{t("Job Details", "ఆర్డర్ వివరాలు")}</h2>
+            <h2 className="font-medium text-gray-900 uppercase tracking-wide text-sm">{t("Job Details", "ఆర్డర్ వివరాలు")}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
@@ -215,13 +258,50 @@ export default function NewOrderPage() {
             </div>
             <div className="space-y-1">
               <label className="text-xs  text-gray-500 uppercase">{t("Design File", "ఫైల్")}</label>
-              <button 
-                type="button"
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 border border-dashed border-gray-300 rounded-lg text-xs  text-gray-600 transition-colors"
-              >
-                <Upload className="w-3 h-3" />
-                {t("Upload File", "ఫైల్ అప్‌లోడ్")}
-              </button>
+              <input 
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                className="hidden"
+                accept="image/*,.pdf,.zip,.rar"
+              />
+              {!formData.file_url ? (
+                <button 
+                  type="button"
+                  disabled={uploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 border border-dashed border-gray-300 rounded-lg text-xs text-gray-600 transition-colors"
+                >
+                  {uploading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      {t("Uploading...", "అప్‌లోడ్ అవుతోంది...")}
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="w-3 h-3" />
+                      {t("Upload File", "ఫైల్ అప్‌లోడ్")}
+                    </>
+                  )}
+                </button>
+              ) : (
+                <div className="flex items-center justify-between gap-2 px-3 py-2 bg-green-50 border border-green-100 rounded-lg text-xs text-green-700">
+                  <div className="flex items-center gap-2 truncate">
+                    <FileIcon className="w-3 h-3 flex-shrink-0" />
+                    <span className="truncate">{fileName || t("File Uploaded", "ఫైల్ అప్‌లోడ్ చేయబడింది")}</span>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, file_url: "" }));
+                      setFileName("");
+                    }}
+                    className="p-1 hover:bg-green-100 rounded-full transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           <div className="space-y-1">
@@ -241,7 +321,7 @@ export default function NewOrderPage() {
           <div className="flex items-center justify-between border-b border-gray-50 pb-3 mb-4">
             <div className="flex items-center gap-2">
               <Receipt className="w-5 h-5 text-primary" />
-              <h2 className=" text-gray-900 uppercase tracking-wide text-sm">{t("GST Configuration", "GST వివరాలు")}</h2>
+              <h2 className="font-medium text-gray-900 uppercase tracking-wide text-sm">{t("GST Configuration", "GST వివరాలు")}</h2>
             </div>
             <div className="flex items-center gap-2">
               <label className="text-xs text-gray-500 uppercase">{t("Apply GST", "GST వర్తింపజేయి")}</label>
@@ -320,7 +400,7 @@ export default function NewOrderPage() {
                   <span>{formData.isInterState ? "IGST" : "CGST + SGST"} ({formData.gstRate}%)</span>
                   <span>₹ {formData.isInterState ? gstCalc.igst : (gstCalc.cgst + gstCalc.sgst)}</span>
                 </div>
-                <div className="flex justify-between font-bold text-sm text-primary">
+                <div className="flex justify-between font-medium text-sm text-primary">
                   <span>{t("Total with GST", "మొత్తం GST కలిపి")}</span>
                   <span>₹ {gstCalc.totalWithGST}</span>
                 </div>

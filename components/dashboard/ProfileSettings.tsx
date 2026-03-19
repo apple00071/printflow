@@ -7,14 +7,11 @@ import {
   Phone, 
   Shield,
   Edit,
-  Save,
-  X,
   Loader2,
   Calendar,
   Building
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { getCurrentTenant } from "@/lib/tenant";
 import { useLanguage } from "@/lib/context/LanguageContext";
 
 interface UserProfile {
@@ -38,6 +35,7 @@ interface Tenant {
 }
 
 export default function ProfileSettings() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { t } = useLanguage();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [tenant, setTenant] = useState<Tenant | null>(null);

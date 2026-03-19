@@ -178,8 +178,8 @@ export default function DashboardPage() {
         })).sort((a, b) => b.value - a.value).slice(0, 6);
 
         setChartData(localChartData);
-      } catch (err) {
-        console.error("Dashboard error:", err);
+      } catch {
+        console.error("Dashboard error");
       } finally {
         setLoading(false);
       }
@@ -194,7 +194,7 @@ export default function DashboardPage() {
         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-            <h3 className="text-purple-900 font-semibold">Super Admin View</h3>
+            <h3 className="text-purple-900 font-medium">Super Admin View</h3>
           </div>
           <p className="text-purple-700 text-sm mt-1">
             You are viewing the business dashboard with data from all tenants
@@ -226,11 +226,11 @@ export default function DashboardPage() {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-tight">{t("Monthly Usage", "నెలవారీ వినియోగం")}</h2>
+              <h2 className="text-sm font-medium text-gray-900 uppercase tracking-tight">{t("Monthly Usage", "నెలవారీ వినియోగం")}</h2>
               <p className="text-[10px] text-gray-400 uppercase tracking-widest">{tenant.plan === 'FREE' ? t("Free Plan Limit: 50 Orders", "ఉచిత ప్లాన్ పరిమితి: 50 ఆర్డర్లు") : t("Unlimited Pro Plan", "అపరిమిత ప్రో ప్లాన్")}</p>
             </div>
             <div className="text-right">
-              <span className="text-sm font-black text-primary">{tenant.orders_this_month || 0}</span>
+              <span className="text-sm font-bold text-primary">{tenant.orders_this_month || 0}</span>
               <span className="text-xs text-gray-300"> / {tenant.plan === 'FREE' ? 50 : '∞'}</span>
             </div>
           </div>
@@ -245,7 +245,7 @@ export default function DashboardPage() {
                 />
               </div>
               {((tenant.orders_this_month || 0) / 50) > 0.8 && (
-                <p className="text-[10px] text-red-500 font-bold animate-pulse uppercase tracking-tighter">
+                <p className="text-[10px] text-red-500 font-medium animate-pulse uppercase tracking-tighter">
                   {t("Warning: You are approaching your monthly limit. Upgrade soon!", "హెచ్చరిక: మీరు మీ నెలవారీ పరిమితికి చేరుకుంటున్నారు. త్వరలో అప్‌గ్రేడ్ చేయండి!")}
                 </p>
               )}

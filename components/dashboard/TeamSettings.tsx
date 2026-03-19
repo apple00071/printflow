@@ -5,9 +5,6 @@ import {
   Users, 
   Plus, 
   Search, 
-  MoreVertical,
-  Mail,
-  Phone,
   Shield,
   Edit,
   Trash2,
@@ -28,6 +25,7 @@ interface TeamMember {
 }
 
 export default function TeamSettings() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { t } = useLanguage();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
@@ -59,7 +57,7 @@ export default function TeamSettings() {
 
       // Test if team_invitations table exists
       console.log('Testing team_invitations table existence...');
-      const { data: tableTest, error: tableError } = await supabase
+      const { error: tableError } = await supabase
         .from('team_invitations')
         .select('id')
         .limit(1);
@@ -71,7 +69,7 @@ export default function TeamSettings() {
 
       // Test if profiles table exists
       console.log('Testing profiles table existence...');
-      const { data: profileTest, error: profileError } = await supabase
+      const { error: profileError } = await supabase
         .from('profiles')
         .select('id')
         .limit(1);
@@ -103,7 +101,7 @@ export default function TeamSettings() {
       }
 
       // Convert database invitations to TeamMember format
-      const pendingMembers = (invitationData || []).map((inv: any) => ({
+      const pendingMembers = (invitationData || []).map((inv: { id: string; name: string; email: string; phone?: string; role: 'ADMIN' | 'WORKER'; created_at: string }) => ({
         id: inv.id,
         name: inv.name,
         username: `PENDING_${inv.email.split('@')[0]}`,

@@ -22,6 +22,7 @@ interface OrderData {
   isInterState?: boolean;
   gstin?: string;
   hsnCode?: string;
+  file_url?: string;
 }
 
 interface CustomerData {
@@ -51,6 +52,7 @@ interface OrderInsertData {
   invoice_date?: string | null;
   is_inter_state: boolean;
   hsn_code?: string | null;
+  file_url?: string | null;
   tenant_id?: string;
 }
 
@@ -170,6 +172,7 @@ export async function createOrder(data: OrderData) {
     invoice_date: data.applyGST && !superAdmin ? new Date().toISOString() : null,
     is_inter_state: !!data.isInterState,
     hsn_code: data.hsnCode || null,
+    file_url: data.file_url || null,
   };
   
   // Only add tenant_id if not super admin
@@ -353,6 +356,7 @@ export async function updateOrder(id: string, data: OrderData) {
       total_with_gst,
       is_inter_state: !!data.isInterState,
       hsn_code: data.hsnCode || null,
+      file_url: data.file_url || null,
     })
     .eq("id", id)
     .eq("tenant_id", tenant.id)
@@ -361,4 +365,53 @@ export async function updateOrder(id: string, data: OrderData) {
 
   if (error) throw error;
   return order;
+}
+
+export async function addPayment(orderId: string, amount: number, method: string) {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  
+  // 1. Get current order to find tenant_id and current advance_paid
+  let orderQuery = supabase
+    .from("orders")
+    .select("tenant_id, advance_paid")
+    .eq("id", orderId);
+    
+  if (!superAdmin) {
+    const tenant = await getCurrentTenant(supabase);
+    if (!tenant) throw new Error("Unauthorized");
+    orderQuery = orderQuery.eq("tenant_id", tenant.id);
+  }
+  
+  const { data: order, error: orderError } = await orderQuery.single();
+  if (orderError || !order) throw new Error("Order not found");
+  
+  // 2. Insert payment record
+  const paymentData: PaymentData = {
+    order_id: orderId,
+    amount: amount,
+    method: method,
+  };
+  
+  if (!superAdmin && order.tenant_id) {
+    paymentData.tenant_id = order.tenant_id;
+  }
+  
+  const { error: paymentError } = await supabase
+    .from("payments")
+    .insert(paymentData);
+    
+  if (paymentError) throw paymentError;
+  
+  // 3. Update order advance_paid
+  const { error: updateError } = await supabase
+    .from("orders")
+    .update({ 
+      advance_paid: (order.advance_paid || 0) + amount 
+    })
+    .eq("id", orderId);
+    
+  if (updateError) throw updateError;
+  
+  return { success: true };
 }

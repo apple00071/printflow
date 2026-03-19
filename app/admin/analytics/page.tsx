@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Building2, Users, TrendingUp, CreditCard, ArrowUp, ArrowDown, BarChart3, PieChart, Activity } from "lucide-react";
+import { Building2, Users, TrendingUp, CreditCard, ArrowUp, ArrowDown, BarChart3, Activity } from "lucide-react";
 import Link from "next/link";
 
 interface Analytics {
@@ -13,6 +13,16 @@ interface Analytics {
   freePlans: number;
   growthRate: number;
   churnRate: number;
+}
+
+interface Tenant {
+  id: string;
+  name: string;
+  plan_status?: string;
+  subscription_status?: string;
+  orders_this_month?: number;
+  plan?: string;
+  subscription_tier?: string;
 }
 
 export default function AnalyticsPage() {
@@ -36,15 +46,15 @@ export default function AnalyticsPage() {
     try {
       const response = await fetch('/api/admin/tenants');
       if (response.ok) {
-        const tenants = await response.json();
+        const tenants: Tenant[] = await response.json();
         
         const stats = {
           totalTenants: tenants.length,
-          activeTenants: tenants.filter((t: any) => (t.plan_status || t.subscription_status) === 'ACTIVE').length,
-          totalOrders: tenants.reduce((sum: number, t: any) => sum + (t.orders_this_month || 0), 0),
-          monthlyRevenue: tenants.filter((t: any) => (t.plan || t.subscription_tier) === 'PRO').length * 999,
-          proPlans: tenants.filter((t: any) => (t.plan || t.subscription_tier) === 'PRO').length,
-          freePlans: tenants.filter((t: any) => (t.plan || t.subscription_tier) === 'FREE').length,
+          activeTenants: tenants.filter((t) => (t.plan_status || t.subscription_status) === 'ACTIVE').length,
+          totalOrders: tenants.reduce((sum, t) => sum + (t.orders_this_month || 0), 0),
+          monthlyRevenue: tenants.filter((t) => (t.plan || t.subscription_tier) === 'PRO').length * 999,
+          proPlans: tenants.filter((t) => (t.plan || t.subscription_tier) === 'PRO').length,
+          freePlans: tenants.filter((t) => (t.plan || t.subscription_tier) === 'FREE').length,
           growthRate: 15.3, // Mock data
           churnRate: 2.1, // Mock data
         };

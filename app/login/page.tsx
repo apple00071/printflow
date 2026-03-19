@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { PRESS_CONFIG } from "@/lib/config";
 import { useLanguage } from "@/lib/context/LanguageContext";

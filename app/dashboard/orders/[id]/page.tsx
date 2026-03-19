@@ -9,14 +9,17 @@ import {
   Edit3,
   FileText,
   Loader2,
-  IndianRupee
+  IndianRupee,
+  File as FileIcon
 } from "lucide-react";
 import Link from "next/link";
-import { formatCurrency } from "@/lib/utils/format";
+import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { PRESS_CONFIG } from "@/lib/config";
 import { getOrder, updateOrderStatus } from "@/lib/supabase/actions";
+import AddPaymentModal from "@/components/dashboard/AddPaymentModal";
 
 import { useLanguage } from "@/lib/context/LanguageContext";
+import { cn } from "@/lib/utils";
 
 interface Order {
   id: string;
@@ -34,6 +37,7 @@ interface Order {
   size?: string;
   delivery_date?: string;
   instructions?: string;
+  file_url?: string;
 }
 
 export default function OrderDetailsPage({ params }: { params: { id: string } }) {
@@ -41,6 +45,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const statuses = [
     t("RECEIVED", "వచ్చింది"),
@@ -50,19 +55,21 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
     t("DELIVERED", "డెలివరీ అయింది")
   ];
 
-  useEffect(() => {
-    async function fetchOrder() {
-      setLoading(true);
-      try {
-        const data = await getOrder(params.id);
-        setOrder(data);
-      } catch (err) {
-        console.error("Error fetching order:", err);
-      } finally {
-        setLoading(false);
-      }
+  const fetchOrder = async () => {
+    setLoading(true);
+    try {
+      const data = await getOrder(params.id);
+      setOrder(data);
+    } catch {
+      console.error("Error fetching order");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchOrder();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   const handleStatusUpdate = async (newStatus: string) => {
@@ -71,8 +78,8 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
     try {
       await updateOrderStatus(order.id, newStatus);
       setOrder({ ...order, status: newStatus } as Order);
-    } catch (err) {
-      console.error("Error updating status:", err);
+    } catch {
+      console.error("Error updating status");
     } finally {
       setUpdating(false);
     }
@@ -81,15 +88,15 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
   if (loading) return (
     <div className="flex flex-col items-center justify-center p-20 text-gray-400">
        <Loader2 className="w-10 h-10 animate-spin mb-4 text-primary" />
-       <p className="text-sm font-bold">{t("Loading Order Details...", "ఆర్డర్ వివరాలు లోడ్ అవుతున్నాయి...")}</p>
+       <p className="text-sm font-medium text-gray-400">{t("Loading Order Details...", "ఆర్డర్ వివరాలు లోడ్ అవుతున్నాయి...")}</p>
     </div>
   );
 
   if (!order) return (
     <div className="flex flex-col items-center justify-center p-20 text-gray-400 text-center">
-       <h2 className="text-2xl font-bold text-gray-900 mb-2">{t("Order Not Found", "ఆర్డర్ కనుగొనబడలేదు")}</h2>
+       <h2 className="text-2xl font-medium text-gray-900 mb-2">{t("Order Not Found", "ఆర్డర్ కనుగొనబడలేదు")}</h2>
        <p className="mb-6">{t("The order ID provided does not exist in our system.", "అందించిన ఆర్డర్ ఐడి మా సిస్టమ్‌లో లేదు.")}</p>
-       <Link href="/dashboard/orders" className="bg-primary text-white px-6 py-2 rounded-lg font-bold">
+       <Link href="/dashboard/orders" className="bg-primary text-white px-6 py-2 rounded-lg font-medium">
          {t("Back to Orders", "ఆర్డర్‌లకు తిరిగి వెళ్లండి")}
        </Link>
     </div>
@@ -204,7 +211,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
               </div>
               <div>
                 <p className="text-[10px] text-gray-400 uppercase tracking-wider">{t("Delivery Date", "డెలివరీ తేదీ")}</p>
-                <p className="text-sm text-gray-900">{order.delivery_date || t("TBA", "త్వరలో")}</p>
+                <p className="text-sm text-gray-900">{order.delivery_date ? formatDate(order.delivery_date) : t("TBA", "త్వరలో")}</p>
               </div>
             </div>
             <div className="pt-4 border-t border-gray-50">
@@ -213,6 +220,26 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                  {order.instructions || t("No special instructions", "ఎలాంటి ప్రత్యేక సూచనలు లేవు")}
                </p>
             </div>
+
+            {order.file_url && (
+              <div className="pt-4 border-t border-gray-50">
+                <p className="text-[10px] text-gray-400 uppercase mb-2 tracking-wider">{t("Design File", "డిజైన్ ఫైల్")}</p>
+                <a 
+                  href={order.file_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-3 px-4 py-3 bg-primary/5 border border-primary/10 rounded-xl hover:bg-primary/10 transition-colors group"
+                >
+                  <FileIcon className="w-5 h-5 text-primary" />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-gray-900 group-hover:text-primary transition-colors">
+                      {t("View Design File", "డిజైన్ ఫైల్ చూడండి")}
+                    </span>
+                    <span className="text-[10px] text-gray-400 uppercase">{t("Click to open in new tab", "కొత్త ట్యాబ్‌లో తెరవడానికి క్లిక్ చేయండి")}</span>
+                  </div>
+                </a>
+              </div>
+            )}
           </div>
         </div>
 
@@ -238,9 +265,14 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                 <span className="text-xl text-primary">{formatCurrency(order.total_amount - order.advance_paid)}</span>
               </div>
             </div>
-            <button className="w-full py-2.5 bg-primary text-white text-xs rounded-lg hover:bg-primary/90 transition-all shadow-md active:scale-95 mt-2">
-              {t("Add Payment", "పేమెంట్ జోడించండి")}
-            </button>
+            {(order.total_amount - order.advance_paid) > 0 && (
+              <button 
+                onClick={() => setIsPaymentModalOpen(true)}
+                className="w-full py-2.5 bg-primary text-white text-xs rounded-lg hover:bg-primary/90 transition-all shadow-md active:scale-95 mt-2 font-medium uppercase tracking-wider"
+              >
+                {t("Add Payment", "పేమెంట్ జోడించండి")}
+              </button>
+            )}
           </div>
 
           {/* WhatsApp Notification */}
@@ -266,11 +298,19 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
           )}
         </div>
       </div>
+
+      {isPaymentModalOpen && order && (
+        <AddPaymentModal
+          orderId={order.id}
+          balanceDue={order.total_amount - order.advance_paid}
+          onClose={() => setIsPaymentModalOpen(false)}
+          onSuccess={() => {
+            fetchOrder();
+          }}
+        />
+      )}
     </div>
 
   );
 }
 
-function cn(...inputs: unknown[]) {
-  return inputs.filter(Boolean).join(" ");
-}

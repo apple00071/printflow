@@ -11,9 +11,7 @@ import {
   Loader2,
   Users,
   Shield,
-  Crown,
-  Mail,
-  Calendar
+  Crown
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -34,8 +32,17 @@ export default function SettingsPage() {
   ];
 
   const [loading, setLoading] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [tenant, setTenant] = useState<any>(null); // Keeping any for now but could be Tenant type
+  interface Tenant {
+    id: string;
+    name: string;
+    city?: string;
+    phone?: string;
+    gst_number?: string;
+    subscription_tier?: string;
+    orders_this_month?: number;
+    subscription_end_date?: string;
+  }
+  const [tenant, setTenant] = useState<Tenant | null>(null);
 
   useEffect(() => {
     async function fetchSettings() {
@@ -72,8 +79,8 @@ export default function SettingsPage() {
         const rzp = new (window as any).Razorpay(options);
         rzp.open();
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
+      console.error("Upgrade error");
     } finally {
       setLoading(false);
     }

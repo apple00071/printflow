@@ -2,19 +2,22 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { 
-  ArrowLeft, 
-  Save, 
-  User, 
-  Phone, 
-  Hash, 
-  FileText, 
+import {
+  ArrowLeft,
+  Save,
+  User,
+  Phone,
+  Hash,
+  FileText,
   Upload,
   Calendar,
-  IndianRupee,
   Loader2,
-  Receipt
+  IndianRupee,
+  Receipt,
+  X,
+  File as FileIcon
 } from "lucide-react";
+import { useRef } from "react";
 import Link from "next/link";
 import { getOrder, updateOrder } from "@/lib/supabase/actions";
 import { createClient } from "@/lib/supabase/client";
@@ -57,10 +60,19 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
     isInterState: false,
     gstin: "",
     hsnCode: "",
+    file_url: "",
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [gstRates, setGstRates] = useState<any[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [fileName, setFileName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  interface GSTRate {
+    id: string;
+    rate: number;
+    label: string;
+  }
+  const [gstRates, setGstRates] = useState<GSTRate[]>([]);
 
   useEffect(() => {
     async function init() {
@@ -98,10 +110,14 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
             isInterState: order.is_inter_state || false,
             gstin: order.customers?.gstin || "",
             hsnCode: order.hsn_code || "",
+            file_url: order.file_url || "",
           });
+          if (order.file_url) {
+            setFileName(order.file_url.split('/').pop() || "");
+          }
         }
-      } catch (err) {
-        console.error("Error fetching order for edit:", err);
+      } catch {
+        console.error("Error fetching order for edit");
       } finally {
         setLoading(false);
       }
@@ -111,10 +127,45 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
 
   const gstCalc = calculateGST(formData.totalAmount, formData.gstRate, formData.isInterState);
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setFileName(file.name);
+
+    try {
+      const supabase = createClient();
+      const tenant = await getCurrentTenant(supabase);
+      if (!tenant) throw new Error("Tenant not found");
+
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${tenant.id}/orders/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('printflow-files')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('printflow-files')
+        .getPublicUrl(filePath);
+
+      setFormData(prev => ({ ...prev, file_url: publicUrl }));
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert(t("Failed to upload file", "ఫైల్ అప్‌లోడ్ విఫలమైంది"));
+      setFileName("");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    
+
     try {
       await updateOrder(params.id, formData);
       router.push(`/dashboard/orders/${params.id}`);
@@ -128,8 +179,8 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center p-20 text-gray-400">
-       <Loader2 className="w-10 h-10 animate-spin mb-4 text-primary" />
-       <p className="text-sm">{t("Loading Order Data...", "ఆర్డర్ వివరాలు లోడ్ అవుతున్నాయి...")}</p>
+      <Loader2 className="w-10 h-10 animate-spin mb-4 text-primary" />
+      <p className="text-sm">{t("Loading Order Data...", "ఆర్డర్ వివరాలు లోడ్ అవుతున్నాయి...")}</p>
     </div>
   );
 
@@ -192,7 +243,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
               <label className="text-xs text-gray-500 uppercase">{t("Job Type", "పని రకం")}</label>
               <select
                 value={formData.jobType}
-                onChange={(e) => setFormData({...formData, jobType: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, jobType: e.target.value })}
                 className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
               >
                 {jobTypes.map((type) => (
@@ -209,7 +260,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
                   min="1"
                   required
                   value={formData.quantity}
-                  onChange={(e) => setFormData({...formData, quantity: parseInt(e.target.value) || 0})}
+                  onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
                 />
               </div>
@@ -221,7 +272,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
                 <input
                   type="date"
                   value={formData.deliveryDate}
-                  onChange={(e) => setFormData({...formData, deliveryDate: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, deliveryDate: e.target.value })}
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
                 />
               </div>
@@ -232,7 +283,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
                 type="text"
                 placeholder={t("e.g. 300 GSM Matte", "ఉదా: 300 GSM Matte")}
                 value={formData.paperType}
-                onChange={(e) => setFormData({...formData, paperType: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, paperType: e.target.value })}
                 className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
               />
             </div>
@@ -242,19 +293,56 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
                 type="text"
                 placeholder={t("e.g. A4, 10x12", "ఉదా: A4, 10x12")}
                 value={formData.size}
-                onChange={(e) => setFormData({...formData, size: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, size: e.target.value })}
                 className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
               />
             </div>
             <div className="space-y-1">
               <label className="text-xs text-gray-500 uppercase">{t("Design File", "ఫైల్")}</label>
-              <button 
-                type="button"
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 border border-dashed border-gray-300 rounded-lg text-xs text-gray-600 transition-colors"
-              >
-                <Upload className="w-3 h-3" />
-                {t("Upload File", "ఫైల్ అప్‌లోడ్")}
-              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                className="hidden"
+                accept="image/*,.pdf,.zip,.rar"
+              />
+              {!formData.file_url ? (
+                <button
+                  type="button"
+                  disabled={uploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 border border-dashed border-gray-300 rounded-lg text-xs text-gray-600 transition-colors"
+                >
+                  {uploading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      {t("Uploading...", "అప్‌లోడ్ అవుతోంది...")}
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="w-3 h-3" />
+                      {t("Upload File", "ఫైల్ అప్‌లోడ్")}
+                    </>
+                  )}
+                </button>
+              ) : (
+                <div className="flex items-center justify-between gap-2 px-3 py-2 bg-green-50 border border-green-100 rounded-lg text-xs text-green-700">
+                  <div className="flex items-center gap-2 truncate">
+                    <FileIcon className="w-3 h-3 flex-shrink-0" />
+                    <span className="truncate">{fileName || t("File Uploaded", "ఫైల్ అప్‌లోడ్ చేయబడింది")}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, file_url: "" }));
+                      setFileName("");
+                    }}
+                    className="p-1 hover:bg-green-100 rounded-full transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           <div className="space-y-1">
@@ -262,7 +350,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
             <textarea
               rows={3}
               value={formData.instructions}
-              onChange={(e) => setFormData({...formData, instructions: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
               className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none resize-none"
               placeholder={t("e.g. Laminate after printing, edge cutting needed", "ఉదా: ప్రింటింగ్ తర్వాత లామినేట్ చేయండి")}
             />
@@ -278,10 +366,10 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
             </div>
             <div className="flex items-center gap-2">
               <label className="text-xs text-gray-500 uppercase">{t("Apply GST", "GST వర్తింపజేయి")}</label>
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 checked={formData.applyGST}
-                onChange={(e) => setFormData({...formData, applyGST: e.target.checked})}
+                onChange={(e) => setFormData({ ...formData, applyGST: e.target.checked })}
                 className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
               />
             </div>
@@ -293,7 +381,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
                 <label className="text-xs text-gray-500 uppercase">{t("GST Rate", "GST శాతం")}</label>
                 <select
                   value={formData.gstRate}
-                  onChange={(e) => setFormData({...formData, gstRate: parseFloat(e.target.value)})}
+                  onChange={(e) => setFormData({ ...formData, gstRate: parseFloat(e.target.value) })}
                   className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
                 >
                   <option value="0">0% (Nil)</option>
@@ -303,11 +391,11 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
                 </select>
               </div>
               <div className="flex items-center gap-3 mt-6">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   id="interstate"
                   checked={formData.isInterState}
-                  onChange={(e) => setFormData({...formData, isInterState: e.target.checked})}
+                  onChange={(e) => setFormData({ ...formData, isInterState: e.target.checked })}
                   className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
                 />
                 <label htmlFor="interstate" className="text-sm text-gray-700">{t("Inter-state Supply (IGST)", "అంతరాష్ట్ర సరఫరా (IGST)")}</label>
@@ -317,7 +405,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
                 <input
                   type="text"
                   value={formData.hsnCode}
-                  onChange={(e) => setFormData({...formData, hsnCode: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, hsnCode: e.target.value })}
                   placeholder="e.g. 4911"
                   className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
                 />
@@ -341,7 +429,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
                   type="number"
                   required
                   value={formData.totalAmount}
-                  onChange={(e) => setFormData({...formData, totalAmount: parseFloat(e.target.value) || 0})}
+                  onChange={(e) => setFormData({ ...formData, totalAmount: parseFloat(e.target.value) || 0 })}
                   className="w-full pl-8 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
                 />
               </div>
@@ -353,7 +441,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
                   <span>{formData.isInterState ? "IGST" : "CGST + SGST"} ({formData.gstRate}%)</span>
                   <span>₹ {formData.isInterState ? gstCalc.igst : (gstCalc.cgst + gstCalc.sgst)}</span>
                 </div>
-                <div className="flex justify-between font-bold text-sm text-primary">
+                <div className="flex justify-between font-medium text-sm text-primary">
                   <span>{t("Total with GST", "మొత్తం GST కలిపి")}</span>
                   <span>₹ {gstCalc.totalWithGST}</span>
                 </div>
@@ -367,21 +455,21 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
                 <input
                   type="number"
                   value={formData.advancePaid}
-                  onChange={(e) => setFormData({...formData, advancePaid: parseFloat(e.target.value) || 0})}
+                  onChange={(e) => setFormData({ ...formData, advancePaid: parseFloat(e.target.value) || 0 })}
                   className="w-full pl-8 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none text-green-600"
                 />
               </div>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg flex flex-col justify-center border border-gray-100">
-               <p className="text-[10px] text-gray-400 uppercase">{t("Balance Due", "మిగిలిన మొత్తం")}</p>
-               <p className="text-xl text-primary">₹ {formData.applyGST ? (gstCalc.totalWithGST - formData.advancePaid) : (formData.totalAmount - formData.advancePaid)}</p>
+              <p className="text-[10px] text-gray-400 uppercase">{t("Balance Due", "మిగిలిన మొత్తం")}</p>
+              <p className="text-xl text-primary">₹ {formData.applyGST ? (gstCalc.totalWithGST - formData.advancePaid) : (formData.totalAmount - formData.advancePaid)}</p>
             </div>
           </div>
         </section>
 
         {/* Action Buttons */}
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 flex justify-end gap-4 lg:relative lg:bg-transparent lg:border-none lg:px-0">
-          <Link 
+          <Link
             href={`/dashboard/orders/${params.id}`}
             className="px-6 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 lg:bg-white"
           >

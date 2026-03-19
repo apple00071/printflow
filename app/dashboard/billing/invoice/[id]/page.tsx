@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Printer, ArrowLeft, Loader2, Landmark, Mail, Phone, MapPin } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { getOrder } from "@/lib/supabase/actions";
@@ -52,8 +53,8 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
         ]);
         setOrder(orderData as Order);
         setTenant(tenantData);
-      } catch (err) {
-        console.error("Error fetching invoice data:", err);
+      } catch {
+        console.error("Error fetching invoice data");
       } finally {
         setLoading(false);
       }
@@ -110,7 +111,15 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
             <div className="flex flex-col md:flex-row justify-between gap-8 relative z-10">
               <div className="space-y-4">
                 {tenant.logo_url ? (
-                  <img src={tenant.logo_url} alt={tenant.name} className="h-16 w-auto object-contain mb-4" />
+                  <div className="relative h-16 w-32 mb-4">
+                    <Image 
+                      src={tenant.logo_url} 
+                      alt={tenant.name} 
+                      fill
+                      className="object-contain object-left"
+                      unoptimized
+                    />
+                  </div>
                 ) : (
                   <div className="flex items-center gap-3 mb-4">
                     <Printer className="w-10 h-10 text-primary" />

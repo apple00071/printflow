@@ -69,8 +69,8 @@ export default function CustomerProfilePage({ params }: { params: { id: string }
         
         if (ordsErr) throw ordsErr;
         setOrders(ords || []);
-      } catch (err) {
-        console.error("Error fetching customer profile:", err);
+      } catch {
+        console.error("Error fetching customer profile");
       } finally {
         setLoading(false);
       }
