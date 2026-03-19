@@ -98,12 +98,8 @@ export async function updateSession(request: NextRequest) {
       if (isAdminRoute) {
         return response;
       }
-      // Allow dashboard access for super admin
-      if (isDashboardRoute) {
-        return response;
-      }
       // If super admin tries to access tenant routes, redirect to admin
-      if (request.nextUrl.pathname === "/dashboard") {
+      if (isDashboardRoute || isOnboardingRoute) {
         return NextResponse.redirect(new URL("/admin", request.url));
       }
       // Default redirect to admin dashboard

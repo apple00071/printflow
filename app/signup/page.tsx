@@ -6,11 +6,13 @@ import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { slugify, generateRandomDigits } from "@/lib/utils";
 import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function SignupPage() {
   const { language, setLanguage, t } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [businessName, setBusinessName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -44,7 +46,8 @@ export default function SignupPage() {
         .insert({
           name: businessName,
           slug,
-          plan: "FREE",
+          plan: "PRO",
+          trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
           onboarding_complete: false,
           email: email
         })
@@ -53,10 +56,10 @@ export default function SignupPage() {
 
       if (tenantError) throw tenantError;
 
-      // 3. Create Profile
+      // 3. Update Profile (trigger creates it, so we upsert/update)
       const { error: profileError } = await supabase
         .from("profiles")
-        .insert({
+        .upsert({
           id: authData.user.id,
           username: email.split("@")[0],
           name: businessName,
@@ -67,8 +70,9 @@ export default function SignupPage() {
       if (profileError) throw profileError;
 
       router.push("/onboarding");
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
+    } catch (err: any) {
+      console.error("Signup error details:", err);
+      const message = err?.message || (err instanceof Error ? err.message : String(err));
       setError(message);
     } finally {
       setLoading(false);
@@ -151,15 +155,28 @@ export default function SignupPage() {
               <label htmlFor="password" className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">
                 {t("Password", "పాస్‌వర్డ్")}
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm transition-all"
-              />
+              <div className="relative mt-1">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="block w-full rounded-xl border border-gray-200 px-4 py-3 pr-12 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" aria-hidden="true" />
+                  ) : (
+                    <Eye className="h-5 w-5" aria-hidden="true" />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 

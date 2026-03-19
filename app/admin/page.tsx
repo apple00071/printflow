@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Building2, Users, TrendingUp, Plus, MoreHorizontal, CreditCard, Settings, BarChart3, UserCheck } from "lucide-react";
+import { Building2, Users, TrendingUp, Plus, MoreHorizontal, CreditCard, Settings, BarChart3, UserCheck, Zap, Power, Trash2, LogOut } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 interface Tenant {
   id: string;
@@ -44,6 +46,13 @@ export default function AdminDashboard() {
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState('');
   const [activeTab, setActiveTab] = useState<'overview' | 'tenants' | 'subscriptions'>('overview');
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   useEffect(() => {
     fetchTenants();
@@ -103,6 +112,76 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleTogglePlan = async (tenantId: string, currentPlan: string) => {
+    try {
+      const newPlan = currentPlan.toUpperCase() === 'PRO' ? 'FREE' : 'PRO';
+      setLoading(true);
+      
+      const response = await fetch(`/api/admin/tenants/${tenantId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: newPlan }),
+      });
+
+      if (response.ok) {
+        await fetchTenants();
+      } else {
+        alert('Failed to update plan');
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error toggling plan:', error);
+      alert('Error updating plan');
+      setLoading(false);
+    }
+  };
+
+  const handleToggleStatus = async (tenantId: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+      setLoading(true);
+      
+      const response = await fetch(`/api/admin/tenants/${tenantId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan_status: newStatus }),
+      });
+
+      if (response.ok) {
+        await fetchTenants();
+      } else {
+        alert('Failed to update status');
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error toggling status:', error);
+      alert('Error updating status');
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteTenant = async (tenantId: string, tenantName: string) => {
+    if (!confirm(`Are you sure you want to delete ${tenantName}? This action cannot be undone and will delete all associated data.`)) return;
+    
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/admin/tenants/${tenantId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        await fetchTenants();
+      } else {
+        alert('Failed to delete tenant');
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error deleting tenant:', error);
+      alert('Error deleting tenant');
+      setLoading(false);
+    }
+  };
+
   const stats = {
     totalTenants: tenants.length,
     activeTenants: tenants.filter(t => (t.plan_status || t.subscription_status) === 'ACTIVE').length,
@@ -138,13 +217,6 @@ export default function AdminDashboard() {
                 Tenants
               </Link>
               <Link 
-                href="/dashboard" 
-                className="text-gray-600 hover:text-gray-900 flex items-center"
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Business Dashboard
-              </Link>
-              <Link 
                 href="/" 
                 className="text-gray-600 hover:text-gray-900"
               >
@@ -156,6 +228,13 @@ export default function AdminDashboard() {
               >
                 <Plus className="w-4 h-4 mr-2" />
                 New Tenant
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="text-gray-500 hover:text-red-600 bg-gray-100 hover:bg-red-50 p-2 rounded-lg transition-colors ml-4"
+                title="Sign Out"
+              >
+                <LogOut className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -285,15 +364,6 @@ export default function AdminDashboard() {
                   <p className="text-sm font-medium text-gray-900 text-center">Create New Tenant</p>
                   <p className="text-xs text-gray-500 text-center">Add new SaaS customer</p>
                 </button>
-                
-                <Link 
-                  href="/dashboard"
-                  className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-colors block"
-                >
-                  <Settings className="w-8 h-8 text-orange-600 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-gray-900 text-center">Business Dashboard</p>
-                  <p className="text-xs text-gray-500 text-center">Your printing operations</p>
-                </Link>
               </div>
             </div>
           </div>
@@ -381,8 +451,8 @@ export default function AdminDashboard() {
                           <div>{tenant.phone}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            tenant.plan === 'PRO' 
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full uppercase ${
+                            tenant.plan?.toUpperCase() === 'PRO' 
                               ? 'bg-purple-100 text-purple-800' 
                               : 'bg-blue-100 text-blue-800'
                           }`}>
@@ -393,8 +463,8 @@ export default function AdminDashboard() {
                           {tenant.orders_this_month || 0}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            tenant.plan_status === 'ACTIVE' 
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full uppercase ${
+                            tenant.plan_status?.toUpperCase() === 'ACTIVE' 
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-red-100 text-red-800'
                           }`}>
@@ -402,9 +472,29 @@ export default function AdminDashboard() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          <button className="text-gray-400 hover:text-gray-600">
-                            <MoreHorizontal className="w-5 h-5" />
-                          </button>
+                          <div className="flex items-center gap-3">
+                            <button 
+                              onClick={() => handleTogglePlan(tenant.id, tenant.plan || 'FREE')}
+                              className="text-orange-500 hover:text-orange-700 transition-colors"
+                              title={`Toggle Plan (Current: ${tenant.plan})`}
+                            >
+                              <Zap className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => handleToggleStatus(tenant.id, tenant.plan_status || 'ACTIVE')}
+                              className="text-blue-500 hover:text-blue-700 transition-colors"
+                              title={`Toggle Status (Current: ${tenant.plan_status})`}
+                            >
+                              <Power className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteTenant(tenant.id, tenant.name)}
+                              className="text-red-400 hover:text-red-600 transition-colors"
+                              title="Delete Tenant"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

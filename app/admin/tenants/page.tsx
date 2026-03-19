@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Building2, Users, TrendingUp, Plus, MoreHorizontal, CreditCard, Settings, Search, ArrowUpDown } from "lucide-react";
+import { Building2, Users, TrendingUp, Plus, MoreHorizontal, CreditCard, Settings, Search, ArrowUpDown, LogOut } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 interface Tenant {
   id: string;
@@ -48,6 +50,13 @@ export default function TenantsPage() {
   });
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState('');
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   useEffect(() => {
     fetchTenants();
@@ -156,6 +165,13 @@ export default function TenantsPage() {
               >
                 <Plus className="w-4 h-4 mr-2" />
                 New Tenant
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="text-gray-500 hover:text-red-600 bg-gray-100 hover:bg-red-50 p-2 rounded-lg transition-colors ml-4"
+                title="Sign Out"
+              >
+                <LogOut className="w-5 h-5" />
               </button>
             </div>
           </div>

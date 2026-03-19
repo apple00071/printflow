@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Building2, Users, TrendingUp, CreditCard, ArrowUp, ArrowDown, BarChart3, Activity } from "lucide-react";
+import { Building2, Users, TrendingUp, CreditCard, ArrowUp, ArrowDown, BarChart3, Activity, LogOut } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 interface Analytics {
   totalTenants: number;
@@ -11,8 +13,7 @@ interface Analytics {
   monthlyRevenue: number;
   proPlans: number;
   freePlans: number;
-  growthRate: number;
-  churnRate: number;
+  topTenants: Tenant[];
 }
 
 interface Tenant {
@@ -33,10 +34,16 @@ export default function AnalyticsPage() {
     monthlyRevenue: 0,
     proPlans: 0,
     freePlans: 0,
-    growthRate: 0,
-    churnRate: 0,
+    topTenants: [],
   });
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   useEffect(() => {
     fetchAnalytics();
@@ -48,15 +55,16 @@ export default function AnalyticsPage() {
       if (response.ok) {
         const tenants: Tenant[] = await response.json();
         
+        const sortedTenants = [...tenants].sort((a, b) => (b.orders_this_month || 0) - (a.orders_this_month || 0)).slice(0, 5);
+
         const stats = {
           totalTenants: tenants.length,
-          activeTenants: tenants.filter((t) => (t.plan_status || t.subscription_status) === 'ACTIVE').length,
+          activeTenants: tenants.filter((t) => (t.plan_status || t.subscription_status)?.toUpperCase() === 'ACTIVE').length,
           totalOrders: tenants.reduce((sum, t) => sum + (t.orders_this_month || 0), 0),
-          monthlyRevenue: tenants.filter((t) => (t.plan || t.subscription_tier) === 'PRO').length * 999,
-          proPlans: tenants.filter((t) => (t.plan || t.subscription_tier) === 'PRO').length,
-          freePlans: tenants.filter((t) => (t.plan || t.subscription_tier) === 'FREE').length,
-          growthRate: 15.3, // Mock data
-          churnRate: 2.1, // Mock data
+          monthlyRevenue: tenants.filter((t) => (t.plan || t.subscription_tier)?.toUpperCase() === 'PRO').length * 999,
+          proPlans: tenants.filter((t) => (t.plan || t.subscription_tier)?.toUpperCase() === 'PRO').length,
+          freePlans: tenants.filter((t) => (t.plan || t.subscription_tier)?.toUpperCase() === 'FREE').length,
+          topTenants: sortedTenants
         };
         
         setAnalytics(stats);
@@ -67,9 +75,6 @@ export default function AnalyticsPage() {
       setLoading(false);
     }
   }
-
-  const revenueGrowth = 23.5; // Mock data
-  const orderGrowth = 18.2; // Mock data
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -96,6 +101,13 @@ export default function AnalyticsPage() {
                 <Users className="w-4 h-4 mr-2" />
                 Tenants
               </Link>
+              <button
+                onClick={handleSignOut}
+                className="text-gray-500 hover:text-red-600 bg-gray-100 hover:bg-red-50 p-2 rounded-lg transition-colors ml-4"
+                title="Sign Out"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
@@ -110,17 +122,12 @@ export default function AnalyticsPage() {
         ) : (
           <div className="space-y-8">
             {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-xl shadow-sm border">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">Monthly Revenue</p>
+                    <p className="text-sm text-gray-500">Monthly Revenue (Pro Plans)</p>
                     <p className="text-2xl font-bold text-gray-900">₹{analytics.monthlyRevenue.toLocaleString()}</p>
-                    <div className="flex items-center mt-2 text-sm">
-                      <ArrowUp className="w-4 h-4 text-green-500 mr-1" />
-                      <span className="text-green-500">{revenueGrowth}%</span>
-                      <span className="text-gray-500 ml-1">vs last month</span>
-                    </div>
                   </div>
                   <div className="bg-purple-100 p-3 rounded-lg">
                     <CreditCard className="w-6 h-6 text-purple-600" />
@@ -133,11 +140,6 @@ export default function AnalyticsPage() {
                   <div>
                     <p className="text-sm text-gray-500">Active Tenants</p>
                     <p className="text-2xl font-bold text-gray-900">{analytics.activeTenants}</p>
-                    <div className="flex items-center mt-2 text-sm">
-                      <ArrowUp className="w-4 h-4 text-green-500 mr-1" />
-                      <span className="text-green-500">{analytics.growthRate}%</span>
-                      <span className="text-gray-500 ml-1">growth rate</span>
-                    </div>
                   </div>
                   <div className="bg-blue-100 p-3 rounded-lg">
                     <Users className="w-6 h-6 text-blue-600" />
@@ -148,33 +150,11 @@ export default function AnalyticsPage() {
               <div className="bg-white p-6 rounded-xl shadow-sm border">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">Total Orders</p>
+                    <p className="text-sm text-gray-500">Total Platform Orders</p>
                     <p className="text-2xl font-bold text-gray-900">{analytics.totalOrders}</p>
-                    <div className="flex items-center mt-2 text-sm">
-                      <ArrowUp className="w-4 h-4 text-green-500 mr-1" />
-                      <span className="text-green-500">{orderGrowth}%</span>
-                      <span className="text-gray-500 ml-1">vs last month</span>
-                    </div>
                   </div>
                   <div className="bg-orange-100 p-3 rounded-lg">
                     <BarChart3 className="w-6 h-6 text-orange-600" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-xl shadow-sm border">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500">Churn Rate</p>
-                    <p className="text-2xl font-bold text-gray-900">{analytics.churnRate}%</p>
-                    <div className="flex items-center mt-2 text-sm">
-                      <ArrowDown className="w-4 h-4 text-green-500 mr-1" />
-                      <span className="text-green-500">0.3%</span>
-                      <span className="text-gray-500 ml-1">improvement</span>
-                    </div>
-                  </div>
-                  <div className="bg-red-100 p-3 rounded-lg">
-                    <Activity className="w-6 h-6 text-red-600" />
                   </div>
                 </div>
               </div>
@@ -220,7 +200,7 @@ export default function AnalyticsPage() {
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
                         className="bg-purple-600 h-2 rounded-full" 
-                        style={{ width: `${(analytics.proPlans / analytics.totalTenants) * 100}%` }}
+                        style={{ width: analytics.totalTenants > 0 ? `${(analytics.proPlans / analytics.totalTenants) * 100}%` : '0%' }}
                       ></div>
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
@@ -236,7 +216,7 @@ export default function AnalyticsPage() {
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
                         className="bg-blue-600 h-2 rounded-full" 
-                        style={{ width: `${(analytics.freePlans / analytics.totalTenants) * 100}%` }}
+                        style={{ width: analytics.totalTenants > 0 ? `${(analytics.freePlans / analytics.totalTenants) * 100}%` : '0%' }}
                       ></div>
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
@@ -247,78 +227,34 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Top Performing Tenants */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Performing</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                        <span className="text-green-600 font-medium text-sm">1</span>
+              <div className="bg-white p-6 rounded-xl shadow-sm border lg:col-span-2">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Performing Tenants</h3>
+                {analytics.topTenants.length === 0 ? (
+                  <p className="text-sm text-gray-500">No active tenants with orders yet.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {analytics.topTenants.map((tenant, idx) => (
+                      <div key={tenant.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                        <div className="flex items-center">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
+                            idx === 0 ? 'bg-green-100 text-green-600' : 
+                            idx === 1 ? 'bg-blue-100 text-blue-600' : 
+                            'bg-orange-100 text-orange-600'
+                          }`}>
+                            <span className="font-medium text-sm">{idx + 1}</span>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{tenant.name}</p>
+                            <p className="text-xs text-gray-500">{tenant.orders_this_month || 0} orders this month</p>
+                          </div>
+                        </div>
+                        <span className="text-xs px-2 py-1 bg-gray-100 rounded-lg text-gray-600 font-medium uppercase tracking-widest">
+                          {tenant.plan || 'FREE'}
+                        </span>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">Royal Printers</p>
-                        <p className="text-xs text-gray-500">234 orders</p>
-                      </div>
-                    </div>
-                    <span className="text-sm font-medium text-gray-900">₹1,999</span>
+                    ))}
                   </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                        <span className="text-blue-600 font-medium text-sm">2</span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">Digital Press</p>
-                        <p className="text-xs text-gray-500">189 orders</p>
-                      </div>
-                    </div>
-                    <span className="text-sm font-medium text-gray-900">₹1,999</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center mr-3">
-                        <span className="text-orange-600 font-medium text-sm">3</span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">Quick Prints</p>
-                        <p className="text-xs text-gray-500">156 orders</p>
-                      </div>
-                    </div>
-                    <span className="text-sm font-medium text-gray-900">₹0</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Recent Activity */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
-                <div className="space-y-3">
-                  <div className="flex items-start">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3"></div>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-900">New tenant registered</p>
-                      <p className="text-xs text-gray-500">Metro Graphics - 2 hours ago</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3"></div>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-900">Plan upgrade</p>
-                      <p className="text-xs text-gray-500">City Press upgraded to Pro - 5 hours ago</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 mr-3"></div>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-900">High order volume</p>
-                      <p className="text-xs text-gray-500">Royal Printers - 50+ orders today - 6 hours ago</p>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           </div>

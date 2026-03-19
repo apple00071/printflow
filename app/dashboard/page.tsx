@@ -39,7 +39,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<StatCard[]>([]);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [chartData, setChartData] = useState<{ name: string; value: number; color: string }[]>([]);
-  const [tenant, setTenant] = useState<{ plan: string; orders_this_month: number } | null>(null);
+  const [tenant, setTenant] = useState<{ subscription_tier?: string; orders_this_month: number; trial_ends_at?: string } | null>(null);
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -189,19 +189,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* Super Admin Indicator */}
-      {tenant === null && (
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-            <h3 className="text-purple-900 font-medium">Super Admin View</h3>
-          </div>
-          <p className="text-purple-700 text-sm mt-1">
-            You are viewing the business dashboard with data from all tenants
-          </p>
-        </div>
-      )}
-      
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {loading ? (
@@ -220,39 +207,6 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
-
-      {/* Usage Meter & Plan Status */}
-      {!loading && tenant && (
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-medium text-gray-900 uppercase tracking-tight">{t("Monthly Usage", "నెలవారీ వినియోగం")}</h2>
-              <p className="text-[10px] text-gray-400 uppercase tracking-widest">{tenant.plan === 'FREE' ? t("Free Plan Limit: 50 Orders", "ఉచిత ప్లాన్ పరిమితి: 50 ఆర్డర్లు") : t("Unlimited Pro Plan", "అపరిమిత ప్రో ప్లాన్")}</p>
-            </div>
-            <div className="text-right">
-              <span className="text-sm font-bold text-primary">{tenant.orders_this_month || 0}</span>
-              <span className="text-xs text-gray-300"> / {tenant.plan === 'FREE' ? 50 : '∞'}</span>
-            </div>
-          </div>
-          {tenant.plan === 'FREE' && (
-            <div className="space-y-2">
-              <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full transition-all duration-1000 ${
-                    ((tenant.orders_this_month || 0) / 50) > 0.8 ? 'bg-red-500' : 'bg-primary'
-                  }`}
-                  style={{ width: `${Math.min(((tenant.orders_this_month || 0) / 50) * 100, 100)}%` }}
-                />
-              </div>
-              {((tenant.orders_this_month || 0) / 50) > 0.8 && (
-                <p className="text-[10px] text-red-500 font-medium animate-pulse uppercase tracking-tighter">
-                  {t("Warning: You are approaching your monthly limit. Upgrade soon!", "హెచ్చరిక: మీరు మీ నెలవారీ పరిమితికి చేరుకుంటున్నారు. త్వరలో అప్‌గ్రేడ్ చేయండి!")}
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -290,17 +244,20 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Orders by Job Type */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[350px]">
-          <h2 className="text-lg  text-gray-900 mb-6">{t("Revenue by Job Type", "ఆర్డర్ రకాలు")}</h2>
-          {loading ? (
-             <div className="flex flex-col items-center justify-center p-10 text-gray-400">
-                <Loader2 className="w-8 h-8 animate-spin mb-2" />
-                <p className="text-sm">{t("Generating chart...", "చార్ట్ తయారవుతోంది...")}</p>
-             </div>
-          ) : (
-             <DashboardCharts data={chartData} />
-          )}
+        {/* Right Column: Usage & Revenue */}
+        <div className="space-y-8">
+          {/* Orders by Job Type */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[350px]">
+            <h2 className="text-lg  text-gray-900 mb-6">{t("Revenue by Job Type", "ఆర్డర్ రకాలు")}</h2>
+            {loading ? (
+              <div className="flex flex-col items-center justify-center p-10 text-gray-400">
+                  <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                  <p className="text-sm">{t("Generating chart...", "చార్ట్ తయారవుతోంది...")}</p>
+              </div>
+            ) : (
+              <DashboardCharts data={chartData} />
+            )}
+          </div>
         </div>
       </div>
     </div>
