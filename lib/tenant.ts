@@ -23,7 +23,7 @@ export async function getCurrentTenant(supabase: SupabaseClient) {
 }
 
 export async function checkOrderLimit(tenant: { plan?: string; subscription_tier?: string; orders_this_month: number; trial_ends_at?: string }) {
-  let currentTier = (tenant.subscription_tier || tenant.plan || 'FREE').toUpperCase();
+  const currentTier = (tenant.subscription_tier || tenant.plan || 'FREE').toUpperCase();
   let effectivePlan = currentTier;
   
   // Dynamically downgrade to FREE if the 7-day PRO trial has expired

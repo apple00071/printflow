@@ -39,15 +39,12 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<StatCard[]>([]);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [chartData, setChartData] = useState<{ name: string; value: number; color: string }[]>([]);
-  const [tenant, setTenant] = useState<{ subscription_tier?: string; orders_this_month: number; trial_ends_at?: string } | null>(null);
-
   useEffect(() => {
     async function fetchDashboardData() {
       setLoading(true);
       try {
         const supabase = createClient();
         const currentTenant = await getCurrentTenant(supabase);
-        setTenant(currentTenant);
 
         // Check if user is super admin
         const { data: { user } } = await supabase.auth.getUser();

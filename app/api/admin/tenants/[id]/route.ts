@@ -19,7 +19,7 @@ export async function PATCH(
     const adminSupabase = createAdminClient();
 
     // Mapping payload logic to the database columns
-    const updateData: any = {};
+    const updateData: Record<string, string> = {};
     if (body.plan) updateData.subscription_tier = body.plan.toLowerCase();
     if (body.plan_status) updateData.subscription_status = body.plan_status;
 

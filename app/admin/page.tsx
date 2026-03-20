@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Building2, Users, TrendingUp, Plus, MoreHorizontal, CreditCard, Settings, BarChart3, UserCheck, Zap, Power, Trash2, LogOut } from "lucide-react";
+import { Building2, Users, TrendingUp, Plus, CreditCard, BarChart3, UserCheck, Zap, Power, Trash2, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";

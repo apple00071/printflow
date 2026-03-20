@@ -70,9 +70,16 @@ export default function SignupPage() {
       if (profileError) throw profileError;
 
       router.push("/onboarding");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Signup error details:", err);
-      const message = err?.message || (err instanceof Error ? err.message : String(err));
+      let message = "An unexpected error occurred";
+      if (err instanceof Error) {
+        message = err.message;
+      } else if (typeof err === "object" && err !== null && "message" in err) {
+        message = String((err as { message: unknown }).message);
+      } else {
+        message = String(err);
+      }
       setError(message);
     } finally {
       setLoading(false);
