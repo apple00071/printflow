@@ -145,7 +145,7 @@ export default function ProfileSettings() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">My Profile</h3>
+          <h3 className="text-lg font-normal text-gray-900">My Profile</h3>
           <p className="text-gray-600">Manage your personal information and account settings</p>
         </div>
       </div>
@@ -157,7 +157,7 @@ export default function ProfileSettings() {
               <User className="w-8 h-8 text-blue-600" />
             </div>
             <div>
-              <h4 className="text-xl font-bold text-gray-900">{profile.name}</h4>
+              <h4 className="text-xl font-normal text-gray-900">{profile.name}</h4>
               <p className="text-gray-600">@{profile.username}</p>
             </div>
           </div>
@@ -175,10 +175,10 @@ export default function ProfileSettings() {
         <div className="space-y-6">
           {/* Personal Information */}
           <div>
-            <h5 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h5>
+            <h5 className="text-lg font-normal text-gray-900 mb-4">Personal Information</h5>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <label className="block text-sm font-normal text-gray-700 mb-1">Full Name</label>
                 {editing ? (
                   <input
                     type="text"
@@ -195,7 +195,7 @@ export default function ProfileSettings() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <label className="block text-sm font-normal text-gray-700 mb-1">Username</label>
                 <div className="flex items-center gap-2 text-gray-900">
                   <User className="w-4 h-4 text-gray-400" />
                   @{profile.username}
@@ -203,7 +203,7 @@ export default function ProfileSettings() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                <label className="block text-sm font-normal text-gray-700 mb-1">Email Address</label>
                 <div className="flex items-center gap-2 text-gray-900">
                   <Mail className="w-4 h-4 text-gray-400" />
                   {profile.email}
@@ -211,7 +211,7 @@ export default function ProfileSettings() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <label className="block text-sm font-normal text-gray-700 mb-1">Phone Number</label>
                 {editing ? (
                   <input
                     type="tel"
@@ -232,13 +232,13 @@ export default function ProfileSettings() {
 
           {/* Account Information */}
           <div>
-            <h5 className="text-lg font-semibold text-gray-900 mb-4">Account Information</h5>
+            <h5 className="text-lg font-normal text-gray-900 mb-4">Account Information</h5>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                <label className="block text-sm font-normal text-gray-700 mb-1">Role</label>
                 <div className="flex items-center gap-2">
                   <Shield className="w-4 h-4 text-gray-400" />
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-normal ${
                     profile.role === 'ADMIN' 
                       ? 'bg-purple-100 text-purple-800' 
                       : 'bg-gray-100 text-gray-800'
@@ -249,7 +249,7 @@ export default function ProfileSettings() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Member Since</label>
+                <label className="block text-sm font-normal text-gray-700 mb-1">Member Since</label>
                 <div className="flex items-center gap-2 text-gray-900">
                   <Calendar className="w-4 h-4 text-gray-400" />
                   {formatDate(profile.created_at)}
@@ -257,7 +257,7 @@ export default function ProfileSettings() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Last Login</label>
+                <label className="block text-sm font-normal text-gray-700 mb-1">Last Login</label>
                 <div className="flex items-center gap-2 text-gray-900">
                   <Calendar className="w-4 h-4 text-gray-400" />
                   {profile.last_sign_in_at 
@@ -297,20 +297,20 @@ export default function ProfileSettings() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-center gap-2 mb-4">
             <Building className="w-5 h-5 text-gray-400" />
-            <h4 className="text-lg font-semibold text-gray-900">Organization</h4>
+            <h4 className="text-lg font-normal text-gray-900">Organization</h4>
           </div>
           <div className="space-y-3">
             <div>
               <p className="text-sm text-gray-600">Company Name</p>
-              <p className="font-medium text-gray-900">{tenant.name}</p>
+              <p className="font-normal text-gray-900">{tenant.name}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Business Email</p>
-              <p className="font-medium text-gray-900">{tenant.email}</p>
+              <p className="font-normal text-gray-900">{tenant.email}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Subscription</p>
-              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-normal ${
                 tenant.subscription_tier === 'PRO' 
                   ? 'bg-purple-100 text-purple-800' 
                   : 'bg-gray-100 text-gray-800'

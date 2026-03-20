@@ -95,11 +95,11 @@ function RegisterContent() {
       <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
         <div className="w-full max-w-md space-y-6 bg-white p-8 rounded-2xl shadow-xl border border-red-100 flex flex-col items-center text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mb-2" />
-          <h2 className="text-2xl font-bold text-gray-900">Invalid Invitation</h2>
+          <h2 className="text-2xl font-normal text-gray-900">Invalid Invitation</h2>
           <p className="text-gray-600">
             This invitation has expired, been used, or does not exist. Please ask your administrator to send a new invitation.
           </p>
-          <Link href="/signup" className="mt-4 text-primary font-medium hover:underline">
+          <Link href="/signup" className="mt-4 text-primary font-normal hover:underline">
             Create a new business instead
           </Link>
         </div>
@@ -206,7 +206,7 @@ function RegisterContent() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative flex w-full justify-center rounded-xl bg-primary px-4 py-3.5 text-sm font-semibold text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 transition-all shadow-lg shadow-primary/20"
+              className="group relative flex w-full justify-center rounded-xl bg-primary px-4 py-3.5 text-sm font-normal text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 transition-all shadow-lg shadow-primary/20"
             >
               {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

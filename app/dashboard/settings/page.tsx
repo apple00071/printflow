@@ -151,7 +151,7 @@ export default function SettingsPage() {
               <div className="p-8 space-y-8">
                  <Script src="https://checkout.razorpay.com/v1/checkout.js" />
                  <div className="border-b border-gray-100 pb-6">
-                    <h2 className="text-xl font-black text-gray-900 uppercase tracking-tighter">{t("Subscription & Usage", "సబ్‌స్క్రిప్షన్ వివరాలు")}</h2>
+                    <h2 className="text-xl font-normal text-gray-900 uppercase tracking-tighter">{t("Subscription & Usage", "సబ్‌స్క్రిప్షన్ వివరాలు")}</h2>
                     <p className="text-xs text-gray-400 uppercase tracking-widest">{t("Manage your plan and billing", "మీ ప్లాన్ మరియు బిల్లింగ్ వివరాలు")}</p>
                  </div>
 
@@ -159,18 +159,18 @@ export default function SettingsPage() {
                     {/* Current Plan Card */}
                     <div className="bg-primary p-8 rounded-3xl text-white shadow-xl shadow-primary/20 space-y-6">
                        <div className="space-y-2">
-                          <p className="text-[10px] uppercase tracking-[0.2em] opacity-60 font-bold">{t("Current Plan", "ప్రస్తుత ప్లాన్")}</p>
-                          <h3 className="text-3xl font-black italic tracking-tighter uppercase">{tenant?.subscription_tier || 'FREE'}</h3>
+                          <p className="text-[10px] uppercase tracking-[0.2em] opacity-60 font-normal">{t("Current Plan", "ప్రస్తుత ప్లాన్")}</p>
+                          <h3 className="text-3xl font-normal italic tracking-tighter uppercase">{tenant?.subscription_tier || 'FREE'}</h3>
                        </div>
                        
                        <div className="space-y-4 pt-4">
                           <div className="flex justify-between items-end border-b border-white/10 pb-4">
                              <div className="space-y-1">
                                 <p className="text-[10px] uppercase opacity-60">{t("Usage this month", "ఈ నెల వినియోగం")}</p>
-                                <p className="text-xl font-bold">{tenant?.orders_this_month || 0} / {tenant?.subscription_tier === 'FREE' ? '50' : '∞'}</p>
+                                <p className="text-xl font-normal">{tenant?.orders_this_month || 0} / {tenant?.subscription_tier === 'FREE' ? '50' : '∞'}</p>
                              </div>
                              {tenant?.subscription_tier === 'FREE' && (
-                               <p className="text-[10px] bg-white/20 px-2 py-1 rounded font-bold uppercase tracking-widest leading-none">
+                               <p className="text-[10px] bg-white/20 px-2 py-1 rounded font-normal uppercase tracking-widest leading-none">
                                   {Math.round(((tenant?.orders_this_month || 0) / 50) * 100)}%
                                </p>
                              )}
@@ -184,35 +184,58 @@ export default function SettingsPage() {
                        </div>
                     </div>
 
-                    {/* Upgrade Options */}
-                    {tenant?.subscription_tier === 'FREE' ? (
-                      <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between space-y-6">
-                         <div className="space-y-2">
-                            <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter">{t("Unlock Pro", "ప్రీమియం పొందండి")}</h3>
-                            <p className="text-xs text-gray-400 tracking-widest leading-relaxed">
-                               {t("Get unlimited orders, professional GST reports, and advanced analytics.", "అపరిమిత ఆర్డర్లు మరియు అడ్వాన్స్డ్ ఫీచర్స్ కోసం అప్‌గ్రేడ్ చేయండి.")}
-                            </p>
-                         </div>
-                         <div className="space-y-4">
-                            <div className="flex items-baseline gap-1">
-                               <span className="text-2xl font-black">₹999</span>
-                               <span className="text-[10px] text-gray-400 uppercase">/ {t("Month", "నెల")}</span>
-                            </div>
-                            <button 
-                               onClick={handleUpgrade}
-                               disabled={loading}
-                               className="w-full bg-primary text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
-                            >
-                               {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : t("Upgrade Now", "ఇప్పుడే అప్‌గ్రేడ్ చేయండి")}
-                            </button>
-                         </div>
-                      </div>
+                     {/* Upgrade Options */}
+                     {tenant?.subscription_tier === 'FREE' ? (
+                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                          <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between space-y-4">
+                             <div className="space-y-1">
+                                <h3 className="text-lg font-normal text-gray-900 uppercase tracking-tighter">Pro Plan</h3>
+                                <p className="text-[10px] text-gray-400 tracking-widest leading-relaxed">
+                                   Unlimited orders & reports
+                                </p>
+                             </div>
+                             <div className="space-y-3">
+                                <div className="flex items-baseline gap-1">
+                                   <span className="text-xl font-normal text-primary">₹499</span>
+                                   <span className="text-[9px] text-gray-400 uppercase">/ month</span>
+                                </div>
+                                <button 
+                                   onClick={handleUpgrade}
+                                   disabled={loading}
+                                   className="w-full bg-primary text-white py-3 rounded-xl font-normal uppercase tracking-widest text-[10px] shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                                >
+                                   {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Upgrade to Pro"}
+                                </button>
+                             </div>
+                          </div>
+
+                          <div className="bg-[#1e3a5f] p-6 rounded-3xl border border-white/10 shadow-xl flex flex-col justify-between space-y-4">
+                             <div className="space-y-1">
+                                <h3 className="text-lg font-normal text-white uppercase tracking-tighter">Business</h3>
+                                <p className="text-[10px] text-blue-200/60 tracking-widest leading-relaxed">
+                                   Advanced scaling & support
+                                </p>
+                             </div>
+                             <div className="space-y-3">
+                                <div className="flex items-baseline gap-1">
+                                   <span className="text-xl font-normal text-white">₹999</span>
+                                   <span className="text-[9px] text-blue-200/40 uppercase">/ month</span>
+                                </div>
+                                <button 
+                                   onClick={() => alert("Business plan upgrade via sales. Please contact support.")}
+                                   className="w-full bg-white text-primary py-3 rounded-xl font-normal uppercase tracking-widest text-[10px] shadow-lg hover:scale-[1.02] active:scale-95 transition-all"
+                                >
+                                   Contact Support
+                                </button>
+                             </div>
+                          </div>
+                       </div>
                     ) : (
                       <div className="bg-green-50 p-8 rounded-3xl border border-green-100 flex flex-col items-center justify-center text-center space-y-4">
                          <div className="p-4 bg-green-500 rounded-full text-white">
                             <Save className="w-8 h-8" />
                          </div>
-                         <h3 className="text-lg font-bold text-green-900 uppercase tracking-tight">{t("You are on Pro Plan", "మీరు ప్రో ప్లాన్ లో ఉన్నారు")}</h3>
+                         <h3 className="text-lg font-normal text-green-900 uppercase tracking-tight">{t("You are on Pro Plan", "మీరు ప్రో ప్లాన్ లో ఉన్నారు")}</h3>
                          <p className="text-xs text-green-600 tracking-widest">{t("Next billing: ", "తదుపరి బిల్లింగ్: ")} {tenant?.subscription_end_date ? formatDate(tenant.subscription_end_date) : 'N/A'}</p>
                       </div>
                     )}
@@ -223,7 +246,7 @@ export default function SettingsPage() {
             {activeTab === "team" && (
               <div className="p-8 space-y-8">
                  <div className="border-b border-gray-100 pb-6">
-                    <h2 className="text-xl font-black text-gray-900 uppercase tracking-tighter">{t("Team Management", "టీమ్ మేనేజ్‌మెంట్")}</h2>
+                    <h2 className="text-xl font-normal text-gray-900 uppercase tracking-tighter">{t("Team Management", "టీమ్ మేనేజ్‌మెంట్")}</h2>
                     <p className="text-xs text-gray-400 uppercase tracking-widest">{t("Manage your team members and their permissions", "మీ టీమ్ సభ్యులు మరియు వారి అనుమతులను నిర్వహించండి")}</p>
                  </div>
 
@@ -236,12 +259,12 @@ export default function SettingsPage() {
                                 <Crown className="w-6 h-6" />
                              </div>
                              <div>
-                                <h3 className="font-bold text-gray-900">{t("Tenant Admin", "టెనంట్ అడ్మిన్")}</h3>
+                                <h3 className="font-normal text-gray-900">{t("Tenant Admin", "టెనంట్ అడ్మిన్")}</h3>
                                 <p className="text-sm text-gray-600">{t("You have full access to all business settings", "మీకు అన్ని వ్యాపార సెట్టింగ్‌లకు పూర్తి ప్రాప్యం ఉంది")}</p>
                              </div>
                           </div>
                           <div className="bg-blue-100 px-3 py-1 rounded-full">
-                             <span className="text-xs font-medium text-blue-800">{t("OWNER", "యజమాని")}</span>
+                             <span className="text-xs font-normal text-blue-800">{t("OWNER", "యజమాని")}</span>
                           </div>
                        </div>
                     </div>
@@ -249,7 +272,7 @@ export default function SettingsPage() {
                     {/* Add Team Members Section */}
                     <div className="bg-white p-6 rounded-2xl border border-gray-200">
                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-semibold text-gray-900">{t("Team Members", "టీమ్ సభ్యులు")}</h3>
+                          <h3 className="font-normal text-gray-900">{t("Team Members", "టీమ్ సభ్యులు")}</h3>
                           <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors">
                              {t("Add Member", "సభ్యుడిని జోడించండి")}
                           </button>
@@ -264,14 +287,14 @@ export default function SettingsPage() {
 
                     {/* Role Permissions Info */}
                     <div className="bg-gray-50 p-6 rounded-2xl border border-dashed border-gray-200">
-                       <h3 className="font-semibold text-gray-900 mb-4">{t("Available Roles", "అందుబాటులో ఉన్న పాత్రలు")}</h3>
+                       <h3 className="font-normal text-gray-900 mb-4">{t("Available Roles", "అందుబాటులో ఉన్న పాత్రలు")}</h3>
                        <div className="space-y-3">
                           <div className="flex items-start space-x-3">
                              <div className="bg-blue-100 p-2 rounded-lg mt-1">
                                 <Crown className="w-4 h-4 text-blue-600" />
                              </div>
                              <div className="flex-1">
-                                <h4 className="font-medium text-gray-900">{t("Tenant Admin", "టెనంట్ అడ్మిన్")}</h4>
+                                <h4 className="font-normal text-gray-900">{t("Tenant Admin", "టెనంట్ అడ్మిన్")}</h4>
                                 <p className="text-sm text-gray-600">{t("Full access to business settings, billing, and team management", "వ్యాపార సెట్టింగ్‌లు, బిల్లింగ్ మరియు టీమ్ మేనేజ్‌మెంట్‌కు పూర్తి ప్రాప్యం")}</p>
                              </div>
                           </div>
@@ -281,7 +304,7 @@ export default function SettingsPage() {
                                 <Shield className="w-4 h-4 text-green-600" />
                              </div>
                              <div className="flex-1">
-                                <h4 className="font-medium text-gray-900">{t("Manager", "మేనేజర్")}</h4>
+                                <h4 className="font-normal text-gray-900">{t("Manager", "మేనేజర్")}</h4>
                                 <p className="text-sm text-gray-600">{t("Can manage orders, customers, and view reports", "ఆర్డర్‌లు, కస్టమర్‌లను నిర్వహించగలరు మరియు నివేదికలను వీక్షించగలరు")}</p>
                              </div>
                           </div>
@@ -291,7 +314,7 @@ export default function SettingsPage() {
                                 <User className="w-4 h-4 text-gray-600" />
                              </div>
                              <div className="flex-1">
-                                <h4 className="font-medium text-gray-900">{t("Staff", "సిబ్బంది")}</h4>
+                                <h4 className="font-normal text-gray-900">{t("Staff", "సిబ్బంది")}</h4>
                                 <p className="text-sm text-gray-600">{t("Can manage orders and customers only", "ఆర్డర్‌లు మరియు కస్టమర్‌లను మాత్రమే నిర్వహించగలరు")}</p>
                              </div>
                           </div>

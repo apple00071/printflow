@@ -167,7 +167,7 @@ export default function NewOrderPage() {
         <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
           <div className="flex items-center gap-2 border-b border-gray-50 pb-3 mb-4">
             <User className="w-5 h-5 text-primary" />
-            <h2 className="font-medium text-gray-900 uppercase tracking-wide text-sm">{t("Customer Details", "కస్టమర్ వివరాలు")}</h2>
+            <h2 className="font-normal text-gray-900 uppercase tracking-wide text-sm">{t("Customer Details", "కస్టమర్ వివరాలు")}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
@@ -205,7 +205,7 @@ export default function NewOrderPage() {
         <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
           <div className="flex items-center gap-2 border-b border-gray-50 pb-3 mb-4">
             <FileText className="w-5 h-5 text-primary" />
-            <h2 className="font-medium text-gray-900 uppercase tracking-wide text-sm">{t("Job Details", "ఆర్డర్ వివరాలు")}</h2>
+            <h2 className="font-normal text-gray-900 uppercase tracking-wide text-sm">{t("Job Details", "ఆర్డర్ వివరాలు")}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
@@ -344,7 +344,7 @@ export default function NewOrderPage() {
           <div className="flex items-center justify-between border-b border-gray-50 pb-3 mb-4">
             <div className="flex items-center gap-2">
               <Receipt className="w-5 h-5 text-primary" />
-              <h2 className="font-medium text-gray-900 uppercase tracking-wide text-sm">{t("GST Configuration", "GST వివరాలు")}</h2>
+              <h2 className="font-normal text-gray-900 uppercase tracking-wide text-sm">{t("GST Configuration", "GST వివరాలు")}</h2>
             </div>
             <div className="flex items-center gap-2">
               <label className="text-xs text-gray-500 uppercase">{t("Apply GST", "GST వర్తింపజేయి")}</label>
@@ -423,7 +423,7 @@ export default function NewOrderPage() {
                   <span>{formData.isInterState ? "IGST" : "CGST + SGST"} ({formData.gstRate}%)</span>
                   <span>₹ {formData.isInterState ? gstCalc.igst : (gstCalc.cgst + gstCalc.sgst)}</span>
                 </div>
-                <div className="flex justify-between font-medium text-sm text-primary">
+                <div className="flex justify-between font-normal text-sm text-primary">
                   <span>{t("Total with GST", "మొత్తం GST కలిపి")}</span>
                   <span>₹ {gstCalc.totalWithGST}</span>
                 </div>

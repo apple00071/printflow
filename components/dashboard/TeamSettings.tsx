@@ -298,7 +298,7 @@ export default function TeamSettings() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Team Management</h3>
+          <h3 className="text-lg font-normal text-gray-900">Team Management</h3>
           <p className="text-gray-600">Manage your team members and their permissions</p>
         </div>
         <button
@@ -319,7 +319,7 @@ export default function TeamSettings() {
             </div>
             <div>
               <p className="text-sm text-gray-600">Total Members</p>
-              <p className="text-2xl font-bold text-gray-900">{teamMembers.length}</p>
+              <p className="text-2xl font-normal text-gray-900">{teamMembers.length}</p>
             </div>
           </div>
         </div>
@@ -331,7 +331,7 @@ export default function TeamSettings() {
             </div>
             <div>
               <p className="text-sm text-gray-600">Active Members</p>
-              <p className="text-2xl font-bold text-gray-900">{activeMembers}</p>
+              <p className="text-2xl font-normal text-gray-900">{activeMembers}</p>
             </div>
           </div>
         </div>
@@ -343,7 +343,7 @@ export default function TeamSettings() {
             </div>
             <div>
               <p className="text-sm text-gray-600">Pending Invites</p>
-              <p className="text-2xl font-bold text-gray-900">{pendingMembers}</p>
+              <p className="text-2xl font-normal text-gray-900">{pendingMembers}</p>
             </div>
           </div>
         </div>
@@ -355,7 +355,7 @@ export default function TeamSettings() {
             </div>
             <div>
               <p className="text-sm text-gray-600">Admins</p>
-              <p className="text-2xl font-bold text-gray-900">{adminCount}</p>
+              <p className="text-2xl font-normal text-gray-900">{adminCount}</p>
             </div>
           </div>
         </div>
@@ -381,19 +381,19 @@ export default function TeamSettings() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider">
                   Member
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider">
                   Role
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider">
                   Joined
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-normal text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -412,7 +412,7 @@ export default function TeamSettings() {
                   <tr key={member.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div>
-                        <div className="font-medium text-gray-900">{member.name}</div>
+                        <div className="font-normal text-gray-900">{member.name}</div>
                         <div className="text-sm text-gray-500">@{getCleanUsername(member.username)}</div>
                         {member.phone && (
                           <div className="text-sm text-gray-500">{member.phone}</div>
@@ -420,7 +420,7 @@ export default function TeamSettings() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-normal ${
                         member.role === 'ADMIN' 
                           ? 'bg-purple-100 text-purple-800' 
                           : 'bg-gray-100 text-gray-800'
@@ -430,7 +430,7 @@ export default function TeamSettings() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-normal ${
                         getMemberStatus(member.username) === 'ACTIVE' 
                           ? 'bg-green-100 text-green-800' 
                           : getMemberStatus(member.username) === 'PENDING'
@@ -478,7 +478,7 @@ export default function TeamSettings() {
           >
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white">
-              <h2 className="text-xl font-bold text-gray-900">
+              <h2 className="text-xl font-normal text-gray-900">
                 {editingMember ? 'Edit Team Member' : 'Add Team Member'}
               </h2>
               <button 
@@ -496,7 +496,7 @@ export default function TeamSettings() {
             {/* Modal Content */}
             <div className="p-6 space-y-4 overflow-y-auto">
               <div>
-                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Full Name</label>
+                <label className="block text-[10px] font-normal text-gray-500 uppercase tracking-widest mb-1.5">Full Name</label>
                 <input
                   type="text"
                   value={newMember.name}
@@ -506,7 +506,7 @@ export default function TeamSettings() {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Email Address</label>
+                <label className="block text-[10px] font-normal text-gray-500 uppercase tracking-widest mb-1.5">Email Address</label>
                 <input
                   type="email"
                   value={newMember.email}
@@ -517,7 +517,7 @@ export default function TeamSettings() {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Phone Number (Optional)</label>
+                <label className="block text-[10px] font-normal text-gray-500 uppercase tracking-widest mb-1.5">Phone Number (Optional)</label>
                 <input
                   type="tel"
                   value={newMember.phone}
@@ -527,12 +527,12 @@ export default function TeamSettings() {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Access Role</label>
+                <label className="block text-[10px] font-normal text-gray-500 uppercase tracking-widest mb-1.5">Access Role</label>
                 <div className="grid grid-cols-2 gap-3 mt-1">
                   <button
                     type="button"
                     onClick={() => setNewMember({ ...newMember, role: 'WORKER' })}
-                    className={`px-4 py-3 rounded-xl border text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    className={`px-4 py-3 rounded-xl border text-sm font-normal transition-all flex items-center justify-center gap-2 ${
                       newMember.role === 'WORKER'
                         ? 'border-primary bg-primary/5 text-primary'
                         : 'border-gray-200 text-gray-600 hover:border-gray-300'
@@ -543,7 +543,7 @@ export default function TeamSettings() {
                   <button
                     type="button"
                     onClick={() => setNewMember({ ...newMember, role: 'ADMIN' })}
-                    className={`px-4 py-3 rounded-xl border text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    className={`px-4 py-3 rounded-xl border text-sm font-normal transition-all flex items-center justify-center gap-2 ${
                       newMember.role === 'ADMIN'
                         ? 'border-primary bg-primary/5 text-primary'
                         : 'border-gray-200 text-gray-600 hover:border-gray-300'
@@ -564,14 +564,14 @@ export default function TeamSettings() {
                   setNewMember({ name: '', email: '', phone: '', role: 'WORKER' });
                   setEditingMember(null);
                 }}
-                className="flex-1 px-4 py-3 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors font-medium text-sm"
+                className="flex-1 px-4 py-3 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors font-normal text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddMember}
                 disabled={addingMember}
-                className="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 disabled:opacity-50 transition-all font-semibold text-sm shadow-lg shadow-primary/20"
+                className="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 disabled:opacity-50 transition-all font-normal text-sm shadow-lg shadow-primary/20"
               >
                 {addingMember ? (
                   <div className="flex items-center justify-center">

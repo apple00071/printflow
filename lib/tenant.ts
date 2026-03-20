@@ -36,3 +36,14 @@ export async function checkOrderLimit(tenant: { plan?: string; subscription_tier
   }
   return { allowed: true }
 }
+
+export async function getTenantBySlug(supabase: SupabaseClient, slug: string) {
+  const { data, error } = await supabase
+    .from('tenants')
+    .select('*')
+    .eq('slug', slug)
+    .single();
+
+  if (error) return null;
+  return data;
+}

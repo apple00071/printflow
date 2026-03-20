@@ -205,7 +205,7 @@ export default function DashboardLayout({
                   "flex flex-col transition-all duration-300",
                   isSidebarOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 pointer-events-none"
                 )}>
-                  <span className="text-sm font-medium">Super Admin</span>
+                  <span className="text-sm font-normal">Super Admin</span>
                   <span className="text-[10px] opacity-70">SaaS Management</span>
                 </div>
               </Link>

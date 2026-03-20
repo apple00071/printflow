@@ -94,11 +94,11 @@ export const Logo: React.FC<LogoProps> = ({
 
       {showText && (
         <div className="flex flex-col leading-tight">
-          <div className={cn("flex items-center tracking-tighter uppercase font-bold", currentSize.text)}>
+          <div className={cn("flex items-center tracking-tighter uppercase font-normal", currentSize.text)}>
             <span className={primaryColor}>Print</span>
             <span className={cn("ml-1.5", accentColor)}>Flow</span>
           </div>
-          <span className={cn("tracking-[0.2em] font-medium uppercase font-sans", currentSize.subtext, subtextColor)}>
+          <span className={cn("tracking-[0.2em] font-normal uppercase font-sans", currentSize.subtext, subtextColor)}>
             Print Shop Software
           </span>
         </div>

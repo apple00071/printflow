@@ -24,6 +24,7 @@ interface OrderData {
   gstin?: string;
   hsnCode?: string;
   file_url?: string;
+  tenantId?: string; // Optional for public orders
 }
 
 interface CustomerData {
@@ -69,14 +70,26 @@ export async function createOrder(data: OrderData) {
   const superAdmin = await isSuperAdmin(supabase);
   
   // For super admin, create orders without tenant restriction
-  // For regular users, require tenant context
+  // For regular users, require tenant context (either from session or passed explicitly for public pages)
   let tenant;
   if (superAdmin) {
-    // Super admin can create orders without tenant context
-    // Use a default/system tenant or null
-    tenant = null;
+    // Super admin can create orders directly (optionally for a tenant if tenantId is provided)
+    if (data.tenantId) {
+      const { data: tenantData } = await supabase.from('tenants').select('*').eq('id', data.tenantId).single();
+      tenant = tenantData;
+    } else {
+      tenant = null;
+    }
   } else {
+    // If not super admin, we either have a session tenant or we are a public user for a specific tenant
     tenant = await getCurrentTenant(supabase);
+    
+    // If no session tenant, check if tenantId was passed (Public Page scenario)
+    if (!tenant && data.tenantId) {
+      const { data: tenantData } = await supabase.from('tenants').select('*').eq('id', data.tenantId).single();
+      tenant = tenantData;
+    }
+
     if (!tenant) throw new Error("Unauthorized: Tenant context missing");
   }
 

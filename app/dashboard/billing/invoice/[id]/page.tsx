@@ -95,7 +95,7 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
           </Link>
           <button 
             onClick={handlePrint}
-            className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all font-bold"
+            className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all font-normal"
           >
             <Printer className="w-4 h-4" />
             {t("Print Invoice", "ప్రింట్ బిల్")}
@@ -123,7 +123,7 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
                 ) : (
                   <div className="flex items-center gap-3 mb-4">
                     <Printer className="w-10 h-10 text-primary" />
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tighter uppercase">{tenant.name}</h1>
+                    <h1 className="text-3xl font-normal text-gray-900 tracking-tighter uppercase">{tenant.name}</h1>
                   </div>
                 )}
                 
@@ -131,14 +131,14 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
                   {tenant.city && <p className="flex items-center gap-2"><MapPin className="w-3 h-3" /> {tenant.city}, {tenant.state}</p>}
                   {tenant.phone && <p className="flex items-center gap-2"><Phone className="w-3 h-3" /> {tenant.phone}</p>}
                   {tenant.email && <p className="flex items-center gap-2"><Mail className="w-3 h-3" /> {tenant.email}</p>}
-                  {tenant.gst_number && <p className="font-bold text-gray-700">GSTIN: {tenant.gst_number}</p>}
+                  {tenant.gst_number && <p className="font-normal text-gray-700">GSTIN: {tenant.gst_number}</p>}
                 </div>
               </div>
 
               <div className="md:text-right space-y-4">
-                <h2 className="text-5xl font-black text-primary/10 uppercase tracking-tighter absolute top-0 right-0 hidden md:block">{t("Invoice", "ఇన్వాయిస్")}</h2>
+                <h2 className="text-5xl font-normal text-primary/10 uppercase tracking-tighter absolute top-0 right-0 hidden md:block">{t("Invoice", "ఇన్వాయిస్")}</h2>
                 <div className="pt-12 md:pt-16">
-                  <p className="text-sm font-bold text-gray-900">{t("Invoice #", "ఇన్వాయిస్ నంబర్:")} <span className="text-primary">{order.invoice_number || "Draft"}</span></p>
+                  <p className="text-sm font-normal text-gray-900">{t("Invoice #", "ఇన్వాయిస్ నంబర్:")} <span className="text-primary">{order.invoice_number || "Draft"}</span></p>
                   <p className="text-xs text-gray-500">{t("Date", "తేదీ")}: {formatDate(order.invoice_date || order.id)}</p>
                 </div>
               </div>
@@ -150,9 +150,9 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-gray-50 p-6 rounded-2xl border border-gray-100">
               <div className="space-y-2">
                 <h3 className="text-[10px] text-gray-400 uppercase tracking-widest border-b border-gray-200 pb-2 mb-2">{t("Bill To", "కస్టమర్")}</h3>
-                <p className="text-lg font-bold text-gray-900">{order.customers.name}</p>
+                <p className="text-lg font-normal text-gray-900">{order.customers.name}</p>
                 <p className="text-sm text-gray-600">{order.customers.phone}</p>
-                {order.customers.gstin && <p className="text-xs font-bold text-primary mt-1">GSTIN: {order.customers.gstin}</p>}
+                {order.customers.gstin && <p className="text-xs font-normal text-primary mt-1">GSTIN: {order.customers.gstin}</p>}
               </div>
               <div className="space-y-2">
                 <h3 className="text-[10px] text-gray-400 uppercase tracking-widest border-b border-gray-200 pb-2 mb-2">{t("Order Meta", "ఆర్డర్ వివరాలు")}</h3>
@@ -173,21 +173,21 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
                       {order.gst_type !== 'NONE' && (
                         <th className="px-4 py-4 text-right">{t("GST", "GST")} (%)</th>
                       )}
-                      <th className="px-4 py-4 text-right font-bold">{t("Amount", "ధర")}</th>
+                      <th className="px-4 py-4 text-right font-normal">{t("Amount", "ధర")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
                     <tr>
                       <td className="px-4 py-8">
-                        <p className="font-bold text-gray-900">{order.job_type}</p>
+                        <p className="font-normal text-gray-900">{order.job_type}</p>
                         <p className="text-xs text-gray-500 mt-1">{order.paper_type || "Standard Printing"}</p>
                       </td>
                       <td className="px-4 py-8 text-center">{order.quantity}</td>
-                      <td className="px-4 py-8 text-right font-medium">{formatCurrency(order.taxable_amount || order.total_amount)}</td>
+                      <td className="px-4 py-8 text-right font-normal">{formatCurrency(order.taxable_amount || order.total_amount)}</td>
                       {order.gst_type !== 'NONE' && (
                         <td className="px-4 py-8 text-right">{order.gst_rate}%</td>
                       )}
-                      <td className="px-4 py-8 text-right font-black text-gray-900">{formatCurrency(order.total_amount)}</td>
+                      <td className="px-4 py-8 text-right font-normal text-gray-900">{formatCurrency(order.total_amount)}</td>
                     </tr>
                   </tbody>
                </table>
@@ -198,7 +198,7 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
                <div className="flex-1 space-y-6">
                  <div>
                     <h4 className="text-[10px] text-gray-400 uppercase tracking-widest mb-2">{t("Amount in words", "అక్షరాలలో మొత్తం")}</h4>
-                    <p className="text-sm font-bold text-gray-800 italic bg-gray-50 p-3 rounded-lg border border-gray-100">{amountInWords(order.total_amount)}</p>
+                    <p className="text-sm font-normal text-gray-800 italic bg-gray-50 p-3 rounded-lg border border-gray-100">{amountInWords(order.total_amount)}</p>
                  </div>
                  
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -226,7 +226,7 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
                   <div className="space-y-2 px-2 border-b border-gray-100 pb-4 mb-4">
                     <div className="flex justify-between text-xs">
                        <span className="text-gray-500">{t("Sub Total", "మొత్తం")}</span>
-                       <span className="font-bold">{formatCurrency(order.taxable_amount || order.total_amount)}</span>
+                       <span className="font-normal">{formatCurrency(order.taxable_amount || order.total_amount)}</span>
                     </div>
                     {order.gst_type === 'CGST_SGST' && (
                       <>
@@ -249,16 +249,16 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
                   </div>
 
                   <div className="flex justify-between items-center bg-primary text-white p-6 rounded-2xl shadow-2xl shadow-primary/30 transform scale-105 origin-right">
-                    <span className="text-[10px] font-black uppercase tracking-widest">{t("Grand Total", "మొత్తం చెల్లించాల్సింది")}</span>
-                    <span className="text-3xl font-black">{formatCurrency(order.total_amount)}</span>
+                    <span className="text-[10px] font-normal uppercase tracking-widest">{t("Grand Total", "మొత్తం చెల్లించాల్సింది")}</span>
+                    <span className="text-3xl font-normal">{formatCurrency(order.total_amount)}</span>
                   </div>
 
                   <div className="pt-8 space-y-2 px-4 italic">
                     <div className="flex justify-between text-sm text-green-600">
                        <span className="text-gray-400 uppercase text-[9px] tracking-widest">{t("Advance Paid", "అడ్వాన్స్")}</span>
-                       <span className="font-bold">-{formatCurrency(order.advance_paid)}</span>
+                       <span className="font-normal">-{formatCurrency(order.advance_paid)}</span>
                     </div>
-                    <div className="flex justify-between text-lg font-black text-primary pt-2 border-t border-dashed border-gray-200">
+                    <div className="flex justify-between text-lg font-normal text-primary pt-2 border-t border-dashed border-gray-200">
                        <span className="text-gray-400 uppercase text-[9px] tracking-widest font-normal">{t("Balance Due", "బకాయి")}</span>
                        <span>{formatCurrency(order.total_amount - order.advance_paid)}</span>
                     </div>
@@ -273,7 +273,7 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
                   <p className="text-[10px] text-gray-400 uppercase tracking-widest">{t("Customer's Sign", "కస్టమర్ సంతకం")}</p>
                </div>
                <div className="text-center space-y-2">
-                  <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">{t("For", "కోసం")} {tenant.name}</p>
+                  <p className="text-[10px] text-primary font-normal uppercase tracking-[0.2em]">{t("For", "కోసం")} {tenant.name}</p>
                   <p className="text-[8px] text-gray-400 italic mb-8">{t("Authorized Signatory", "అధికారిక సంతకం")}</p>
                   <div className="w-48 border-b-2 border-primary mx-auto" />
                </div>

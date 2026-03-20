@@ -168,7 +168,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="animate-fade-up">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-syne leading-tight mb-4">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-normal font-syne leading-tight mb-4">
                 <span className="text-[#1e3a5f]">Your Print Shop Deserves</span><br />
                 <span className="text-[#f97316]">Better Than WhatsApp Notes</span>
               </h1>
@@ -178,13 +178,13 @@ export default function LandingPage() {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                <Link href="/signup" className="bg-[#f97316] text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-[#ea580c] transition-colors flex items-center justify-center">
+                <Link href="/signup" className="bg-[#f97316] text-white px-8 py-4 rounded-lg text-lg font-normal hover:bg-[#ea580c] transition-colors flex items-center justify-center">
                   Start Free — No Credit Card
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Link>
                 <button 
                   onClick={scrollToFeatures}
-                  className="border-2 border-[#1e3a5f] text-[#1e3a5f] px-8 py-4 rounded-lg text-lg font-semibold hover:bg-[#1e3a5f] hover:text-white transition-colors"
+                  className="border-2 border-[#1e3a5f] text-[#1e3a5f] px-8 py-4 rounded-lg text-lg font-normal hover:bg-[#1e3a5f] hover:text-white transition-colors"
                 >
                   See How It Works
                 </button>
@@ -216,7 +216,7 @@ export default function LandingPage() {
                 <div className="bg-white rounded-[2.5rem] p-4">
                   {/* Phone Status Bar */}
                   <div className="flex justify-between items-center mb-4 text-xs">
-                    <span className="font-semibold">9:41</span>
+                    <span className="font-normal">9:41</span>
                     <div className="flex space-x-1">
                       <div className="w-4 h-3 bg-gray-800 rounded-sm"></div>
                       <div className="w-4 h-3 bg-gray-800 rounded-sm"></div>
@@ -237,13 +237,13 @@ export default function LandingPage() {
                     <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="font-semibold text-sm">Visiting Cards</p>
+                          <p className="font-normal text-sm">Visiting Cards</p>
                           <p className="text-xs text-gray-600">Ravi Kumar • 500 pcs</p>
                         </div>
                         <span className="bg-green-500 text-white text-xs px-2 py-1 rounded">Ready</span>
                       </div>
                       <div className="flex justify-between items-center mt-2">
-                        <span className="text-sm font-semibold">₹1,500</span>
+                        <span className="text-sm font-normal">₹1,500</span>
                         <button className="bg-green-500 text-white text-xs px-3 py-1 rounded flex items-center">
                           <MessageCircle className="w-3 h-3 mr-1" />
                           WhatsApp
@@ -254,13 +254,13 @@ export default function LandingPage() {
                     <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="font-semibold text-sm">Wedding Cards</p>
+                          <p className="font-normal text-sm">Wedding Cards</p>
                           <p className="text-xs text-gray-600">Suresh • 200 sets</p>
                         </div>
                         <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded">Printing</span>
                       </div>
                       <div className="flex justify-between items-center mt-2">
-                        <span className="text-sm font-semibold">₹5,000</span>
+                        <span className="text-sm font-normal">₹5,000</span>
                         <span className="text-xs text-gray-500">Due tomorrow</span>
                       </div>
                     </div>
@@ -268,13 +268,13 @@ export default function LandingPage() {
                     <div className="bg-orange-50 border border-orange-200 p-3 rounded-lg">
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="font-semibold text-sm">Letterheads</p>
+                          <p className="font-normal text-sm">Letterheads</p>
                           <p className="text-xs text-gray-600">Anand • 1000 pcs</p>
                         </div>
                         <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded">Design</span>
                       </div>
                       <div className="flex justify-between items-center mt-2">
-                        <span className="text-sm font-semibold">₹800</span>
+                        <span className="text-sm font-normal">₹800</span>
                         <span className="text-xs text-gray-500">Pending approval</span>
                       </div>
                     </div>
@@ -289,14 +289,14 @@ export default function LandingPage() {
       {/* Pain Points Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold font-syne text-center mb-12 text-[#1e3a5f]">
+          <h2 className="text-4xl font-normal font-syne text-center mb-12 text-[#1e3a5f]">
             Sound familiar?
           </h2>
           
           <div className="grid md:grid-cols-3 gap-8">
             <div className="bg-white p-6 rounded-xl border-l-4 border-[#f97316] shadow-sm hover-lift">
               <div className="text-4xl mb-4">😩</div>
-              <h3 className="text-xl font-semibold mb-3 text-[#1e3a5f]">Orders lost in WhatsApp chats</h3>
+              <h3 className="text-xl font-normal mb-3 text-[#1e3a5f]">Orders lost in WhatsApp chats</h3>
               <p className="text-gray-600">
                 You get 20 orders on WhatsApp. Three customers call asking where their job is. You have no idea which message to look for.
               </p>
@@ -304,7 +304,7 @@ export default function LandingPage() {
             
             <div className="bg-white p-6 rounded-xl border-l-4 border-[#f97316] shadow-sm hover-lift">
               <div className="text-4xl mb-4">📋</div>
-              <h3 className="text-xl font-semibold mb-3 text-[#1e3a5f]">Writing invoices on paper</h3>
+              <h3 className="text-xl font-normal mb-3 text-[#1e3a5f]">Writing invoices on paper</h3>
               <p className="text-gray-600">
                 You spend 20 minutes writing each bill by hand. GST calculations are wrong sometimes. Customers want digital receipts but you can&apos;t send them.
               </p>
@@ -312,7 +312,7 @@ export default function LandingPage() {
             
             <div className="bg-white p-6 rounded-xl border-l-4 border-[#f97316] shadow-sm hover-lift">
               <div className="text-4xl mb-4">💸</div>
-              <h3 className="text-xl font-semibold mb-3 text-[#1e3a5f]">Customers who haven&apos;t paid</h3>
+              <h3 className="text-xl font-normal mb-3 text-[#1e3a5f]">Customers who haven&apos;t paid</h3>
               <p className="text-gray-600">
                 You finished the job. They said they&apos;ll pay later. Now you have ₹40,000 outstanding and no system to track who owes what.
               </p>
@@ -324,7 +324,7 @@ export default function LandingPage() {
       {/* Features Section */}
       <section ref={featuresRef} className="py-16 px-4 sm:px-6 lg:px-8 bg-[#fafaf8]">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold font-syne text-center mb-4 text-[#1e3a5f]">
+          <h2 className="text-4xl font-normal font-syne text-center mb-4 text-[#1e3a5f]">
             Everything your print shop needs
           </h2>
           <p className="text-xl text-center text-gray-600 mb-12 max-w-3xl mx-auto">
@@ -336,7 +336,7 @@ export default function LandingPage() {
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
                 <Package className="w-6 h-6 text-[#1e3a5f]" />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-[#1e3a5f]">Order Tracking</h3>
+              <h3 className="text-xl font-normal mb-3 text-[#1e3a5f]">Order Tracking</h3>
               <p className="text-gray-600">
                 Create and track every job from received to delivered. Never lose an order again.
               </p>
@@ -346,7 +346,7 @@ export default function LandingPage() {
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
                 <FileText className="w-6 h-6 text-green-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-[#1e3a5f]">GST Invoices</h3>
+              <h3 className="text-xl font-normal mb-3 text-[#1e3a5f]">GST Invoices</h3>
               <p className="text-gray-600">
                 Auto-generate GST-compliant invoices with CGST, SGST, and IGST. Sequential invoice numbers. Print or share instantly.
               </p>
@@ -356,7 +356,7 @@ export default function LandingPage() {
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
                 <MessageCircle className="w-6 h-6 text-purple-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-[#1e3a5f]">WhatsApp Notifications</h3>
+              <h3 className="text-xl font-normal mb-3 text-[#1e3a5f]">WhatsApp Notifications</h3>
               <p className="text-gray-600">
                 One tap sends your customer a message: &quot;Your order is ready. Balance due: ₹500.&quot; No typing needed.
               </p>
@@ -366,7 +366,7 @@ export default function LandingPage() {
               <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
                 <Users className="w-6 h-6 text-[#f97316]" />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-[#1e3a5f]">Customer Ledger</h3>
+              <h3 className="text-xl font-normal mb-3 text-[#1e3a5f]">Customer Ledger</h3>
               <p className="text-gray-600">
                 See every customer&apos;s full order history and outstanding balance at a glance.
               </p>
@@ -376,7 +376,7 @@ export default function LandingPage() {
               <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
                 <Globe className="w-6 h-6 text-indigo-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-[#1e3a5f]">Online Order Form</h3>
+              <h3 className="text-xl font-normal mb-3 text-[#1e3a5f]">Online Order Form</h3>
               <p className="text-gray-600">
                 Share your own link — customers fill their order details and upload files. It lands directly in your dashboard.
               </p>
@@ -386,7 +386,7 @@ export default function LandingPage() {
               <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center mb-4">
                 <BarChart className="w-6 h-6 text-pink-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-[#1e3a5f]">Business Dashboard</h3>
+              <h3 className="text-xl font-normal mb-3 text-[#1e3a5f]">Business Dashboard</h3>
               <p className="text-gray-600">
                 Today&apos;s orders, this month&apos;s revenue, pending jobs, top customers. Your business at a glance.
               </p>
@@ -405,7 +405,7 @@ export default function LandingPage() {
 
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold font-syne mb-4">
+            <h2 className="text-4xl md:text-5xl font-normal font-syne mb-4">
               Up and running in <span className="text-[#f97316]">5 minutes</span>
             </h2>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
@@ -419,14 +419,14 @@ export default function LandingPage() {
 
             <div className="flex flex-col items-center text-center group translate-y-0 hover:-translate-y-2 transition-transform duration-300">
               <div className="relative mb-8">
-                <div className="w-20 h-20 bg-[#1e3a5f] rounded-2xl flex items-center justify-center text-3xl font-bold border border-white/10 group-hover:border-[#f97316]/50 transition-colors">
+                <div className="w-20 h-20 bg-[#1e3a5f] rounded-2xl flex items-center justify-center text-3xl font-normal border border-white/10 group-hover:border-[#f97316]/50 transition-colors">
                   <UserPlus className="w-10 h-10 text-[#f97316]" />
                 </div>
-                <div className="absolute -top-3 -right-3 w-8 h-8 bg-[#f97316] rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
+                <div className="absolute -top-3 -right-3 w-8 h-8 bg-[#f97316] rounded-full flex items-center justify-center text-sm font-normal shadow-lg">
                   1
                 </div>
               </div>
-              <h3 className="text-2xl font-bold mb-4 font-syne">Sign up free</h3>
+              <h3 className="text-2xl font-normal mb-4 font-syne">Sign up free</h3>
               <p className="text-gray-400 leading-relaxed">
                 Enter your business name and email. No credit card required. No demo call needed.
               </p>
@@ -434,14 +434,14 @@ export default function LandingPage() {
             
             <div className="flex flex-col items-center text-center group translate-y-0 hover:-translate-y-2 transition-transform duration-300">
               <div className="relative mb-8">
-                <div className="w-20 h-20 bg-[#1e3a5f] rounded-2xl flex items-center justify-center text-3xl font-bold border border-white/10 group-hover:border-[#f97316]/50 transition-colors">
+                <div className="w-20 h-20 bg-[#1e3a5f] rounded-2xl flex items-center justify-center text-3xl font-normal border border-white/10 group-hover:border-[#f97316]/50 transition-colors">
                   <Settings className="w-10 h-10 text-[#f97316]" />
                 </div>
-                <div className="absolute -top-3 -right-3 w-8 h-8 bg-[#f97316] rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
+                <div className="absolute -top-3 -right-3 w-8 h-8 bg-[#f97316] rounded-full flex items-center justify-center text-sm font-normal shadow-lg">
                   2
                 </div>
               </div>
-              <h3 className="text-2xl font-bold mb-4 font-syne">Set up your shop</h3>
+              <h3 className="text-2xl font-normal mb-4 font-syne">Set up your shop</h3>
               <p className="text-gray-400 leading-relaxed">
                 Add your job types, prices, and GST number. Setup takes less than 3 minutes.
               </p>
@@ -449,14 +449,14 @@ export default function LandingPage() {
             
             <div className="flex flex-col items-center text-center group translate-y-0 hover:-translate-y-2 transition-transform duration-300">
               <div className="relative mb-8">
-                <div className="w-20 h-20 bg-[#1e3a5f] rounded-2xl flex items-center justify-center text-3xl font-bold border border-white/10 group-hover:border-[#f97316]/50 transition-colors">
+                <div className="w-20 h-20 bg-[#1e3a5f] rounded-2xl flex items-center justify-center text-3xl font-normal border border-white/10 group-hover:border-[#f97316]/50 transition-colors">
                   <Rocket className="w-10 h-10 text-[#f97316]" />
                 </div>
-                <div className="absolute -top-3 -right-3 w-8 h-8 bg-[#f97316] rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
+                <div className="absolute -top-3 -right-3 w-8 h-8 bg-[#f97316] rounded-full flex items-center justify-center text-sm font-normal shadow-lg">
                   3
                 </div>
               </div>
-              <h3 className="text-2xl font-bold mb-4 font-syne">Manage orders</h3>
+              <h3 className="text-2xl font-normal mb-4 font-syne">Manage orders</h3>
               <p className="text-gray-400 leading-relaxed">
                 Create your first order and share the job details instantly via WhatsApp.
               </p>
@@ -475,10 +475,10 @@ export default function LandingPage() {
 
             <div className="relative z-10">
               <div className="text-center mb-16">
-                <span className="bg-[#f97316] text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider mb-4 inline-block">
+                <span className="bg-[#f97316] text-white text-xs font-normal px-4 py-1.5 rounded-full uppercase tracking-wider mb-4 inline-block">
                   Compliance Made Simple
                 </span>
-                <h2 className="text-3xl md:text-5xl font-bold font-syne mb-4">
+                <h2 className="text-3xl md:text-5xl font-normal font-syne mb-4">
                   GST invoices. Auto-calculated. Every time.
                 </h2>
               </div>
@@ -486,19 +486,19 @@ export default function LandingPage() {
               <div className="grid md:grid-cols-3 gap-8">
                 <div className="bg-white/5 border border-white/10 p-8 rounded-2xl hover:bg-white/10 transition-colors">
                   <ShieldCheck className="w-12 h-12 text-[#f97316] mb-6" />
-                  <div className="text-2xl font-bold mb-2 font-syne">CGST + SGST</div>
+                  <div className="text-2xl font-normal mb-2 font-syne">CGST + SGST</div>
                   <p className="text-gray-400">Perfectly split for local intra-state orders across India.</p>
                 </div>
                 
                 <div className="bg-white/5 border border-white/10 p-8 rounded-2xl hover:bg-white/10 transition-colors">
                   <Globe className="w-12 h-12 text-[#f97316] mb-6" />
-                  <div className="text-2xl font-bold mb-2 font-syne">IGST Support</div>
+                  <div className="text-2xl font-normal mb-2 font-syne">IGST Support</div>
                   <p className="text-gray-400">Handle inter-state digital orders with correct IGST automatically.</p>
                 </div>
                 
                 <div className="bg-white/5 border border-white/10 p-8 rounded-2xl hover:bg-white/10 transition-colors">
                   <Download className="w-12 h-12 text-[#f97316] mb-6" />
-                  <div className="text-2xl font-bold mb-2 font-syne">GSTR-1 Ready</div>
+                  <div className="text-2xl font-normal mb-2 font-syne">GSTR-1 Ready</div>
                   <p className="text-gray-400">Export clean CSV reports for your CA in seconds. (Pro feature)</p>
                 </div>
               </div>
@@ -516,7 +516,7 @@ export default function LandingPage() {
       {/* Comparison Table */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold font-syne text-center mb-12 text-[#1e3a5f]">
+          <h2 className="text-4xl font-normal font-syne text-center mb-12 text-[#1e3a5f]">
             Why small shops choose PrintFlow
           </h2>
           
@@ -527,48 +527,48 @@ export default function LandingPage() {
                   <th className="text-left py-3 px-4">Feature</th>
                   <th className="text-center py-3 px-4">Paper/WhatsApp</th>
                   <th className="text-center py-3 px-4">eFlexo</th>
-                  <th className="text-center py-3 px-4 bg-orange-50 text-orange-600 font-semibold">PrintFlow</th>
+                  <th className="text-center py-3 px-4 bg-orange-50 text-orange-600 font-normal">PrintFlow</th>
                 </tr>
               </thead>
               <tbody>
                 <tr className="border-b">
-                  <td className="py-3 px-4 font-medium">Order tracking</td>
+                  <td className="py-3 px-4 font-normal">Order tracking</td>
                   <td className="text-center py-3 px-4">❌ Manual</td>
                   <td className="text-center py-3 px-4">✅ Yes</td>
                   <td className="text-center py-3 px-4 bg-orange-50">✅ Yes</td>
                 </tr>
                 <tr className="border-b">
-                  <td className="py-3 px-4 font-medium">GST invoices</td>
+                  <td className="py-3 px-4 font-normal">GST invoices</td>
                   <td className="text-center py-3 px-4">❌ Manual</td>
                   <td className="text-center py-3 px-4">✅ Yes</td>
                   <td className="text-center py-3 px-4 bg-orange-50">✅ Yes</td>
                 </tr>
                 <tr className="border-b">
-                  <td className="py-3 px-4 font-medium">Free plan</td>
+                  <td className="py-3 px-4 font-normal">Free plan</td>
                   <td className="text-center py-3 px-4">✅ Free</td>
                   <td className="text-center py-3 px-4">❌ ₹6,970/yr</td>
                   <td className="text-center py-3 px-4 bg-orange-50">✅ Free forever</td>
                 </tr>
                 <tr className="border-b">
-                  <td className="py-3 px-4 font-medium">Mobile-first</td>
+                  <td className="py-3 px-4 font-normal">Mobile-first</td>
                   <td className="text-center py-3 px-4">✅ WhatsApp</td>
                   <td className="text-center py-3 px-4">❌ Desktop only</td>
                   <td className="text-center py-3 px-4 bg-orange-50">✅ Built for phone</td>
                 </tr>
                 <tr className="border-b">
-                  <td className="py-3 px-4 font-medium">WhatsApp notify</td>
+                  <td className="py-3 px-4 font-normal">WhatsApp notify</td>
                   <td className="text-center py-3 px-4">❌ Manual</td>
                   <td className="text-center py-3 px-4">❌ SMS only</td>
                   <td className="text-center py-3 px-4 bg-orange-50">✅ One tap</td>
                 </tr>
                 <tr className="border-b">
-                  <td className="py-3 px-4 font-medium">Setup time</td>
+                  <td className="py-3 px-4 font-normal">Setup time</td>
                   <td className="text-center py-3 px-4">❌ None needed</td>
                   <td className="text-center py-3 px-4">❌ Book a demo</td>
                   <td className="text-center py-3 px-4 bg-orange-50">✅ 5 minutes</td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 font-medium">Telugu / Hindi</td>
+                  <td className="py-3 px-4 font-normal">Telugu / Hindi</td>
                   <td className="text-center py-3 px-4">✅</td>
                   <td className="text-center py-3 px-4">❌ English only</td>
                   <td className="text-center py-3 px-4 bg-orange-50">✅ EN+TE+HI</td>
@@ -582,15 +582,15 @@ export default function LandingPage() {
       {/* Pricing */}
       <section id="pricing" className="py-16 px-4 sm:px-6 lg:px-8 bg-[#fafaf8]">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold font-syne text-center mb-4 text-[#1e3a5f]">
+          <h2 className="text-4xl font-normal font-syne text-center mb-4 text-[#1e3a5f]">
             Start free. Upgrade when you grow.
           </h2>
           
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {/* Free Plan */}
             <div className="bg-white rounded-xl shadow-sm p-8 hover-lift">
-              <h3 className="text-2xl font-bold text-[#1e3a5f] mb-2">FREE</h3>
-              <div className="text-3xl font-bold mb-4">
+              <h3 className="text-2xl font-normal text-[#1e3a5f] mb-2">FREE</h3>
+              <div className="text-3xl font-normal mb-4">
                 ₹0<span className="text-lg font-normal text-gray-600">/month</span>
               </div>
               <p className="text-gray-600 mb-6">Perfect for small shops just getting started</p>
@@ -622,18 +622,18 @@ export default function LandingPage() {
                 </li>
               </ul>
               
-              <Link href="/signup" className="w-full bg-gray-100 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors text-center block">
+              <Link href="/signup" className="w-full bg-gray-100 text-gray-800 py-3 rounded-lg font-normal hover:bg-gray-200 transition-colors text-center block">
                 Start Free
               </Link>
             </div>
 
             {/* Pro Plan */}
             <div className="bg-white rounded-xl shadow-lg border-2 border-[#f97316] p-8 hover-lift transform scale-105">
-              <div className="bg-[#f97316] text-white text-sm font-semibold py-1 px-3 rounded-full inline-block mb-4">
+              <div className="bg-[#f97316] text-white text-sm font-normal py-1 px-3 rounded-full inline-block mb-4">
                 MOST POPULAR
               </div>
-              <h3 className="text-2xl font-bold text-[#1e3a5f] mb-2">PRO</h3>
-              <div className="text-3xl font-bold mb-4">
+              <h3 className="text-2xl font-normal text-[#1e3a5f] mb-2">PRO</h3>
+              <div className="text-3xl font-normal mb-4">
                 ₹499<span className="text-lg font-normal text-gray-600">/month</span>
               </div>
               <p className="text-gray-600 mb-6">For growing print shops</p>
@@ -665,15 +665,15 @@ export default function LandingPage() {
                 </li>
               </ul>
               
-              <Link href="/signup" className="w-full bg-[#f97316] text-white py-3 rounded-lg font-semibold hover:bg-[#ea580c] transition-colors text-center block">
+              <Link href="/signup" className="w-full bg-[#f97316] text-white py-3 rounded-lg font-normal hover:bg-[#ea580c] transition-colors text-center block">
                 Start Pro Trial
               </Link>
             </div>
 
             {/* Business Plan */}
             <div className="bg-white rounded-xl shadow-sm p-8 hover-lift">
-              <h3 className="text-2xl font-bold text-[#1e3a5f] mb-2">BUSINESS</h3>
-              <div className="text-3xl font-bold mb-4">
+              <h3 className="text-2xl font-normal text-[#1e3a5f] mb-2">BUSINESS</h3>
+              <div className="text-3xl font-normal mb-4">
                 ₹999<span className="text-lg font-normal text-gray-600">/month</span>
               </div>
               <p className="text-gray-600 mb-6">For large print shops and chains</p>
@@ -705,7 +705,7 @@ export default function LandingPage() {
                 </li>
               </ul>
               
-              <Link href="/signup" className="w-full bg-gray-100 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors text-center block">
+              <Link href="/signup" className="w-full bg-gray-100 text-gray-800 py-3 rounded-lg font-normal hover:bg-gray-200 transition-colors text-center block">
                 Contact Us
               </Link>
             </div>
@@ -720,7 +720,7 @@ export default function LandingPage() {
       {/* Testimonials */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold font-syne text-center mb-12 text-[#1e3a5f]">
+          <h2 className="text-4xl font-normal font-syne text-center mb-12 text-[#1e3a5f]">
             Trusted by print shops across India
           </h2>
           
@@ -731,11 +731,11 @@ export default function LandingPage() {
                 &quot;Earlier I used to write 30 invoices a week by hand. Now PrintFlow generates them in seconds with GST.&quot;
               </p>
               <div className="flex items-center">
-                <div className="w-12 h-12 bg-[#1e3a5f] text-white rounded-full flex items-center justify-center font-semibold mr-3">
+                <div className="w-12 h-12 bg-[#1e3a5f] text-white rounded-full flex items-center justify-center font-normal mr-3">
                   RK
                 </div>
                 <div>
-                  <p className="font-semibold">Ravi Kumar</p>
+                  <p className="font-normal">Ravi Kumar</p>
                   <p className="text-sm text-gray-600">Sri Lakshmi Printers, Vijayawada</p>
                   <div className="flex text-yellow-400">
                     <Star className="w-4 h-4 fill-current" />
@@ -754,11 +754,11 @@ export default function LandingPage() {
                 &quot;My customers now track their own orders using the link I share. No more &apos;when is my order ready?&apos; calls.&quot;
               </p>
               <div className="flex items-center">
-                <div className="w-12 h-12 bg-[#1e3a5f] text-white rounded-full flex items-center justify-center font-semibold mr-3">
+                <div className="w-12 h-12 bg-[#1e3a5f] text-white rounded-full flex items-center justify-center font-normal mr-3">
                   SB
                 </div>
                 <div>
-                  <p className="font-semibold">Suresh Babu</p>
+                  <p className="font-normal">Suresh Babu</p>
                   <p className="text-sm text-gray-600">Flash Digital Prints, Hyderabad</p>
                   <div className="flex text-yellow-400">
                     <Star className="w-4 h-4 fill-current" />
@@ -777,11 +777,11 @@ export default function LandingPage() {
                 &quot;Free plan is more than enough for my small shop. Finally software made for shops like mine.&quot;
               </p>
               <div className="flex items-center">
-                <div className="w-12 h-12 bg-[#1e3a5f] text-white rounded-full flex items-center justify-center font-semibold mr-3">
+                <div className="w-12 h-12 bg-[#1e3a5f] text-white rounded-full flex items-center justify-center font-normal mr-3">
                   AR
                 </div>
                 <div>
-                  <p className="font-semibold">Anand Raj</p>
+                  <p className="font-normal">Anand Raj</p>
                   <p className="text-sm text-gray-600">Star Flex Prints, Chirala</p>
                   <div className="flex text-yellow-400">
                     <Star className="w-4 h-4 fill-current" />
@@ -802,19 +802,19 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto text-center">
           <div className="grid md:grid-cols-3 gap-8">
             <div>
-              <div className="text-5xl font-bold font-syne mb-2">
+              <div className="text-5xl font-normal font-syne mb-2">
                 {counters.shops}+
               </div>
               <p className="text-xl">Print shops across India</p>
             </div>
             <div>
-              <div className="text-5xl font-bold font-syne mb-2">
+              <div className="text-5xl font-normal font-syne mb-2">
                 ₹{counters.orders.toLocaleString()}+
               </div>
               <p className="text-xl">Orders managed monthly</p>
             </div>
             <div>
-              <div className="text-5xl font-bold font-syne mb-2">
+              <div className="text-5xl font-normal font-syne mb-2">
                 {counters.years}+
               </div>
               <p className="text-xl">Years serving printers</p>
@@ -826,14 +826,14 @@ export default function LandingPage() {
       {/* Final CTA */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-[#1e3a5f] text-white">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold font-syne mb-6">
+          <h2 className="text-4xl md:text-5xl font-normal font-syne mb-6">
             Your print shop runs on hard work.<br />
             Let PrintFlow handle the paperwork.
           </h2>
           <p className="text-xl mb-8 text-gray-300">
             Join printing businesses across India who manage smarter with PrintFlow. Free to start, always.
           </p>
-          <Link href="/signup" className="bg-[#f97316] text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-[#ea580c] transition-colors inline-flex items-center">
+          <Link href="/signup" className="bg-[#f97316] text-white px-8 py-4 rounded-lg text-lg font-normal hover:bg-[#ea580c] transition-colors inline-flex items-center">
             Start Free Today
             <ArrowRight className="ml-2 w-5 h-5" />
           </Link>
@@ -855,7 +855,7 @@ export default function LandingPage() {
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">Product</h4>
+              <h4 className="font-normal mb-4">Product</h4>
               <ul className="space-y-2 text-gray-600">
                 <li><a href="#features" className="hover:text-[#1e3a5f]">Features</a></li>
                 <li><a href="#pricing" className="hover:text-[#1e3a5f]">Pricing</a></li>
@@ -865,7 +865,7 @@ export default function LandingPage() {
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">Compare</h4>
+              <h4 className="font-normal mb-4">Compare</h4>
               <ul className="space-y-2 text-gray-600">
                 <li><a href="#" className="hover:text-[#1e3a5f]">vs eFlexo</a></li>
                 <li><a href="#" className="hover:text-[#1e3a5f]">vs Tally</a></li>
@@ -874,7 +874,7 @@ export default function LandingPage() {
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">Support</h4>
+              <h4 className="font-normal mb-4">Support</h4>
               <ul className="space-y-2 text-gray-600">
                 <li><a href="#" className="hover:text-[#1e3a5f]">Help Center</a></li>
                 <li><a href="#" className="hover:text-[#1e3a5f]">WhatsApp Support</a></li>

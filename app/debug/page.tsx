@@ -75,45 +75,45 @@ export default function DebugPage() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Debug Info</h1>
+      <h1 className="text-2xl font-normal mb-4">Debug Info</h1>
       
       <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-2">User:</h2>
+        <h2 className="text-xl font-normal mb-2">User:</h2>
         <pre className="bg-gray-100 p-4 rounded">
           {JSON.stringify(user, null, 2)}
         </pre>
       </div>
       
       <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-2">Profile:</h2>
+        <h2 className="text-xl font-normal mb-2">Profile:</h2>
         <pre className="bg-gray-100 p-4 rounded">
           {JSON.stringify(profile, null, 2)}
         </pre>
       </div>
       
       <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-2">Tenant:</h2>
+        <h2 className="text-xl font-normal mb-2">Tenant:</h2>
         <pre className="bg-gray-100 p-4 rounded">
           {JSON.stringify(tenant, null, 2)}
         </pre>
       </div>
       
       <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-2">Your Orders ({orders.length}):</h2>
+        <h2 className="text-xl font-normal mb-2">Your Orders ({orders.length}):</h2>
         <pre className="bg-gray-100 p-4 rounded">
           {JSON.stringify(orders, null, 2)}
         </pre>
       </div>
       
       <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-2">All Orders ({allOrders.length}):</h2>
+        <h2 className="text-xl font-normal mb-2">All Orders ({allOrders.length}):</h2>
         <pre className="bg-gray-100 p-4 rounded">
           {JSON.stringify(allOrders, null, 2)}
         </pre>
       </div>
       
       <div>
-        <h2 className="text-xl font-semibold mb-2">Check Specific Order:</h2>
+        <h2 className="text-xl font-normal mb-2">Check Specific Order:</h2>
         <input 
           type="text" 
           placeholder="Enter order ID"

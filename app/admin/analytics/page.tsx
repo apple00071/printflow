@@ -12,6 +12,7 @@ interface Analytics {
   totalOrders: number;
   monthlyRevenue: number;
   proPlans: number;
+  businessPlans: number;
   freePlans: number;
   topTenants: Tenant[];
 }
@@ -33,6 +34,7 @@ export default function AnalyticsPage() {
     totalOrders: 0,
     monthlyRevenue: 0,
     proPlans: 0,
+    businessPlans: 0,
     freePlans: 0,
     topTenants: [],
   });
@@ -61,8 +63,11 @@ export default function AnalyticsPage() {
           totalTenants: tenants.length,
           activeTenants: tenants.filter((t) => (t.plan_status || t.subscription_status)?.toUpperCase() === 'ACTIVE').length,
           totalOrders: tenants.reduce((sum, t) => sum + (t.orders_this_month || 0), 0),
-          monthlyRevenue: tenants.filter((t) => (t.plan || t.subscription_tier)?.toUpperCase() === 'PRO').length * 999,
+          monthlyRevenue: 
+            (tenants.filter((t) => (t.plan || t.subscription_tier)?.toUpperCase() === 'PRO').length * 499) +
+            (tenants.filter((t) => (t.plan || t.subscription_tier)?.toUpperCase() === 'BUSINESS').length * 999),
           proPlans: tenants.filter((t) => (t.plan || t.subscription_tier)?.toUpperCase() === 'PRO').length,
+          businessPlans: tenants.filter((t) => (t.plan || t.subscription_tier)?.toUpperCase() === 'BUSINESS').length,
           freePlans: tenants.filter((t) => (t.plan || t.subscription_tier)?.toUpperCase() === 'FREE').length,
           topTenants: sortedTenants
         };
@@ -83,7 +88,7 @@ export default function AnalyticsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
+              <h1 className="text-2xl font-normal text-gray-900">Analytics Dashboard</h1>
               <p className="text-sm text-gray-500">SaaS platform performance metrics</p>
             </div>
             <div className="flex items-center space-x-4">
@@ -127,7 +132,7 @@ export default function AnalyticsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500">Monthly Revenue (Pro Plans)</p>
-                    <p className="text-2xl font-bold text-gray-900">₹{analytics.monthlyRevenue.toLocaleString()}</p>
+                    <p className="text-2xl font-normal text-gray-900">₹{analytics.monthlyRevenue.toLocaleString()}</p>
                   </div>
                   <div className="bg-purple-100 p-3 rounded-lg">
                     <CreditCard className="w-6 h-6 text-purple-600" />
@@ -139,7 +144,7 @@ export default function AnalyticsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500">Active Tenants</p>
-                    <p className="text-2xl font-bold text-gray-900">{analytics.activeTenants}</p>
+                    <p className="text-2xl font-normal text-gray-900">{analytics.activeTenants}</p>
                   </div>
                   <div className="bg-blue-100 p-3 rounded-lg">
                     <Users className="w-6 h-6 text-blue-600" />
@@ -151,7 +156,7 @@ export default function AnalyticsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500">Total Platform Orders</p>
-                    <p className="text-2xl font-bold text-gray-900">{analytics.totalOrders}</p>
+                    <p className="text-2xl font-normal text-gray-900">{analytics.totalOrders}</p>
                   </div>
                   <div className="bg-orange-100 p-3 rounded-lg">
                     <BarChart3 className="w-6 h-6 text-orange-600" />
@@ -164,7 +169,7 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Revenue Chart */}
               <div className="bg-white p-6 rounded-xl shadow-sm border">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Overview</h3>
+                <h3 className="text-lg font-normal text-gray-900 mb-4">Revenue Overview</h3>
                 <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
                   <div className="text-center">
                     <BarChart3 className="w-12 h-12 text-gray-300 mx-auto mb-2" />
@@ -176,7 +181,7 @@ export default function AnalyticsPage() {
 
               {/* Tenant Growth Chart */}
               <div className="bg-white p-6 rounded-xl shadow-sm border">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Tenant Growth</h3>
+                <h3 className="text-lg font-normal text-gray-900 mb-4">Tenant Growth</h3>
                 <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
                   <div className="text-center">
                     <TrendingUp className="w-12 h-12 text-gray-300 mx-auto mb-2" />
@@ -190,11 +195,11 @@ export default function AnalyticsPage() {
             {/* Plan Distribution */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-xl shadow-sm border">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Plan Distribution</h3>
+                <h3 className="text-lg font-normal text-gray-900 mb-4">Plan Distribution</h3>
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">Pro Plan</span>
+                      <span className="text-sm font-normal text-gray-700">Pro Plan</span>
                       <span className="text-sm text-gray-500">{analytics.proPlans} tenants</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
@@ -204,13 +209,29 @@ export default function AnalyticsPage() {
                       ></div>
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
-                      ₹{(analytics.proPlans * 999).toLocaleString()} monthly revenue
+                      ₹{(analytics.proPlans * 499).toLocaleString()} monthly revenue
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-normal text-gray-700">Business Plan</span>
+                      <span className="text-sm text-gray-500">{analytics.businessPlans} tenants</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full" 
+                        style={{ width: analytics.totalTenants > 0 ? `${(analytics.businessPlans / analytics.totalTenants) * 100}%` : '0%' }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      ₹{(analytics.businessPlans * 999).toLocaleString()} monthly revenue
                     </p>
                   </div>
                   
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">Free Plan</span>
+                      <span className="text-sm font-normal text-gray-700">Free Plan</span>
                       <span className="text-sm text-gray-500">{analytics.freePlans} tenants</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
@@ -228,7 +249,7 @@ export default function AnalyticsPage() {
 
               {/* Top Performing Tenants */}
               <div className="bg-white p-6 rounded-xl shadow-sm border lg:col-span-2">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Performing Tenants</h3>
+                <h3 className="text-lg font-normal text-gray-900 mb-4">Top Performing Tenants</h3>
                 {analytics.topTenants.length === 0 ? (
                   <p className="text-sm text-gray-500">No active tenants with orders yet.</p>
                 ) : (
@@ -241,14 +262,14 @@ export default function AnalyticsPage() {
                             idx === 1 ? 'bg-blue-100 text-blue-600' : 
                             'bg-orange-100 text-orange-600'
                           }`}>
-                            <span className="font-medium text-sm">{idx + 1}</span>
+                            <span className="font-normal text-sm">{idx + 1}</span>
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-900">{tenant.name}</p>
+                            <p className="text-sm font-normal text-gray-900">{tenant.name}</p>
                             <p className="text-xs text-gray-500">{tenant.orders_this_month || 0} orders this month</p>
                           </div>
                         </div>
-                        <span className="text-xs px-2 py-1 bg-gray-100 rounded-lg text-gray-600 font-medium uppercase tracking-widest">
+                        <span className="text-xs px-2 py-1 bg-gray-100 rounded-lg text-gray-600 font-normal uppercase tracking-widest">
                           {tenant.plan || 'FREE'}
                         </span>
                       </div>

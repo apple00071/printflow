@@ -85,16 +85,16 @@ export default function BillingPage() {
     <div className="space-y-8">
       <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-xl font-medium text-gray-900 uppercase tracking-tighter">{t("Billing & Finance", "బిల్లింగ్ మరియు ఫైనాన్స్")}</h1>
+          <h1 className="text-xl font-normal text-gray-900 uppercase tracking-tighter">{t("Billing & Finance", "బిల్లింగ్ మరియు ఫైనాన్స్")}</h1>
           <p className="text-[10px] text-gray-400 uppercase tracking-widest">{t("Revenue & Tax Management", "రాబడి మరియు పన్ను నిర్వహణ")}</p>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/dashboard/billing/gst-reports" className="bg-white text-primary border border-primary/20 px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 hover:bg-primary/5 hover:border-primary/40 active:scale-[0.97] transition-all shadow-sm">
+          <Link href="/dashboard/billing/gst-reports" className="bg-white text-primary border border-primary/20 px-5 py-2.5 rounded-xl text-sm font-normal flex items-center gap-2 hover:bg-primary/5 hover:border-primary/40 active:scale-[0.97] transition-all shadow-sm">
             <TrendingUp className="w-4 h-4" /> {t("GST Reports", "GST నివేదికలు")}
           </Link>
           <button 
             onClick={() => setIsPaymentModalOpen(true)}
-            className="bg-gradient-to-br from-primary to-[#2a4d7d] text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.97] transition-all shadow-lg shadow-primary/20"
+            className="bg-gradient-to-br from-primary to-[#2a4d7d] text-white px-5 py-2.5 rounded-xl text-sm font-normal flex items-center gap-2 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.97] transition-all shadow-lg shadow-primary/20"
           >
             <Plus className="w-4 h-4" /> {t("New Transaction", "కొత్త లావాదేవీ")}
           </button>
@@ -188,7 +188,7 @@ export default function BillingPage() {
                                 setSelectedOrder(ord);
                                 setIsPaymentModalOpen(true);
                               }}
-                              className="bg-primary/10 text-primary text-[10px] font-bold px-3 py-1.5 rounded-lg hover:bg-primary hover:text-white active:scale-[0.95] transition-all uppercase tracking-wider shadow-sm shadow-primary/5"
+                              className="bg-primary/10 text-primary text-[10px] font-normal px-3 py-1.5 rounded-lg hover:bg-primary hover:text-white active:scale-[0.95] transition-all uppercase tracking-wider shadow-sm shadow-primary/5"
                             >
                               {t("PAY", "పేమెంట్")}
                             </button>

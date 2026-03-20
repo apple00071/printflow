@@ -27,8 +27,15 @@ export const PLANS = {
   PRO: {
     id: 'pro_monthly',
     name: 'Pro Monthly',
+    price: 499,
+    limit: 1000,
+    razorpay_plan_id: process.env.NEXT_PUBLIC_RAZORPAY_PLAN_ID_PRO || '',
+  },
+  BUSINESS: {
+    id: 'business_monthly',
+    name: 'Business Monthly',
     price: 999,
     limit: Infinity,
-    razorpay_plan_id: process.env.NEXT_PUBLIC_RAZORPAY_PLAN_ID_PRO || '',
+    razorpay_plan_id: process.env.NEXT_PUBLIC_RAZORPAY_PLAN_ID_BUSINESS || '',
   }
 };

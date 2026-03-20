@@ -88,15 +88,15 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
   if (loading) return (
     <div className="flex flex-col items-center justify-center p-20 text-gray-400">
        <Loader2 className="w-10 h-10 animate-spin mb-4 text-primary" />
-       <p className="text-sm font-medium text-gray-400">{t("Loading Order Details...", "ఆర్డర్ వివరాలు లోడ్ అవుతున్నాయి...")}</p>
+       <p className="text-sm font-normal text-gray-400">{t("Loading Order Details...", "ఆర్డర్ వివరాలు లోడ్ అవుతున్నాయి...")}</p>
     </div>
   );
 
   if (!order) return (
     <div className="flex flex-col items-center justify-center p-20 text-gray-400 text-center">
-       <h2 className="text-2xl font-medium text-gray-900 mb-2">{t("Order Not Found", "ఆర్డర్ కనుగొనబడలేదు")}</h2>
+       <h2 className="text-2xl font-normal text-gray-900 mb-2">{t("Order Not Found", "ఆర్డర్ కనుగొనబడలేదు")}</h2>
        <p className="mb-6">{t("The order ID provided does not exist in our system.", "అందించిన ఆర్డర్ ఐడి మా సిస్టమ్‌లో లేదు.")}</p>
-       <Link href="/dashboard/orders" className="bg-primary text-white px-6 py-2 rounded-lg font-medium">
+       <Link href="/dashboard/orders" className="bg-primary text-white px-6 py-2 rounded-lg font-normal">
          {t("Back to Orders", "ఆర్డర్‌లకు తిరిగి వెళ్లండి")}
        </Link>
     </div>
@@ -179,7 +179,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                     </div>
                     <span className={cn(
                       "text-[10px] uppercase tracking-tighter absolute -bottom-6 whitespace-nowrap",
-                      isCompleted ? "text-primary" : "text-gray-400 font-medium"
+                      isCompleted ? "text-primary" : "text-gray-400 font-normal"
                     )}>
                       {s}
                     </span>
@@ -232,7 +232,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                 >
                   <FileIcon className="w-5 h-5 text-primary" />
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium text-gray-900 group-hover:text-primary transition-colors">
+                    <span className="text-sm font-normal text-gray-900 group-hover:text-primary transition-colors">
                       {t("View Design File", "డిజైన్ ఫైల్ చూడండి")}
                     </span>
                     <span className="text-[10px] text-gray-400 uppercase">{t("Click to open in new tab", "కొత్త ట్యాబ్‌లో తెరవడానికి క్లిక్ చేయండి")}</span>
@@ -268,7 +268,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
             {(order.total_amount - order.advance_paid) > 0 && (
               <button 
                 onClick={() => setIsPaymentModalOpen(true)}
-                className="w-full py-2.5 bg-primary text-white text-xs rounded-lg hover:bg-primary/90 transition-all shadow-md active:scale-95 mt-2 font-medium uppercase tracking-wider"
+                className="w-full py-2.5 bg-primary text-white text-xs rounded-lg hover:bg-primary/90 transition-all shadow-md active:scale-95 mt-2 font-normal uppercase tracking-wider"
               >
                 {t("Add Payment", "పేమెంట్ జోడించండి")}
               </button>

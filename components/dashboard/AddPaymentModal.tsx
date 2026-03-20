@@ -109,7 +109,7 @@ export default function AddPaymentModal({ orderId, balanceDue, onSuccess, onClos
       <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
         <div className="px-5 py-4 sm:px-6 sm:py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
           <div>
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight">{t("Add Payment", "పేమెంట్ జోడించండి")}</h2>
+            <h2 className="text-lg sm:text-xl font-normal text-gray-900 tracking-tight">{t("Add Payment", "పేమెంట్ జోడించండి")}</h2>
             <p className="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-widest mt-0.5">{t("Record a new transaction", "కొత్త లావాదేవీని నమోదు చేయండి")}</p>
           </div>
           <button onClick={onClose} className="p-1.5 sm:p-2 hover:bg-white rounded-full transition-all duration-200 active:scale-90 border border-transparent hover:border-gray-100">
@@ -120,14 +120,14 @@ export default function AddPaymentModal({ orderId, balanceDue, onSuccess, onClos
         <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-3 sm:space-y-5">
           {!orderId && (
             <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">{t("Select Order", "ఆర్డర్ ఎంచుకోండి")}</label>
+              <label className="text-xs font-normal text-gray-400 uppercase tracking-wider">{t("Select Order", "ఆర్డర్ ఎంచుకోండి")}</label>
               <div className="relative">
                 <select
                   required
                   disabled={fetchingOrders}
                   value={selectedOrderId || ""}
                   onChange={(e) => handleOrderChange(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-100 focus:border-primary focus:bg-white rounded-xl text-sm font-medium text-gray-900 outline-none transition-all appearance-none pr-10"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-100 focus:border-primary focus:bg-white rounded-xl text-sm font-normal text-gray-900 outline-none transition-all appearance-none pr-10"
                 >
                   <option value="" disabled>{fetchingOrders ? t("Loading orders...", "ఆర్డర్లు లోడ్ అవుతున్నాయి...") : t("Choose an outstanding order", "బకాయి ఉన్న ఆర్డర్‌ను ఎంచుకోండి")}</option>
                   {availableOrders.map(o => (
@@ -142,7 +142,7 @@ export default function AddPaymentModal({ orderId, balanceDue, onSuccess, onClos
           )}
 
           <div className="space-y-2">
-            <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">{t("Amount to Pay", "చెల్లించాల్సిన మొత్తం")}</label>
+            <label className="text-xs font-normal text-gray-400 uppercase tracking-wider">{t("Amount to Pay", "చెల్లించాల్సిన మొత్తం")}</label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">₹</span>
               <input
@@ -152,18 +152,18 @@ export default function AddPaymentModal({ orderId, balanceDue, onSuccess, onClos
                 max={currentBalance}
                 value={amount}
                 onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
-                className="w-full pl-9 pr-4 py-2 sm:py-2.5 bg-gray-50 border border-transparent focus:border-primary focus:bg-white rounded-xl text-lg sm:text-xl font-bold text-gray-900 outline-none transition-all shadow-inner appearance-none"
+                className="w-full pl-9 pr-4 py-2 sm:py-2.5 bg-gray-50 border border-transparent focus:border-primary focus:bg-white rounded-xl text-lg sm:text-xl font-normal text-gray-900 outline-none transition-all shadow-inner appearance-none"
               />
             </div>
             {selectedOrderId && (
               <p className="text-[10px] text-gray-400 italic">
-                {t("Balance Due", "మిగిలిన బకాయి")}: <span className="text-primary font-medium">{formatCurrency(currentBalance)}</span>
+                {t("Balance Due", "మిగిలిన బకాయి")}: <span className="text-primary font-normal">{formatCurrency(currentBalance)}</span>
               </p>
             )}
           </div>
 
           <div className="space-y-3">
-            <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">{t("Payment Method", "పేమెంట్ విధానం")}</label>
+            <label className="text-xs font-normal text-gray-400 uppercase tracking-wider">{t("Payment Method", "పేమెంట్ విధానం")}</label>
             <div className="grid grid-cols-2 sm:grid-cols-1 gap-2">
               {methods.map((m) => (
                 <button
@@ -181,7 +181,7 @@ export default function AddPaymentModal({ orderId, balanceDue, onSuccess, onClos
                   }`}>
                     <m.icon className="w-5 h-5" />
                   </div>
-                  <span className="font-semibold text-sm tracking-tight">{m.label}</span>
+                  <span className="font-normal text-sm tracking-tight">{m.label}</span>
                   {method === m.id && (
                     <div className="ml-auto w-2 h-2 rounded-full bg-primary animate-pulse" />
                   )}
@@ -194,7 +194,7 @@ export default function AddPaymentModal({ orderId, balanceDue, onSuccess, onClos
             <button
               type="submit"
               disabled={loading || !selectedOrderId || amount <= 0}
-              className="w-full py-3.5 bg-gradient-to-br from-primary to-[#2a4d7d] text-white font-bold uppercase tracking-[0.15em] rounded-2xl shadow-xl shadow-primary/30 hover:shadow-primary/40 active:scale-[0.97] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:grayscale disabled:scale-100 text-xs"
+              className="w-full py-3.5 bg-gradient-to-br from-primary to-[#2a4d7d] text-white font-normal uppercase tracking-[0.15em] rounded-2xl shadow-xl shadow-primary/30 hover:shadow-primary/40 active:scale-[0.97] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:grayscale disabled:scale-100 text-xs"
             >
               {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

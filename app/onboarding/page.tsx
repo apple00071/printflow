@@ -151,8 +151,8 @@ export default function OnboardingPage() {
         {/* Progress Bar */}
         <div className="bg-gray-50/50 border-b border-gray-100 px-8 py-6">
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-xl font-bold tracking-tight text-gray-900">Welcome to PrintFlow</h1>
-            <span className="text-xs font-medium text-gray-400 uppercase tracking-widest">Step {step} of 4</span>
+            <h1 className="text-xl font-normal tracking-tight text-gray-900">Welcome to PrintFlow</h1>
+            <span className="text-xs font-normal text-gray-400 uppercase tracking-widest">Step {step} of 4</span>
           </div>
           <div className="flex gap-2">
             {[1, 2, 3, 4].map(s => (
@@ -167,7 +167,7 @@ export default function OnboardingPage() {
         <div className="p-8">
           {step === 1 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-semibold text-gray-900 leading-tight">Tell us about your business</h2>
+              <h2 className="text-2xl font-normal text-gray-900 leading-tight">Tell us about your business</h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Business Type</label>
@@ -213,14 +213,14 @@ export default function OnboardingPage() {
 
           {step === 2 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-semibold text-gray-900 leading-tight">Branding & Payments</h2>
+              <h2 className="text-2xl font-normal text-gray-900 leading-tight">Branding & Payments</h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Business Logo</label>
                   <input 
                     type="file" 
                     onChange={e => e.target.files?.[0] && uploadLogo(e.target.files[0])}
-                    className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                    className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-normal file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                   />
                 </div>
                 <div>
@@ -247,7 +247,7 @@ export default function OnboardingPage() {
 
           {step === 3 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-semibold text-gray-900 leading-tight">GST Setup</h2>
+              <h2 className="text-2xl font-normal text-gray-900 leading-tight">GST Setup</h2>
               <div className="space-y-4">
                 <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
                   <input 
@@ -257,7 +257,7 @@ export default function OnboardingPage() {
                     onChange={e => setFormData({...formData, is_gst_registered: e.target.checked})}
                     className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
                   />
-                  <label htmlFor="gst_reg" className="text-sm font-medium text-gray-700">I am GST registered</label>
+                  <label htmlFor="gst_reg" className="text-sm font-normal text-gray-700">I am GST registered</label>
                 </div>
                 
                 {formData.is_gst_registered && (
@@ -283,7 +283,7 @@ export default function OnboardingPage() {
 
           {step === 4 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-semibold text-gray-900 leading-tight">Products & Pricing</h2>
+              <h2 className="text-2xl font-normal text-gray-900 leading-tight">Products & Pricing</h2>
               <div className="space-y-3">
                 {formData.job_types.map((jt, idx) => (
                   <div key={idx} className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 hover:border-primary/20 transition-all">
@@ -298,7 +298,7 @@ export default function OnboardingPage() {
                       className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
                     />
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900">{jt.label}</p>
+                      <p className="text-sm font-normal text-gray-900">{jt.label}</p>
                       <p className="text-[10px] text-gray-400">HSN: {jt.hsn}</p>
                     </div>
                     <div className="w-24">
@@ -327,14 +327,14 @@ export default function OnboardingPage() {
           <button 
             onClick={() => setStep(s => s - 1)}
             disabled={step === 1 || loading}
-            className="text-sm font-medium text-gray-500 hover:text-gray-900 disabled:opacity-0 transition-all"
+            className="text-sm font-normal text-gray-500 hover:text-gray-900 disabled:opacity-0 transition-all"
           >
             Previous
           </button>
           <button 
             onClick={handleNext}
             disabled={loading}
-            className="rounded-xl bg-primary px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all disabled:opacity-50"
+            className="rounded-xl bg-primary px-8 py-3 text-sm font-normal text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all disabled:opacity-50"
           >
             {loading ? "Saving..." : (step === 4 ? "Complete Setup" : "Continue")}
           </button>

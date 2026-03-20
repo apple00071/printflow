@@ -131,7 +131,7 @@ export default function GSTReportsPage() {
             <ArrowLeft className="w-5 h-5 text-gray-500" />
           </Link>
           <div>
-            <h1 className="text-2xl font-medium text-gray-900 uppercase tracking-tighter">{t("GST Reports", "GST నివేదికలు")}</h1>
+            <h1 className="text-2xl font-normal text-gray-900 uppercase tracking-tighter">{t("GST Reports", "GST నివేదికలు")}</h1>
             <p className="text-gray-500 text-xs tracking-widest">{t("Tax Summary & Compliance", "పన్ను మరియు ఇతర వివరాలు")}</p>
           </div>
         </div>
@@ -139,14 +139,14 @@ export default function GSTReportsPage() {
           <select 
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-            className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-medium focus:ring-1 focus:ring-primary outline-none"
+            className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-normal focus:ring-1 focus:ring-primary outline-none"
           >
             {months.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select>
           <select 
             value={selectedYear}
             onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-            className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-medium focus:ring-1 focus:ring-primary outline-none"
+            className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-normal focus:ring-1 focus:ring-primary outline-none"
           >
             <option value={2026}>2026</option>
             <option value={2025}>2025</option>
@@ -154,14 +154,14 @@ export default function GSTReportsPage() {
           <button 
             onClick={exportCSV}
             disabled={orders.length === 0}
-            className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-xl text-xs font-medium shadow-lg shadow-primary/20 hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100 relative group"
+            className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-xl text-xs font-normal shadow-lg shadow-primary/20 hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100 relative group"
           >
             <Download className="w-4 h-4" />
             {t("Export CSV", "CSV ఎగుమతి")}
             
             {/* Pro Badge for Free Users */}
             {(tenant?.plan || 'FREE').toUpperCase() === 'FREE' && (
-              <span className="absolute -top-2 -right-2 bg-orange-500 text-[8px] px-1.5 py-0.5 rounded-full border border-white font-bold shadow-sm">
+              <span className="absolute -top-2 -right-2 bg-orange-500 text-[8px] px-1.5 py-0.5 rounded-full border border-white font-normal shadow-sm">
                 PRO
               </span>
             )}
@@ -183,28 +183,28 @@ export default function GSTReportsPage() {
                  <div className="p-2 bg-blue-50 rounded-lg"><TrendingUp className="w-5 h-5 text-blue-500" /></div>
                  <h3 className="text-[10px] text-gray-400 uppercase tracking-widest">{t("Taxable Value", "పన్ను వేయదగిన మొత్తం")}</h3>
               </div>
-              <p className="text-2xl font-medium text-gray-900">{formatCurrency(totals.taxable)}</p>
+              <p className="text-2xl font-normal text-gray-900">{formatCurrency(totals.taxable)}</p>
             </div>
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
               <div className="flex items-center gap-3">
                  <div className="p-2 bg-purple-50 rounded-lg"><ShieldCheck className="w-5 h-5 text-purple-500" /></div>
                  <h3 className="text-[10px] text-gray-400 uppercase tracking-widest">Total CGST + SGST</h3>
               </div>
-              <p className="text-2xl font-medium text-gray-900">{formatCurrency(totals.cgst + totals.sgst)}</p>
+              <p className="text-2xl font-normal text-gray-900">{formatCurrency(totals.cgst + totals.sgst)}</p>
             </div>
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
               <div className="flex items-center gap-3">
                  <div className="p-2 bg-amber-50 rounded-lg"><ShieldCheck className="w-5 h-5 text-amber-500" /></div>
                  <h3 className="text-[10px] text-gray-400 uppercase tracking-widest">Total IGST</h3>
               </div>
-              <p className="text-2xl font-medium text-gray-900">{formatCurrency(totals.igst)}</p>
+              <p className="text-2xl font-normal text-gray-900">{formatCurrency(totals.igst)}</p>
             </div>
             <div className="bg-primary p-6 rounded-2xl shadow-xl shadow-primary/20 space-y-4">
               <div className="flex items-center gap-3">
                  <div className="p-2 bg-white/10 rounded-lg"><PieChart className="w-5 h-5 text-white" /></div>
                  <h3 className="text-[10px] text-white/60 uppercase tracking-widest">{t("Grand Total", "మొత్తం చెల్లింపు")}</h3>
               </div>
-              <p className="text-2xl font-medium text-white">{formatCurrency(totals.grand)}</p>
+              <p className="text-2xl font-normal text-white">{formatCurrency(totals.grand)}</p>
             </div>
           </div>
 
@@ -212,7 +212,7 @@ export default function GSTReportsPage() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-50 flex items-center gap-2">
                <TableIcon className="w-5 h-5 text-primary" />
-               <h2 className="text-sm font-medium text-gray-900 uppercase tracking-tight">{t("B2B & B2C Invoices", "ఇన్వాయిస్ల వివరాలు")}</h2>
+               <h2 className="text-sm font-normal text-gray-900 uppercase tracking-tight">{t("B2B & B2C Invoices", "ఇన్వాయిస్ల వివరాలు")}</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
@@ -233,22 +233,22 @@ export default function GSTReportsPage() {
                    {orders.map((o) => (
                      <tr key={o.id} className="hover:bg-gray-50/50 transition-colors">
                        <td className="px-6 py-4 text-gray-500">{formatDate(o.invoice_date || o.created_at)}</td>
-                       <td className="px-6 py-4 font-medium text-primary">{o.invoice_number || "Draft"}</td>
+                       <td className="px-6 py-4 font-normal text-primary">{o.invoice_number || "Draft"}</td>
                        <td className="px-6 py-4">
-                          <p className="font-medium text-gray-900">{o.customers?.name}</p>
+                          <p className="font-normal text-gray-900">{o.customers?.name}</p>
                           <p className="text-[10px] text-gray-400">{o.customers?.gstin || "B2C"}</p>
                        </td>
-                       <td className="px-6 py-4 text-right font-medium">{formatCurrency(o.taxable_amount || o.total_amount)}</td>
+                       <td className="px-6 py-4 text-right font-normal">{formatCurrency(o.taxable_amount || o.total_amount)}</td>
                        <td className="px-6 py-4 text-right">{o.gst_rate}%</td>
                        <td className="px-6 py-4 text-right text-gray-500">{formatCurrency(o.cgst || 0)}</td>
                        <td className="px-6 py-4 text-right text-gray-500">{formatCurrency(o.sgst || 0)}</td>
                        <td className="px-6 py-4 text-right text-gray-500">{formatCurrency(o.igst || 0)}</td>
-                       <td className="px-6 py-4 text-right font-black text-gray-900">{formatCurrency(o.total_amount)}</td>
+                       <td className="px-6 py-4 text-right font-normal text-gray-900">{formatCurrency(o.total_amount)}</td>
                      </tr>
                    ))}
                    {orders.length === 0 && (
                      <tr>
-                       <td colSpan={9} className="px-6 py-12 text-center text-gray-400 uppercase tracking-widest font-medium">
+                       <td colSpan={9} className="px-6 py-12 text-center text-gray-400 uppercase tracking-widest font-normal">
                          {t("No GST orders found for this period", "ఈ కాలానికి GST ఆర్డర్లు లేవు")}
                        </td>
                      </tr>

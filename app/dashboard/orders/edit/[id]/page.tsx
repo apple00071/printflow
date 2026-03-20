@@ -441,7 +441,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
                   <span>{formData.isInterState ? "IGST" : "CGST + SGST"} ({formData.gstRate}%)</span>
                   <span>₹ {formData.isInterState ? gstCalc.igst : (gstCalc.cgst + gstCalc.sgst)}</span>
                 </div>
-                <div className="flex justify-between font-medium text-sm text-primary">
+                <div className="flex justify-between font-normal text-sm text-primary">
                   <span>{t("Total with GST", "మొత్తం GST కలిపి")}</span>
                   <span>₹ {gstCalc.totalWithGST}</span>
                 </div>
