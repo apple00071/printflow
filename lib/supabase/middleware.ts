@@ -1,6 +1,5 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient as createAdminClient } from "./admin";
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({
@@ -73,77 +72,77 @@ export async function updateSession(request: NextRequest) {
     }
   } else {
     // User is authenticated
-    if (isAuthRoute || request.nextUrl.pathname === "/") {
+    if (isAuthRoute || (request.nextUrl.pathname === "/" && !isDashboardRoute)) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
-    // Allow access to debug route
-    if (isDebugRoute) {
-      return response;
-    }
+    try {
+      // Fetch user profile to check role and tenant using regular client
+      // RLS on profiles table already allows users to see their own profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id, role')
+        .eq('id', user.id)
+        .single();
 
-    // Fetch user profile to check role and tenant
-    // Use admin client to bypass RLS for profile checking
-    const adminSupabase = createAdminClient();
-    
-    const { data: profile } = await adminSupabase
-      .from('profiles')
-      .select('tenant_id, role')
-      .eq('id', user.id)
-      .single();
-
-    // Super admin logic (ADMIN role with no tenant_id)
-    if (profile?.role === 'ADMIN' && !profile?.tenant_id) {
-      // Super admin can access admin routes
-      if (isAdminRoute) {
+      if (!profile) {
+        // No profile yet, likely needs onboarding
+        if (!isOnboardingRoute && isDashboardRoute) {
+          return NextResponse.redirect(new URL("/onboarding", request.url));
+        }
         return response;
       }
-      // If super admin tries to access tenant routes, redirect to admin
-      if (isDashboardRoute || isOnboardingRoute) {
-        return NextResponse.redirect(new URL("/admin", request.url));
+
+      // Super admin logic (ADMIN role with no tenant_id)
+      if (profile.role === 'ADMIN' && !profile.tenant_id) {
+        if (isAdminRoute) return response;
+        if (isDashboardRoute || isOnboardingRoute || request.nextUrl.pathname === "/") {
+          return NextResponse.redirect(new URL("/admin", request.url));
+        }
       }
-      // Default redirect to admin dashboard
-      return NextResponse.redirect(new URL("/admin", request.url));
-    }
 
-    // Tenant admin logic (ADMIN role with tenant_id)
-    if (profile?.role === 'ADMIN' && profile?.tenant_id) {
-      // Tenant admins CANNOT access admin routes
-      if (isAdminRoute) {
-        return NextResponse.redirect(new URL("/dashboard", request.url));
+      // Tenant admin logic (ADMIN role with tenant_id)
+      if (profile.role === 'ADMIN' && profile.tenant_id) {
+        if (isAdminRoute) {
+          return NextResponse.redirect(new URL("/dashboard", request.url));
+        }
+        if (isDashboardRoute) return response;
+        // Default redirect to dashboard if not already there
+        if (request.nextUrl.pathname === "/" || isOnboardingRoute) {
+          return NextResponse.redirect(new URL("/dashboard", request.url));
+        }
       }
-      // Tenant admins can access dashboard routes
-      if (isDashboardRoute) {
-        return response;
-      }
-      // Default redirect to dashboard
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
 
-    // Regular tenant user logic (WORKER role with tenant_id)
-    if (profile?.role === 'WORKER' && profile?.tenant_id) {
-       // Prevent regular tenants from accessing admin routes
-       if (isAdminRoute) {
-         return NextResponse.redirect(new URL("/dashboard", request.url));
-       }
-       
-       // Attach tenant_id to headers for use in server components/actions
-       response.headers.set('x-tenant-id', profile.tenant_id);
-
-       const { data: tenant } = await adminSupabase
-         .from('tenants')
-         .select('onboarding_complete')
-         .eq('id', profile.tenant_id)
-         .single();
-
-       if (tenant) {
-         if (!tenant.onboarding_complete && !isOnboardingRoute && !request.nextUrl.pathname.startsWith('/api')) {
-           return NextResponse.redirect(new URL("/onboarding", request.url));
-         }
-         if (tenant.onboarding_complete && isOnboardingRoute) {
+      // Regular tenant user logic (WORKER role with tenant_id)
+      if (profile.role === 'WORKER' && profile.tenant_id) {
+         if (isAdminRoute) {
            return NextResponse.redirect(new URL("/dashboard", request.url));
          }
-       }
+         
+         // Attach tenant_id to headers for use in server components/actions
+         response.headers.set('x-tenant-id', profile.tenant_id);
+
+         // Check onboarding status
+         const { data: tenant } = await supabase
+           .from('tenants')
+           .select('onboarding_complete')
+           .eq('id', profile.tenant_id)
+           .single();
+
+         if (tenant) {
+           if (!tenant.onboarding_complete && !isOnboardingRoute && !request.nextUrl.pathname.startsWith('/api')) {
+             return NextResponse.redirect(new URL("/onboarding", request.url));
+           }
+           if (tenant.onboarding_complete && isOnboardingRoute) {
+             return NextResponse.redirect(new URL("/dashboard", request.url));
+           }
+         }
+      }
+    } catch (error) {
+      console.error("Middleware Error:", error);
+      // In case of error fetching profile, allow request to proceed to avoid 500
+      // RLS will protect actual data even if middleware fails
+      return response;
     }
   }
 

@@ -19,8 +19,9 @@ import { useLanguage } from "@/lib/context/LanguageContext";
 export default function GSTReportsPage() {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [orders, setOrders] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [tenant, setTenant] = useState<any>(null);
   
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
@@ -62,6 +63,7 @@ export default function GSTReportsPage() {
 
         if (error) throw error;
         setOrders(data || []);
+        setTenant(currentTenant);
       }
     } catch {
       console.error("Error fetching GST report");
@@ -85,6 +87,14 @@ export default function GSTReportsPage() {
   }), { taxable: 0, cgst: 0, sgst: 0, igst: 0, grand: 0 });
 
   const exportCSV = () => {
+    // Plan-based restriction
+    const isPro = (tenant?.subscription_tier || tenant?.plan || 'FREE').toUpperCase() !== 'FREE';
+    
+    if (!isPro) {
+      alert(t("GSTR-1 Export is a PRO feature. Please upgrade to download.", "GSTR-1 ఎగుమతి అనేది PRO ఫీచర్. డౌన్‌లోడ్ చేయడానికి దయచేసి అప్‌గ్రేడ్ చేయండి."));
+      return;
+    }
+
     const headers = ["Invoice Date", "Invoice Number", "Customer Name", "Customer GSTIN", "Taxable Value", "GST Type", "IGST", "CGST", "SGST", "Total Amount"];
     const rows = orders.map(o => [
       formatDate(o.invoice_date || o.created_at),
@@ -143,10 +153,17 @@ export default function GSTReportsPage() {
           <button 
             onClick={exportCSV}
             disabled={orders.length === 0}
-            className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-xl text-xs font-medium shadow-lg shadow-primary/20 hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100"
+            className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-xl text-xs font-medium shadow-lg shadow-primary/20 hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100 relative group"
           >
             <Download className="w-4 h-4" />
             {t("Export CSV", "CSV ఎగుమతి")}
+            
+            {/* Pro Badge for Free Users */}
+            {(tenant?.plan || 'FREE').toUpperCase() === 'FREE' && (
+              <span className="absolute -top-2 -right-2 bg-orange-500 text-[8px] px-1.5 py-0.5 rounded-full border border-white font-bold shadow-sm">
+                PRO
+              </span>
+            )}
           </button>
         </div>
       </div>
