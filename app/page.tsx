@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Menu, X, Check, ArrowRight, Star, Quote, MessageCircle, FileText, Users, Package, Globe, BarChart } from "lucide-react";
+import { Menu, X, Check, ArrowRight, Star, Quote, MessageCircle, FileText, Users, Package, Globe, BarChart, UserPlus, Settings, Rocket, ShieldCheck, Download } from "lucide-react";
 import { Logo } from "@/components/Logo";
 
 export default function LandingPage() {
@@ -104,6 +104,16 @@ export default function LandingPage() {
         .dot-grid {
           background-image: radial-gradient(circle, #e5e7eb 1px, transparent 1px);
           background-size: 20px 20px;
+        }
+
+        .glass-card {
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .connector-line {
+          background: linear-gradient(90deg, #f97316 0%, #1e3a5f 100%);
         }
       `}</style>
 
@@ -386,40 +396,69 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-[#1e3a5f] text-white">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold font-syne text-center mb-12">
-            Up and running in 5 minutes
-          </h2>
+      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-[#0f172a] text-white relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#f97316] rounded-full blur-[120px]"></div>
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#1e3a5f] rounded-full blur-[120px]"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold font-syne mb-4">
+              Up and running in <span className="text-[#f97316]">5 minutes</span>
+            </h2>
+            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+              We&apos;ve removed the friction. No long sales calls, no complex setups. Just sign up and start.
+            </p>
+          </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-white text-[#1e3a5f] rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
-                1
+          <div className="grid md:grid-cols-3 gap-12 relative">
+            {/* Desktop Connector Line */}
+            <div className="hidden md:block absolute top-[40%] left-[15%] right-[15%] h-0.5 connector-line z-0 opacity-20"></div>
+
+            <div className="flex flex-col items-center text-center group translate-y-0 hover:-translate-y-2 transition-transform duration-300">
+              <div className="relative mb-8">
+                <div className="w-20 h-20 bg-[#1e3a5f] rounded-2xl flex items-center justify-center text-3xl font-bold border border-white/10 group-hover:border-[#f97316]/50 transition-colors">
+                  <UserPlus className="w-10 h-10 text-[#f97316]" />
+                </div>
+                <div className="absolute -top-3 -right-3 w-8 h-8 bg-[#f97316] rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
+                  1
+                </div>
               </div>
-              <h3 className="text-xl font-semibold mb-3">Sign up free</h3>
-              <p className="text-gray-300">
-                Enter your business name and email. No credit card. No demo call needed.
+              <h3 className="text-2xl font-bold mb-4 font-syne">Sign up free</h3>
+              <p className="text-gray-400 leading-relaxed">
+                Enter your business name and email. No credit card required. No demo call needed.
               </p>
             </div>
             
-            <div className="text-center">
-              <div className="w-16 h-16 bg-white text-[#1e3a5f] rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
-                2
+            <div className="flex flex-col items-center text-center group translate-y-0 hover:-translate-y-2 transition-transform duration-300">
+              <div className="relative mb-8">
+                <div className="w-20 h-20 bg-[#1e3a5f] rounded-2xl flex items-center justify-center text-3xl font-bold border border-white/10 group-hover:border-[#f97316]/50 transition-colors">
+                  <Settings className="w-10 h-10 text-[#f97316]" />
+                </div>
+                <div className="absolute -top-3 -right-3 w-8 h-8 bg-[#f97316] rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
+                  2
+                </div>
               </div>
-              <h3 className="text-xl font-semibold mb-3">Set up your shop</h3>
-              <p className="text-gray-300">
-                Add your job types, prices, GST number, and UPI ID. Takes 3 minutes.
+              <h3 className="text-2xl font-bold mb-4 font-syne">Set up your shop</h3>
+              <p className="text-gray-400 leading-relaxed">
+                Add your job types, prices, and GST number. Setup takes less than 3 minutes.
               </p>
             </div>
             
-            <div className="text-center">
-              <div className="w-16 h-16 bg-white text-[#1e3a5f] rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
-                3
+            <div className="flex flex-col items-center text-center group translate-y-0 hover:-translate-y-2 transition-transform duration-300">
+              <div className="relative mb-8">
+                <div className="w-20 h-20 bg-[#1e3a5f] rounded-2xl flex items-center justify-center text-3xl font-bold border border-white/10 group-hover:border-[#f97316]/50 transition-colors">
+                  <Rocket className="w-10 h-10 text-[#f97316]" />
+                </div>
+                <div className="absolute -top-3 -right-3 w-8 h-8 bg-[#f97316] rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
+                  3
+                </div>
               </div>
-              <h3 className="text-xl font-semibold mb-3">Start managing orders</h3>
-              <p className="text-gray-300">
-                Create your first order and share your online order form link with customers.
+              <h3 className="text-2xl font-bold mb-4 font-syne">Manage orders</h3>
+              <p className="text-gray-400 leading-relaxed">
+                Create your first order and share the job details instantly via WhatsApp.
               </p>
             </div>
           </div>
@@ -427,30 +466,50 @@ export default function LandingPage() {
       </section>
 
       {/* GST Callout */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-[#1e3a5f] to-[#2d5a8e] text-white">
-        <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-3xl font-bold font-syne mb-8">
-            GST invoices. Auto-calculated. Every time.
-          </h2>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            <div>
-              <div className="text-2xl font-bold mb-2">CGST + SGST</div>
-              <p className="text-gray-300">for intra-state orders</p>
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white text-[#1e3a5f]">
+        <div className="max-w-7xl mx-auto">
+          <div className="glass-card bg-[#1e3a5f] rounded-[2rem] p-12 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-10">
+              <FileText className="w-64 h-64 -rotate-12" />
             </div>
-            <div>
-              <div className="text-2xl font-bold mb-2">IGST</div>
-              <p className="text-gray-300">for inter-state orders</p>
-            </div>
-            <div>
-              <div className="text-2xl font-bold mb-2">GSTR-1 Ready</div>
-              <p className="text-gray-300">CSV export (Pro)</p>
+
+            <div className="relative z-10">
+              <div className="text-center mb-16">
+                <span className="bg-[#f97316] text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider mb-4 inline-block">
+                  Compliance Made Simple
+                </span>
+                <h2 className="text-3xl md:text-5xl font-bold font-syne mb-4">
+                  GST invoices. Auto-calculated. Every time.
+                </h2>
+              </div>
+              
+              <div className="grid md:grid-cols-3 gap-8">
+                <div className="bg-white/5 border border-white/10 p-8 rounded-2xl hover:bg-white/10 transition-colors">
+                  <ShieldCheck className="w-12 h-12 text-[#f97316] mb-6" />
+                  <div className="text-2xl font-bold mb-2 font-syne">CGST + SGST</div>
+                  <p className="text-gray-400">Perfectly split for local intra-state orders across India.</p>
+                </div>
+                
+                <div className="bg-white/5 border border-white/10 p-8 rounded-2xl hover:bg-white/10 transition-colors">
+                  <Globe className="w-12 h-12 text-[#f97316] mb-6" />
+                  <div className="text-2xl font-bold mb-2 font-syne">IGST Support</div>
+                  <p className="text-gray-400">Handle inter-state digital orders with correct IGST automatically.</p>
+                </div>
+                
+                <div className="bg-white/5 border border-white/10 p-8 rounded-2xl hover:bg-white/10 transition-colors">
+                  <Download className="w-12 h-12 text-[#f97316] mb-6" />
+                  <div className="text-2xl font-bold mb-2 font-syne">GSTR-1 Ready</div>
+                  <p className="text-gray-400">Export clean CSV reports for your CA in seconds. (Pro feature)</p>
+                </div>
+              </div>
+              
+              <div className="text-center mt-12">
+                <p className="text-sm text-gray-400 inline-flex items-center">
+                   Works for flex, digital, offset, screen, and packaging printers
+                </p>
+              </div>
             </div>
           </div>
-          
-          <p className="text-sm text-gray-400 mt-8">
-            Works for all print types — flex, digital, offset, screen, packaging
-          </p>
         </div>
       </section>
 
