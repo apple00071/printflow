@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Menu, X, Check, ArrowRight, Star, Quote, MessageCircle, FileText, Users, Package, Globe, BarChart } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -112,10 +113,7 @@ export default function LandingPage() {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center">
-              <span className="text-2xl font-bold font-syne">
-                <span className="text-[#1e3a5f]">Print</span>
-                <span className="text-[#f97316]">Flow</span>
-              </span>
+              <Logo showText={true} />
             </div>
 
             {/* Desktop Navigation */}
@@ -219,7 +217,7 @@ export default function LandingPage() {
                   {/* App Header */}
                   <div className="bg-[#1e3a5f] text-white p-3 rounded-lg mb-3">
                     <div className="flex justify-between items-center">
-                      <span className="font-semibold">PrintFlow</span>
+                      <Logo variant="light" showText={true} className="scale-75 origin-left" />
                       <span className="text-xs">🇮🇳</span>
                     </div>
                   </div>
@@ -791,9 +789,8 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
-              <div className="text-2xl font-bold font-syne mb-4">
-                <span className="text-[#1e3a5f]">Print</span>
-                <span className="text-[#f97316]">Flow</span>
+              <div className="mb-4">
+                <Logo />
               </div>
               <p className="text-gray-600 mb-4">Made in India 🇮🇳 for Indian print shops</p>
             </div>

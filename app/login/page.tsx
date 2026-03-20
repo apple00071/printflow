@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { PRESS_CONFIG } from "@/lib/config";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { Eye, EyeOff } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 export default function LoginPage() {
   const { language, setLanguage, t } = useLanguage();
@@ -101,13 +101,8 @@ export default function LoginPage() {
         </div>
 
         <div className="w-full">
-          <div className="text-center">
-            <h1 className="text-4xl  tracking-tighter text-primary uppercase">
-              {PRESS_CONFIG.name}
-            </h1>
-            <p className="mt-2 text-xs text-gray-500  uppercase tracking-widest">
-              {t(PRESS_CONFIG.tagline, "ప్రింటింగ్ రంగంలో అత్యుత్తమ సంస్థ")}
-            </p>
+          <div className="flex flex-col items-center">
+            <Logo className="mb-2" />
           </div>
           <h2 className="mt-8 text-center text-2xl  text-gray-900 tracking-tight">
             {t("Login", "లాగిన్")}

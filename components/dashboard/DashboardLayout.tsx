@@ -11,12 +11,11 @@ import {
   Settings, 
   LogOut,
   Menu,
-  Printer,
   Crown
 } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
-import { PRESS_CONFIG } from "@/lib/config";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { useEffect } from "react";
@@ -144,16 +143,15 @@ export default function DashboardLayout({
         )}
       >
         <div className="flex flex-col h-full overflow-hidden">
-          {/* Logo */}
-          <div className="p-6 border-b border-white/10 flex items-center gap-3 overflow-hidden whitespace-nowrap">
-            <Printer className="w-8 h-8 text-orange shrink-0" />
-            <div className={cn(
-              "transition-all duration-300",
-              isSidebarOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 pointer-events-none"
-            )}>
-              <h1 className=" text-lg leading-tight">{PRESS_CONFIG.name}</h1>
-              <p className="text-[10px] text-white/60 tracking-wider">CHIRALA, AP</p>
-            </div>
+          <div className="p-4 border-b border-white/10 flex items-center justify-start overflow-hidden whitespace-nowrap">
+             <Logo 
+               variant="light" 
+               showText={isSidebarOpen} 
+               className={cn(
+                 "transition-all duration-300",
+                 !isSidebarOpen && "scale-110 ml-1"
+               )} 
+             />
           </div>
 
           {/* Navigation */}

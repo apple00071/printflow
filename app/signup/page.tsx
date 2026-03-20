@@ -7,6 +7,7 @@ import { useLanguage } from "@/lib/context/LanguageContext";
 import { slugify, generateRandomDigits } from "@/lib/utils";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 export default function SignupPage() {
   const { language, setLanguage, t } = useLanguage();
@@ -109,13 +110,8 @@ export default function SignupPage() {
         </div>
 
         <div className="w-full">
-          <div className="text-center">
-            <h1 className="text-3xl tracking-tighter text-primary uppercase">
-              PrintFlow
-            </h1>
-            <p className="mt-1 text-xs text-gray-500 uppercase tracking-widest">
-              {t("Empowering Indian Print Shops", "భారతీయ ప్రింటింగ్ షాపుల కోసం")}
-            </p>
+          <div className="flex flex-col items-center mb-6">
+            <Logo />
           </div>
           <h2 className="mt-6 text-center text-2xl text-gray-900 tracking-tight">
             {t("Create your account", "ఖాతాను సృష్టించండి")}

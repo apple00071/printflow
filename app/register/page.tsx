@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/lib/context/LanguageContext";
+import { Logo } from "@/components/Logo";
 import Link from "next/link";
 import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 import { getInvitation, acceptInvitation } from "@/lib/supabase/actions";
@@ -129,14 +130,12 @@ function RegisterContent() {
         </div>
 
         <div className="w-full">
-          <div className="text-center">
-            <h1 className="text-3xl tracking-tighter text-primary uppercase">
-              PrintFlow
-            </h1>
-            <p className="mt-1 text-xs text-gray-500 uppercase tracking-widest">
-              {t("Join Your Team", "మీ టీమ్‌లో చేరండి")}
-            </p>
+          <div className="flex flex-col items-center mb-6">
+            <Logo />
           </div>
+          <h2 className="mt-6 text-center text-2xl text-gray-900 tracking-tight">
+            {t("Join your team", "మీ బృందంలో చేరండి")}
+          </h2>
         </div>
 
         <form className="w-full space-y-4" onSubmit={handleRegister}>
