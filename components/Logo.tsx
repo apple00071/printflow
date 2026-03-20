@@ -5,22 +5,48 @@ interface LogoProps {
   className?: string;
   variant?: 'dark' | 'light';
   showText?: boolean;
+  size?: 'sm' | 'md' | 'lg';
 }
 
 export const Logo: React.FC<LogoProps> = ({ 
   className, 
   variant = 'dark',
-  showText = true 
+  showText = true,
+  size = 'md'
 }) => {
   const isDark = variant === 'dark';
   const primaryColor = isDark ? "text-[#1e3a5f]" : "text-white";
   const accentColor = "text-[#f97316]";
   const subtextColor = isDark ? "text-gray-500" : "text-white/60";
 
+  // Size configurations
+  const sizes = {
+    sm: {
+      icon: "w-8 h-8",
+      text: "text-lg",
+      subtext: "text-[7px]",
+      gap: "gap-2"
+    },
+    md: {
+      icon: "w-10 h-10",
+      text: "text-2xl",
+      subtext: "text-[9px]",
+      gap: "gap-3"
+    },
+    lg: {
+      icon: "w-12 h-12",
+      text: "text-3xl",
+      subtext: "text-[11px]",
+      gap: "gap-4"
+    }
+  };
+
+  const currentSize = sizes[size];
+
   return (
-    <div className={cn("flex items-center gap-3", className)}>
+    <div className={cn("flex items-center", currentSize.gap, className)}>
       {/* SVG Icon part */}
-      <div className="relative w-10 h-10 shrink-0">
+      <div className={cn("relative shrink-0", currentSize.icon)}>
         <svg 
           viewBox="0 0 100 100" 
           fill="none" 
@@ -68,11 +94,11 @@ export const Logo: React.FC<LogoProps> = ({
 
       {showText && (
         <div className="flex flex-col leading-tight">
-          <div className="flex items-center text-2xl tracking-tighter uppercase font-bold">
+          <div className={cn("flex items-center tracking-tighter uppercase font-bold", currentSize.text)}>
             <span className={primaryColor}>Print</span>
             <span className={cn("ml-1.5", accentColor)}>Flow</span>
           </div>
-          <span className={cn("text-[9px] tracking-[0.2em] font-medium uppercase font-sans", subtextColor)}>
+          <span className={cn("tracking-[0.2em] font-medium uppercase font-sans", currentSize.subtext, subtextColor)}>
             Print Shop Software
           </span>
         </div>
