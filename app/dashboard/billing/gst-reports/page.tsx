@@ -19,6 +19,7 @@ import { useLanguage } from "@/lib/context/LanguageContext";
 export default function GSTReportsPage() {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [orders, setOrders] = useState<any[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [tenant, setTenant] = useState<any>(null);

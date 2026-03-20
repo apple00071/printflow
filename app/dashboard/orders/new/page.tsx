@@ -40,6 +40,16 @@ export default function NewOrderPage() {
     { id: "Other", label: t("Other", "ఇతర పనులు") },
   ];
 
+  const JOB_TYPE_DEFAULTS: Record<string, { hsn: string; gst: number }> = {
+    "Business Cards": { hsn: "4911", gst: 18 },
+    "Banners": { hsn: "4911", gst: 18 },
+    "Letterheads": { hsn: "4911", gst: 18 },
+    "Wedding Cards": { hsn: "4909", gst: 12 },
+    "Pamphlets": { hsn: "4901", gst: 12 },
+    "Stickers": { hsn: "4911", gst: 18 },
+    "Flex Prints": { hsn: "4911", gst: 18 },
+  };
+
   // Form State
   const [formData, setFormData] = useState({
     customerName: "",
@@ -202,7 +212,20 @@ export default function NewOrderPage() {
               <label className="text-xs  text-gray-500 uppercase">{t("Job Type", "పని రకం")}</label>
               <select
                 value={formData.jobType}
-                onChange={(e) => setFormData({...formData, jobType: e.target.value})}
+                onChange={(e) => {
+                  const newJobType = e.target.value;
+                  const defaults = JOB_TYPE_DEFAULTS[newJobType];
+                  setFormData(prev => ({
+                    ...prev,
+                    jobType: newJobType,
+                    // Auto-apply HSN and GST if defaults exist
+                    ...(defaults ? {
+                      hsnCode: defaults.hsn,
+                      applyGST: true,
+                      gstRate: defaults.gst
+                    } : {})
+                  }));
+                }}
                 className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
               >
                 {jobTypes.map((type) => (

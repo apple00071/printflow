@@ -63,7 +63,6 @@ export async function updateSession(request: NextRequest) {
   const isOnboardingRoute = request.nextUrl.pathname.startsWith("/onboarding");
   const isAuthRoute = request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup";
   const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
-  const isDebugRoute = request.nextUrl.pathname.startsWith("/debug");
 
   if (!user) {
     if (isDashboardRoute || isOnboardingRoute || isAdminRoute) {
