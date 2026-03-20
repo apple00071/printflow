@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Building2, Users, TrendingUp, Plus, CreditCard, BarChart3, UserCheck, Zap, Power, Trash2, LogOut } from "lucide-react";
+import { Building2, TrendingUp, CreditCard, BarChart3, Clock, LogOut, Search, Plus, Filter, MoreHorizontal, Activity, ArrowUpRight, UserCheck, Zap, Power, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -251,7 +251,7 @@ export default function AdminDashboard() {
             {['overview', 'tenants', 'subscriptions'].map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab as any)}
+                onClick={() => setActiveTab(tab as 'overview' | 'tenants' | 'subscriptions')}
                 className={`py-4 px-1 border-b-[3px] font-normal text-xs sm:text-sm uppercase tracking-widest transition-all whitespace-nowrap ${
                   activeTab === tab
                     ? 'border-blue-600 text-blue-600 shadow-[0_2px_0_0_rgba(37,99,235,0.1)]'

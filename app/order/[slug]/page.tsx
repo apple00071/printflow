@@ -29,8 +29,16 @@ const jobTypes = [
   "Other / ఇతరమైనవి",
 ];
 
+interface Tenant {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+  phone: string;
+}
+
 export default function TenantPublicOrderPage({ params }: { params: { slug: string } }) {
-  const [tenant, setTenant] = useState<any>(null);
+  const [tenant, setTenant] = useState<Tenant | null>(null);
   const [fetchingTenant, setFetchingTenant] = useState(true);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);

@@ -2,9 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { 
-  Building2, 
   Users, 
-  TrendingUp, 
   ArrowLeft, 
   CreditCard, 
   Settings, 
@@ -16,7 +14,6 @@ import {
   Zap,
   Clock,
   ExternalLink,
-  MoreVertical,
   Activity,
   ChevronRight
 } from "lucide-react";
@@ -54,25 +51,36 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
   const router = useRouter();
 
   useEffect(() => {
+    async function fetchTenantDetails() {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/admin/tenants/${params.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setTenant(data);
+        } else {
+          console.error("Failed to fetch tenant details");
+          // If not found or error, redirect back
+          router.push("/admin/tenants");
+        }
+      } catch (error) {
+        console.error("Error fetching tenant details:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
     fetchTenantDetails();
-  }, [params.id]);
+  }, [params.id, router]);
 
-  async function fetchTenantDetails() {
+  async function refreshTenantDetails() {
     try {
-      setLoading(true);
       const response = await fetch(`/api/admin/tenants/${params.id}`);
       if (response.ok) {
         const data = await response.json();
         setTenant(data);
-      } else {
-        console.error("Failed to fetch tenant details");
-        // If not found or error, redirect back
-        router.push("/admin/tenants");
       }
     } catch (error) {
-      console.error("Error fetching tenant details:", error);
-    } finally {
-      setLoading(false);
+      console.error("Error refreshing tenant details:", error);
     }
   }
 
@@ -87,7 +95,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
       });
 
       if (response.ok) {
-        await fetchTenantDetails();
+        await refreshTenantDetails();
       } else {
         alert('Failed to update plan');
       }
@@ -109,7 +117,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
       });
 
       if (response.ok) {
-        await fetchTenantDetails();
+        await refreshTenantDetails();
       } else {
         alert('Failed to update status');
       }

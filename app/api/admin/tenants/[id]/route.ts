@@ -25,7 +25,7 @@ export async function GET(
     if (error) throw error;
 
     // Get the admin profile for this tenant
-    const { data: profile, error: profileError } = await adminSupabase
+    const { data: profile } = await adminSupabase
       .from('profiles')
       .select('*')
       .eq('tenant_id', params.id)
