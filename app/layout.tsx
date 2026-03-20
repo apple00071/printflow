@@ -16,6 +16,9 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "PrintFlow - Printing Business Management",
   description: "Complete printing business management solution with order tracking, customer management, GST compliance, and billing.",
+  icons: {
+    icon: '/icon.svg',
+  },
 };
 
 import { LanguageProvider } from "@/lib/context/LanguageContext";
