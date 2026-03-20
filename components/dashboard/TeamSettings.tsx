@@ -8,11 +8,14 @@ import {
   Shield,
   Edit,
   Trash2,
-  Loader2
+  Loader2,
+  X
 } from "lucide-react";
+import { createPortal } from 'react-dom';
 import { createClient } from "@/lib/supabase/client";
 import { getCurrentTenant } from "@/lib/tenant";
 import { useLanguage } from "@/lib/context/LanguageContext";
+import { formatDate } from "@/lib/utils/format";
 
 interface TeamMember {
   id: string;
@@ -29,6 +32,11 @@ export default function TeamSettings() {
   const { t } = useLanguage();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const [deletingMember, setDeletingMember] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -185,7 +193,7 @@ export default function TeamSettings() {
           return;
         }
         
-        alert(`Team member invitation created for ${newMember.email}!\n\nNext steps:\n1. Send them this link to register: ${window.location.origin}/register\n2. Ask them to use email: ${newMember.email}\n3. They will be added to your team automatically after registration.`);
+        alert(`Team member invitation created for ${newMember.email}!\n\nNext steps:\n1. Send them this link to register: ${window.location.origin}/register?email=${encodeURIComponent(newMember.email)}\n2. Ask them to set their password at that link.\n3. They will be added to your team automatically after signup.`);
       }
 
       // Reset form and refresh team members
@@ -256,7 +264,7 @@ export default function TeamSettings() {
         
         if (profileError) {
           console.error('Error deleting profile:', profileError);
-          alert('Failed to remove team member: ' + (profileError as Error).message);
+          alert('Failed to remove team member: ' + profileError.message);
           return;
         }
         console.log('Successfully deleted from profiles');
@@ -268,7 +276,7 @@ export default function TeamSettings() {
       fetchTeamMembers();
     } catch (error) {
       console.error('Error deleting team member:', error);
-      alert('Failed to remove team member: ' + (error as Error).message);
+      alert('Failed to remove team member: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setDeletingMember(null);
     }
@@ -433,7 +441,7 @@ export default function TeamSettings() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
-                      {new Date(member.created_at).toLocaleDateString()}
+                      {formatDate(member.created_at)}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -462,70 +470,108 @@ export default function TeamSettings() {
       </div>
 
       {/* Add Member Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
-            {editingMember ? 'Edit Team Member' : 'Add Team Member'}
-          </h2>
-            <div className="space-y-4">
+      {showAddModal && mounted && createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div 
+            className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white">
+              <h2 className="text-xl font-bold text-gray-900">
+                {editingMember ? 'Edit Team Member' : 'Add Team Member'}
+              </h2>
+              <button 
+                onClick={() => {
+                  setShowAddModal(false);
+                  setNewMember({ name: '', email: '', phone: '', role: 'WORKER' });
+                  setEditingMember(null);
+                }}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-4 overflow-y-auto">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Full Name</label>
                 <input
                   type="text"
                   value={newMember.name}
                   onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   placeholder="Enter member name"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Email Address</label>
                 <input
                   type="email"
                   value={newMember.email}
+                  disabled={!!editingMember}
                   onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all disabled:bg-gray-50 disabled:text-gray-400"
                   placeholder="Enter email address"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone (Optional)</label>
+                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Phone Number (Optional)</label>
                 <input
                   type="tel"
                   value={newMember.phone}
                   onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   placeholder="Enter phone number"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                <select 
-                  value={newMember.role}
-                  onChange={(e) => setNewMember({ ...newMember, role: e.target.value as 'ADMIN' | 'WORKER' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="WORKER">Worker</option>
-                  <option value="ADMIN">Admin</option>
-                </select>
+                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Access Role</label>
+                <div className="grid grid-cols-2 gap-3 mt-1">
+                  <button
+                    type="button"
+                    onClick={() => setNewMember({ ...newMember, role: 'WORKER' })}
+                    className={`px-4 py-3 rounded-xl border text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                      newMember.role === 'WORKER'
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    }`}
+                  >
+                    Worker
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewMember({ ...newMember, role: 'ADMIN' })}
+                    className={`px-4 py-3 rounded-xl border text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                      newMember.role === 'ADMIN'
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    }`}
+                  >
+                    <Shield className="w-4 h-4" />
+                    Admin
+                  </button>
+                </div>
               </div>
             </div>
-            <div className="flex gap-3 mt-6">
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-gray-50 bg-gray-50/50 flex gap-3 sticky bottom-0">
               <button
                 onClick={() => {
                   setShowAddModal(false);
                   setNewMember({ name: '', email: '', phone: '', role: 'WORKER' });
                   setEditingMember(null);
                 }}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="flex-1 px-4 py-3 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors font-medium text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddMember}
                 disabled={addingMember}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 disabled:opacity-50 transition-all font-semibold text-sm shadow-lg shadow-primary/20"
               >
                 {addingMember ? (
                   <div className="flex items-center justify-center">
@@ -538,7 +584,8 @@ export default function TeamSettings() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

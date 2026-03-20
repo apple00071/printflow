@@ -2,15 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  MoreVertical,
-  Calendar,
-  Phone,
-  Loader2
-} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Plus, Search, Filter, MoreVertical, Calendar, Phone, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/format";
 import { getOrders } from "@/lib/supabase/actions";
 
@@ -32,6 +25,7 @@ interface Order {
 }
 
 export default function OrdersPage() {
+  const router = useRouter();
   const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -152,7 +146,11 @@ export default function OrdersPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
+                  <tr 
+                    key={order.id} 
+                    onClick={() => router.push(`/dashboard/orders/${order.id}`)}
+                    className="hover:bg-gray-50/50 transition-colors cursor-pointer group"
+                  >
                     <td className="px-6 py-4 whitespace-nowrap text-[10px]  font-mono text-primary uppercase">
                        {order.friendly_id || `#${order.id.split('-')[0]}`}
                     </td>
@@ -189,7 +187,8 @@ export default function OrdersPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <Link 
                         href={`/dashboard/orders/${order.id}`}
-                        className="p-1 hover:bg-gray-100 rounded-full transition-colors inline-block"
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-1 hover:bg-gray-200 rounded-full transition-colors inline-block"
                       >
                         <MoreVertical className="w-5 h-5 text-gray-400" />
                       </Link>

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/lib/context/LanguageContext";
+import { formatDate } from "@/lib/utils/format";
 
 interface UserProfile {
   id: string;
@@ -251,7 +252,7 @@ export default function ProfileSettings() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Member Since</label>
                 <div className="flex items-center gap-2 text-gray-900">
                   <Calendar className="w-4 h-4 text-gray-400" />
-                  {new Date(profile.created_at).toLocaleDateString()}
+                  {formatDate(profile.created_at)}
                 </div>
               </div>
               
@@ -260,7 +261,7 @@ export default function ProfileSettings() {
                 <div className="flex items-center gap-2 text-gray-900">
                   <Calendar className="w-4 h-4 text-gray-400" />
                   {profile.last_sign_in_at 
-                    ? new Date(profile.last_sign_in_at).toLocaleDateString()
+                    ? formatDate(profile.last_sign_in_at)
                     : 'Never'
                   }
                 </div>

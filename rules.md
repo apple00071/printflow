@@ -28,20 +28,27 @@
 - Use prisma.$transaction for any multi-table writes 
   (e.g. creating order + updating customer balance together)
 
-## UI Rules
-- Mobile-first — design for 375px screen width first
-- Use Tailwind utility classes only — no custom CSS files
-- Color tokens to use consistently:
+## UI Rules (Modern Aesthetic Standard)
+- **Mobile-first** — design for 375px screen width first.
+- **Visual Excellence** — avoid generic UI; aim for a "premium" feel with deep shadows and subtle borders.
+- **Button Standards**:
+    - Use `rounded-xl` or `rounded-2xl` for a modern, soft aesthetic.
+    - Add `transition-all duration-200 active:scale-[0.97]` to all interactive buttons.
+    - Use subtle gradients instead of flat colors (e.g., `bg-gradient-to-br from-primary to-[#2a4d7d]`).
+    - Primary buttons should have a soft glow/shadow: `shadow-lg shadow-primary/20`.
+- **Glassmorphism**: Use `backdrop-blur-md bg-white/80` for overlays and modals where appropriate.
+- **Typography**: Strictly use sans-serif with tracked-tight headers for a sophisticated look.
+- **Micro-animations**: Use `hover:y-[-2px]` (via translate-y) for cards and interactive elements.
+- **Color tokens** to use consistently:
     Primary:   #1e3a5f (deep blue)
     Accent:    #f97316 (orange)
     Success:   #16a34a (green)
     Warning:   #ca8a04 (yellow)
     Danger:    #dc2626 (red)
     Muted:     #6b7280 (gray)
-- All forms must have loading states on submit buttons
-- All data tables must have empty states 
-  (e.g. "No orders yet / ఇంకా ఆర్డర్లు లేవు")
-- Show toast notifications for all create / update / delete actions
+- All forms must have loading states on submit buttons with `lucide-react` spinners.
+- All data tables must have empty states (e.g. "No orders yet / ఇంకా ఆర్డర్లు లేవు").
+- Use custom scrollbars for a refined look: `custom-scrollbar`.
 - All currency values rendered as: ₹1,234.00
 
 ## Git Rules

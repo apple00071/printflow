@@ -5,6 +5,7 @@ import { Building2, Users, TrendingUp, Plus, MoreHorizontal, CreditCard, Setting
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { formatDate } from "@/lib/utils/format";
 
 interface Tenant {
   id: string;
@@ -111,6 +112,78 @@ export default function TenantsPage() {
       setCreateError('Network error. Please try again.');
     } finally {
       setIsCreating(false);
+    }
+  }
+
+  async function handleUpdatePlan(newPlan: string) {
+    if (!selectedTenant) return;
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/admin/tenants/${selectedTenant.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: newPlan }),
+      });
+
+      if (response.ok) {
+        setShowActionsModal(false);
+        await fetchTenants();
+      } else {
+        alert('Failed to update plan');
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error updating plan:', error);
+      alert('Error updating plan');
+      setLoading(false);
+    }
+  }
+
+  async function handleUpdateStatus(newStatus: string) {
+    if (!selectedTenant) return;
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/admin/tenants/${selectedTenant.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan_status: newStatus }),
+      });
+
+      if (response.ok) {
+        setShowActionsModal(false);
+        await fetchTenants();
+      } else {
+        alert('Failed to update status');
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Error updating status');
+      setLoading(false);
+    }
+  }
+
+  async function handleDeleteTenant() {
+    if (!selectedTenant) return;
+    if (!confirm(`Are you sure you want to delete ${selectedTenant.name}? This action cannot be undone.`)) return;
+    
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/admin/tenants/${selectedTenant.id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setShowActionsModal(false);
+        await fetchTenants();
+      } else {
+        alert('Failed to delete tenant');
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error deleting tenant:', error);
+      alert('Error deleting tenant');
+      setLoading(false);
     }
   }
 
@@ -381,7 +454,7 @@ export default function TenantsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(tenant.created_at).toLocaleDateString()}
+                        {formatDate(tenant.created_at)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <button
@@ -542,19 +615,33 @@ export default function TenantsPage() {
               </div>
               
               <div className="space-y-2">
-                <button className="w-full text-left px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <button 
+                  onClick={() => handleUpdatePlan('PRO')}
+                  disabled={selectedTenant.plan === 'PRO'}
+                  className="w-full text-left px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   Upgrade to Pro Plan
                 </button>
-                <button className="w-full text-left px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <button 
+                  onClick={() => handleUpdatePlan('FREE')}
+                  disabled={selectedTenant.plan === 'FREE'}
+                  className="w-full text-left px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   Downgrade to Free Plan
                 </button>
-                <button className="w-full text-left px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                  Suspend Account
+                <button 
+                  onClick={() => handleUpdateStatus(selectedTenant.plan_status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE')}
+                  className="w-full text-left px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  {selectedTenant.plan_status === 'ACTIVE' ? 'Suspend Account' : 'Activate Account'}
                 </button>
                 <button className="w-full text-left px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                   Send Notification
                 </button>
-                <button className="w-full text-left px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors">
+                <button 
+                  onClick={handleDeleteTenant}
+                  className="w-full text-left px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                >
                   Delete Tenant
                 </button>
               </div>

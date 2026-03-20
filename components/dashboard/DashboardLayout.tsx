@@ -128,7 +128,7 @@ export default function DashboardLayout({
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -138,7 +138,7 @@ export default function DashboardLayout({
         onMouseEnter={() => setIsSidebarOpen(true)}
         onMouseLeave={() => setIsSidebarOpen(false)}
         className={cn(
-          "fixed inset-y-0 left-0 z-50 bg-primary text-white transition-all duration-300 ease-in-out transform lg:translate-x-0 lg:static lg:inset-0",
+          "fixed inset-y-0 left-0 z-40 bg-primary text-white transition-all duration-300 ease-in-out transform lg:translate-x-0 lg:static lg:inset-0",
           "w-64", // Mobile width
           isSidebarOpen ? "translate-x-0 lg:w-64" : "-translate-x-full lg:w-20 lg:translate-x-0"
         )}
@@ -234,7 +234,7 @@ export default function DashboardLayout({
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header - Global Selection */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-30">
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-20">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsSidebarOpen(true)}

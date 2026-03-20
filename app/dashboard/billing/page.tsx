@@ -89,12 +89,12 @@ export default function BillingPage() {
           <p className="text-[10px] text-gray-400 uppercase tracking-widest">{t("Revenue & Tax Management", "రాబడి మరియు పన్ను నిర్వహణ")}</p>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/dashboard/billing/gst-reports" className="bg-white text-primary border border-primary/20 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-primary/5 transition-all">
+          <Link href="/dashboard/billing/gst-reports" className="bg-white text-primary border border-primary/20 px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 hover:bg-primary/5 hover:border-primary/40 active:scale-[0.97] transition-all shadow-sm">
             <TrendingUp className="w-4 h-4" /> {t("GST Reports", "GST నివేదికలు")}
           </Link>
           <button 
             onClick={() => setIsPaymentModalOpen(true)}
-            className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+            className="bg-gradient-to-br from-primary to-[#2a4d7d] text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.97] transition-all shadow-lg shadow-primary/20"
           >
             <Plus className="w-4 h-4" /> {t("New Transaction", "కొత్త లావాదేవీ")}
           </button>
@@ -188,16 +188,17 @@ export default function BillingPage() {
                                 setSelectedOrder(ord);
                                 setIsPaymentModalOpen(true);
                               }}
-                              className="text-primary text-[10px] font-medium border border-primary/20 px-2 py-1 rounded hover:bg-primary/5 transition-colors uppercase tracking-wider"
+                              className="bg-primary/10 text-primary text-[10px] font-bold px-3 py-1.5 rounded-lg hover:bg-primary hover:text-white active:scale-[0.95] transition-all uppercase tracking-wider shadow-sm shadow-primary/5"
                             >
                               {t("PAY", "పేమెంట్")}
                             </button>
                           )}
                           <Link 
                             href={`/dashboard/billing/invoice/${ord.id}`}
-                            className="text-gray-400 hover:text-primary text-xs flex items-center gap-1 transition-colors"
+                            className="bg-gray-50 text-gray-500 hover:text-primary hover:bg-primary/5 p-1.5 rounded-lg transition-all active:scale-90"
+                            title={t("INVOICE", "ఇన్వాయిస్")}
                           >
-                            <FileText className="w-3 h-3" /> {t("INVOICE", "ఇన్వాయిస్")}
+                            <FileText className="w-4 h-4" />
                           </Link>
                         </div>
                       </td>

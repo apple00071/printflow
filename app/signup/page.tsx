@@ -87,8 +87,8 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-2xl shadow-xl border border-gray-100 flex flex-col items-center">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-5 bg-white p-6 rounded-2xl shadow-xl border border-gray-100 flex flex-col items-center">
         
         {/* Language Switcher */}
         <div className="self-end flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100 mb-4 text-[10px] ">
@@ -110,18 +110,18 @@ export default function SignupPage() {
 
         <div className="w-full">
           <div className="text-center">
-            <h1 className="text-4xl tracking-tighter text-primary uppercase">
+            <h1 className="text-3xl tracking-tighter text-primary uppercase">
               PrintFlow
             </h1>
-            <p className="mt-2 text-xs text-gray-500 uppercase tracking-widest">
+            <p className="mt-1 text-xs text-gray-500 uppercase tracking-widest">
               {t("Empowering Indian Print Shops", "భారతీయ ప్రింటింగ్ షాపుల కోసం")}
             </p>
           </div>
-          <h2 className="mt-8 text-center text-2xl text-gray-900 tracking-tight">
+          <h2 className="mt-6 text-center text-2xl text-gray-900 tracking-tight">
             {t("Create your account", "ఖాతాను సృష్టించండి")}
           </h2>
         </div>
-        <form className="w-full space-y-6" onSubmit={handleSignup}>
+        <form className="w-full space-y-4" onSubmit={handleSignup}>
           {error && (
             <div className="rounded-xl bg-red-50 p-4 text-xs text-red-700 border border-red-200">
               {error}
@@ -155,7 +155,7 @@ export default function SignupPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="email@example.com"
-                className="block w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm transition-all"
+                className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm transition-all"
               />
             </div>
             <div>
@@ -170,7 +170,7 @@ export default function SignupPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full rounded-xl border border-gray-200 px-4 py-3 pr-12 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm transition-all"
+                  className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 pr-12 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm transition-all"
                 />
                 <button
                   type="button"
@@ -191,7 +191,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative flex w-full justify-center rounded-xl bg-primary px-4 py-4 text-sm text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 transition-all shadow-lg shadow-primary/20"
+              className="group relative flex w-full justify-center rounded-xl bg-primary px-4 py-3.5 text-sm font-semibold text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 transition-all shadow-lg shadow-primary/20"
             >
               {loading ? t("Creating Account...", "ఖాతా సృష్టించబడుతోంది...") : t("Start Free Trial", "ఉచితంగా ప్రారంభించండి")}
             </button>

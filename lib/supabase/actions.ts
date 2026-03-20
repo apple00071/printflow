@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentTenant, checkOrderLimit } from "@/lib/tenant";
 import { isSuperAdmin } from "@/lib/superadmin";
 import { calculateGST } from "@/lib/gst";
@@ -413,5 +414,73 @@ export async function addPayment(orderId: string, amount: number, method: string
     
   if (updateError) throw updateError;
   
+  return { success: true };
+}
+
+export async function getInvitation(email: string) {
+  const adminSupabase = createAdminClient();
+  
+  const { data, error } = await adminSupabase
+    .from("team_invitations")
+    .select("*, tenants(name)")
+    .ilike("email", email)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error fetching invitation:", error);
+    return { error: error.message };
+  }
+  
+  return { data };
+}
+
+export async function acceptInvitation(email: string, userId: string, name: string) {
+  const adminSupabase = createAdminClient();
+
+  // 1. Get invitation
+  const { data: invite, error: inviteError } = await adminSupabase
+    .from("team_invitations")
+    .select("*")
+    .ilike("email", email)
+    .eq("status", "PENDING")
+    .gt("expires_at", new Date().toISOString())
+    .maybeSingle();
+
+  if (inviteError || !invite) {
+    return { error: "No valid invitation found" };
+  }
+
+  // 2. Create Profile
+  const { error: profileError } = await adminSupabase
+    .from("profiles")
+    .upsert({
+      id: userId,
+      username: email.split("@")[0].toLowerCase(),
+      name: name,
+      role: invite.role,
+      tenant_id: invite.tenant_id,
+      status: 'ACTIVE'
+    });
+
+  if (profileError) {
+    console.error("Error creating profile:", profileError);
+    return { error: profileError.message };
+  }
+
+  // 3. Mark invitation as ACCEPTED
+  const { error: updateError } = await adminSupabase
+    .from("team_invitations")
+    .update({ 
+      status: "ACCEPTED",
+      accepted_at: new Date().toISOString()
+    })
+    .eq("id", invite.id);
+
+  if (updateError) {
+    console.error("Error updating invitation:", updateError);
+  }
+
   return { success: true };
 }

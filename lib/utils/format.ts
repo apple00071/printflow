@@ -1,5 +1,3 @@
-import { format } from "date-fns";
-
 export const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -11,17 +9,29 @@ export const formatCurrency = (amount: number) => {
 
 export const formatDate = (date: Date | string | number) => {
   try {
-    return format(new Date(date), "dd/MM/yyyy");
+    return new Intl.DateTimeFormat('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(new Date(date));
   } catch {
-    return String(date); // Assuming dateStr was a typo and meant to return the original date as a string
+    return String(date);
   }
 };
 
-export function formatDateTime(dateStr: string) {
+export const formatDateTime = (date: Date | string | number) => {
   try {
-    const date = new Date(dateStr);
-    return date.toLocaleString();
+    return new Intl.DateTimeFormat('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    }).format(new Date(date));
   } catch {
-    return dateStr;
+    return String(date);
   }
 }

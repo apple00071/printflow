@@ -19,6 +19,7 @@ import { useLanguage } from "@/lib/context/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
 import { getCurrentTenant } from "@/lib/tenant";
 import ProfileSettings from "@/components/dashboard/ProfileSettings";
+import { formatDate } from "@/lib/utils/format";
 import Script from "next/script";
 
 export default function SettingsPage() {
@@ -212,7 +213,7 @@ export default function SettingsPage() {
                             <Save className="w-8 h-8" />
                          </div>
                          <h3 className="text-lg font-bold text-green-900 uppercase tracking-tight">{t("You are on Pro Plan", "మీరు ప్రో ప్లాన్ లో ఉన్నారు")}</h3>
-                         <p className="text-xs text-green-600 tracking-widest">{t("Next billing: ", "తదుపరి బిల్లింగ్: ")} {tenant?.subscription_end_date ? new Date(tenant.subscription_end_date).toLocaleDateString() : 'N/A'}</p>
+                         <p className="text-xs text-green-600 tracking-widest">{t("Next billing: ", "తదుపరి బిల్లింగ్: ")} {tenant?.subscription_end_date ? formatDate(tenant.subscription_end_date) : 'N/A'}</p>
                       </div>
                     )}
                  </div>
