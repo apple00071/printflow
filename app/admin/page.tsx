@@ -646,7 +646,7 @@ export default function AdminDashboard() {
             className="bg-white h-full w-full max-w-md shadow-2xl flex flex-col transform transition-transform duration-300 ease-out translate-x-0"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-6 border-b flex justify-between items-center bg-gray-50/50">
+            <div className="p-4 sm:p-6 border-b flex justify-between items-center bg-gray-50/50">
               <div>
                 <h3 className="text-xl font-normal text-gray-900">Create New Tenant</h3>
                 <p className="text-xs text-gray-500 mt-1">Add a new SaaS customer to your platform</p>
@@ -659,7 +659,7 @@ export default function AdminDashboard() {
               </button>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               {createError && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
                   {createError}
@@ -692,7 +692,7 @@ export default function AdminDashboard() {
                   <p className="text-xs text-gray-500 mt-2 ml-1 italic">Primary admin for this business</p>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-normal text-gray-700 mb-2">Initial Plan</label>
                     <select
@@ -721,7 +721,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-normal text-gray-700 mb-2">City</label>
                     <input
@@ -758,20 +758,20 @@ export default function AdminDashboard() {
               </div>
             </div>
             
-            <div className="p-6 border-t bg-gray-50/50 flex space-x-3">
+            <div className="p-4 sm:p-6 border-t bg-gray-50/50 flex flex-col-reverse sm:flex-row gap-3">
               <button
                 onClick={() => {
                   setShowCreateModal(false);
                   setCreateError('');
                 }}
-                className="flex-1 bg-white border border-gray-200 text-gray-700 py-3 rounded-xl hover:bg-gray-50 transition-colors font-normal"
+                className="w-full sm:flex-1 bg-white border border-gray-200 text-gray-700 py-3 rounded-xl hover:bg-gray-50 transition-colors font-normal"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreateTenant}
                 disabled={isCreating || !createFormData.name || !createFormData.email}
-                className="flex-1 bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-normal"
+                className="w-full sm:flex-1 bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-normal"
               >
                 {isCreating ? 'Creating...' : 'Create Tenant'}
               </button>

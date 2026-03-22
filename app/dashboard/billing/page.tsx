@@ -21,6 +21,7 @@ interface Order {
   friendly_id?: string;
   created_at: string;
   total_amount: number;
+  total_with_gst?: number;
   advance_paid: number;
   status: string;
   customers?: {
@@ -55,13 +56,13 @@ export default function BillingPage() {
       if (error) throw error;
 
       const rev = (data || []).reduce((acc, ord) => acc + Number(ord.advance_paid || 0), 0);
-      const bal = (data || []).reduce((acc, ord) => acc + (Number(ord.total_amount || 0) - Number(ord.advance_paid || 0)), 0);
-      const pendingCount = (data || []).filter(ord => (Number(ord.total_amount || 0) - Number(ord.advance_paid || 0)) > 0).length;
+      const bal = (data || []).reduce((acc, ord) => acc + (Number(ord.total_with_gst || ord.total_amount || 0) - Number(ord.advance_paid || 0)), 0);
+      const pendingCount = (data || []).filter(ord => (Number(ord.total_with_gst || ord.total_amount || 0) - Number(ord.advance_paid || 0)) > 0.01).length;
 
       setOrders(data || []);
       setStats({
-        totalRevenue: rev,
-        outstandingBalance: bal,
+        totalRevenue: Math.round(rev * 100) / 100,
+        outstandingBalance: Math.round(bal * 100) / 100,
         pendingPayments: pendingCount
       });
     } catch {
@@ -157,7 +158,7 @@ export default function BillingPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {orders.map((ord) => {
-                  const balance = Number(ord.total_amount) - Number(ord.advance_paid);
+                  const balance = Number(ord.total_with_gst || ord.total_amount) - Number(ord.advance_paid);
                   return (
                     <tr key={ord.id} className="hover:bg-gray-50/50 transition-all">
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -214,7 +215,7 @@ export default function BillingPage() {
       {isPaymentModalOpen && (
         <AddPaymentModal
           orderId={selectedOrder?.id}
-          balanceDue={selectedOrder ? (Number(selectedOrder.total_amount) - Number(selectedOrder.advance_paid)) : undefined}
+          balanceDue={selectedOrder ? Math.round((Number(selectedOrder.total_with_gst || selectedOrder.total_amount) - Number(selectedOrder.advance_paid)) * 100) / 100 : undefined}
           onClose={() => {
             setIsPaymentModalOpen(false);
             setSelectedOrder(null);

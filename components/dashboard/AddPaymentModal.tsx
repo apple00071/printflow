@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { X, Loader2, IndianRupee, CreditCard, Banknote, Landmark, ChevronDown } from "lucide-react";
+import { X, Loader2, IndianRupee, CreditCard, Banknote, Landmark } from "lucide-react";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { addPayment } from "@/lib/supabase/actions";
 import { formatCurrency } from "@/lib/utils/format";
 import { createClient } from "@/lib/supabase/client";
 import { getCurrentTenant } from "@/lib/tenant";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 interface AddPaymentModalProps {
   orderId?: string;
@@ -18,9 +19,10 @@ interface AddPaymentModalProps {
 
 export default function AddPaymentModal({ orderId, balanceDue, onSuccess, onClose }: AddPaymentModalProps) {
   const { t } = useLanguage();
+  const initialBalance = balanceDue ? Math.round(Number(balanceDue) * 100) / 100 : 0;
   const [selectedOrderId, setSelectedOrderId] = useState<string | undefined>(orderId);
-  const [currentBalance, setCurrentBalance] = useState<number>(balanceDue || 0);
-  const [amount, setAmount] = useState<number>(balanceDue || 0);
+  const [currentBalance, setCurrentBalance] = useState<number>(initialBalance);
+  const [amount, setAmount] = useState<number>(initialBalance);
   const [method, setMethod] = useState("cash");
   const [loading, setLoading] = useState(false);
   const [fetchingOrders, setFetchingOrders] = useState(!orderId);
@@ -34,6 +36,7 @@ export default function AddPaymentModal({ orderId, balanceDue, onSuccess, onClos
     id: string;
     friendly_id?: string;
     total_amount: number;
+    total_with_gst?: number;
     advance_paid: number;
     balance: number;
     customers?: { name: string } | null;
@@ -48,19 +51,23 @@ export default function AddPaymentModal({ orderId, balanceDue, onSuccess, onClos
         
         const { data } = await supabase
           .from("orders")
-          .select("id, friendly_id, total_amount, advance_paid, customers(name)")
+          .select("id, friendly_id, total_amount, total_with_gst, advance_paid, customers(name)")
           .eq("tenant_id", tenant?.id)
           .order("created_at", { ascending: false });
         
         const unpaid = (data || [])
-          .map((o: { id: string; friendly_id?: string; total_amount: number; advance_paid: number; customers: unknown }) => ({
-            id: o.id,
-            friendly_id: o.friendly_id,
-            total_amount: o.total_amount,
-            advance_paid: o.advance_paid,
-            balance: Number(o.total_amount || 0) - Number(o.advance_paid || 0),
-            customers: Array.isArray(o.customers) ? o.customers[0] : o.customers
-          }))
+          .map((o: { id: string; friendly_id?: string; total_amount: number; total_with_gst?: number; advance_paid: number; customers: unknown }) => {
+            const total = Number(o.total_with_gst || o.total_amount || 0);
+            return {
+              id: o.id,
+              friendly_id: o.friendly_id,
+              total_amount: o.total_amount,
+              total_with_gst: o.total_with_gst,
+              advance_paid: o.advance_paid,
+              balance: Math.round((total - Number(o.advance_paid || 0)) * 100) / 100,
+              customers: Array.isArray(o.customers) ? o.customers[0] : o.customers
+            };
+          })
           .filter(o => o.balance > 0);
         
         setAvailableOrders(unpaid);
@@ -73,9 +80,10 @@ export default function AddPaymentModal({ orderId, balanceDue, onSuccess, onClos
   const handleOrderChange = (id: string) => {
     const ord = availableOrders.find(o => o.id === id);
     if (ord) {
+      const roundedBalance = Math.round(Number(ord.balance) * 100) / 100;
       setSelectedOrderId(id);
-      setCurrentBalance(ord.balance);
-      setAmount(ord.balance);
+      setCurrentBalance(roundedBalance);
+      setAmount(roundedBalance);
     }
   };
 
@@ -121,23 +129,15 @@ export default function AddPaymentModal({ orderId, balanceDue, onSuccess, onClos
           {!orderId && (
             <div className="space-y-2">
               <label className="text-xs font-normal text-gray-400 uppercase tracking-wider">{t("Select Order", "ఆర్డర్ ఎంచుకోండి")}</label>
-              <div className="relative">
-                <select
-                  required
-                  disabled={fetchingOrders}
-                  value={selectedOrderId || ""}
-                  onChange={(e) => handleOrderChange(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-100 focus:border-primary focus:bg-white rounded-xl text-sm font-normal text-gray-900 outline-none transition-all appearance-none pr-10"
-                >
-                  <option value="" disabled>{fetchingOrders ? t("Loading orders...", "ఆర్డర్లు లోడ్ అవుతున్నాయి...") : t("Choose an outstanding order", "బకాయి ఉన్న ఆర్డర్‌ను ఎంచుకోండి")}</option>
-                  {availableOrders.map(o => (
-                    <option key={o.id} value={o.id}>
-                      {o.friendly_id || o.id.split('-')[0]} - {o.customers?.name} (₹{o.balance})
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </div>
+              <CustomSelect
+                options={availableOrders.map(o => ({
+                  value: o.id,
+                  label: `${o.friendly_id || o.id.split('-')[0]} - ${o.customers?.name} (₹${o.balance})`
+                }))}
+                value={selectedOrderId || ""}
+                onChange={(value) => handleOrderChange(value as string)}
+                placeholder={fetchingOrders ? t("Loading orders...", "ఆర్డర్లు లోడ్ అవుతున్నాయి...") : t("Choose an outstanding order", "బకాయి ఉన్న ఆర్డర్‌ను ఎంచుకోండి")}
+              />
             </div>
           )}
 

@@ -53,12 +53,12 @@ export function calculateGST(
   if (isInterState) {
     const igst = round2(taxableAmount * gstRate / 100)
     return { cgst: 0, sgst: 0, igst, 
-             totalWithGST: taxableAmount + igst }
+             totalWithGST: round2(taxableAmount + igst) }
   }
   
   const half = round2(taxableAmount * (gstRate / 2) / 100)
   return { cgst: half, sgst: half, igst: 0,
-           totalWithGST: taxableAmount + half + half }
+           totalWithGST: round2(taxableAmount + half + half) }
 }
 
 export function validateGSTIN(gstin: string): boolean {

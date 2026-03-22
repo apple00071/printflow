@@ -31,6 +31,7 @@ interface Order {
   quantity: number;
   total_amount: number;
   advance_paid: number;
+  total_with_gst?: number;
   status: string;
   created_at: string;
 }
@@ -94,10 +95,10 @@ export default function CustomerProfilePage({ params }: { params: { id: string }
   );
 
   // Statistics Calculation
-  const totalBusiness = orders.reduce((acc, curr) => acc + Number(curr.total_amount), 0);
+  const totalBusiness = orders.reduce((acc, curr) => acc + Number(curr.total_with_gst || curr.total_amount), 0);
   const totalBalance = orders.reduce((acc, curr) => {
-    const bal = Number(curr.total_amount) - Number(curr.advance_paid || 0);
-    return acc + bal;
+    const bal = Number(curr.total_with_gst || curr.total_amount) - Number(curr.advance_paid || 0);
+    return acc + (bal > 0.01 ? bal : 0);
   }, 0);
 
   return (
@@ -147,7 +148,7 @@ export default function CustomerProfilePage({ params }: { params: { id: string }
                        </div>
                        <span className="text-sm text-gray-600">{t("Total Business", "మొత్తం వ్యాపారం")}</span>
                     </div>
-                    <span className="text-sm text-gray-900">{formatCurrency(totalBusiness)}</span>
+                    <span className="text-sm text-gray-900 font-medium">{formatCurrency(totalBusiness)}</span>
                  </div>
                  <div className="flex justify-between items-center">
                     <div className="flex items-center gap-3">
@@ -156,7 +157,7 @@ export default function CustomerProfilePage({ params }: { params: { id: string }
                        </div>
                        <span className="text-sm text-gray-600">{t("Total Balance", "మొత్తం బకాయి")}</span>
                     </div>
-                    <span className={`text-sm ${totalBalance > 0 ? "text-red-500" : "text-green-500"}`}>
+                    <span className={`text-sm font-medium ${totalBalance > 0.1 ? "text-red-500" : "text-green-600"}`}>
                        {formatCurrency(totalBalance)}
                     </span>
                  </div>
@@ -194,11 +195,11 @@ export default function CustomerProfilePage({ params }: { params: { id: string }
                           </tr>
                        ) : (
                           orders.map((ord) => (
-                             <tr key={ord.id} className="hover:bg-gray-50/50 transition-colors group">
+                             <tr key={ord.id} className="hover:bg-gray-50/50 transition-colors group cursor-pointer" onClick={() => window.location.href=`/dashboard/orders/${ord.id}`}>
                                 <td className="px-6 py-5 whitespace-nowrap">
-                                   <Link href={`/dashboard/orders/${ord.id}`} className="text-[10px] font-mono text-primary uppercase underline-offset-4 hover:underline">
+                                   <div className="text-[10px] font-mono text-primary uppercase underline-offset-4 group-hover:underline">
                                       {ord.friendly_id || `#${ord.id.split('-')[0]}`}
-                                   </Link>
+                                   </div>
                                 </td>
                                 <td className="px-6 py-5">
                                    <p className="text-gray-900">{ord.job_type}</p>
@@ -212,10 +213,10 @@ export default function CustomerProfilePage({ params }: { params: { id: string }
                                    </span>
                                 </td>
                                 <td className="px-6 py-5 text-right">
-                                   <p className="text-gray-900">{formatCurrency(ord.total_amount)}</p>
-                                   {(Number(ord.total_amount) - Number(ord.advance_paid)) > 0 && (
+                                   <p className="text-gray-900 font-medium">{formatCurrency(ord.total_with_gst || ord.total_amount)}</p>
+                                   {(Number(ord.total_with_gst || ord.total_amount) - Number(ord.advance_paid)) > 0.01 && (
                                       <p className="text-[10px] text-red-500 uppercase tracking-tighter">
-                                         {t("Bal", "బకాయి")}: {formatCurrency(Number(ord.total_amount) - Number(ord.advance_paid))}
+                                         {t("Bal", "బకాయి")}: {formatCurrency(Number(ord.total_with_gst || ord.total_amount) - Number(ord.advance_paid))}
                                       </p>
                                    )}
                                 </td>

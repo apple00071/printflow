@@ -284,13 +284,21 @@ export async function getOrder(id: string) {
   return data;
 }
 
-export async function updateOrderStatus(orderId: string, status: string) {
+export async function updateOrderStatus(orderId: string, status: string, actualDeliveryDate?: string) {
   const supabase = createClient();
   const superAdmin = await isSuperAdmin(supabase);
   
+  const updateData: { status: string; actual_delivery_date?: string | null } = { status };
+  if (actualDeliveryDate) {
+    updateData.actual_delivery_date = actualDeliveryDate;
+  } else if (status !== "DELIVERED") {
+    // If we move away from DELIVERED, clear the actual_delivery_date
+    updateData.actual_delivery_date = null;
+  }
+
   let query = supabase
     .from("orders")
-    .update({ status })
+    .update(updateData)
     .eq("id", orderId);
 
   // If not super admin, ensure tenant access

@@ -5,10 +5,10 @@ import {
   Users, 
   Search, 
   Phone, 
-  History,
-  TrendingUp,
+  History, 
+  TrendingUp, 
   AlertCircle,
-  Loader2
+  Loader2 
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/format";
 import Link from "next/link";
@@ -19,6 +19,7 @@ import { useLanguage } from "@/lib/context/LanguageContext";
 interface CustomerOrder {
   total_amount: number;
   advance_paid: number;
+  total_with_gst?: number;
 }
 
 interface Customer {
@@ -56,7 +57,8 @@ export default function CustomersPage() {
             *,
             orders (
               total_amount,
-              advance_paid
+              advance_paid,
+              total_with_gst
             )
           `)
           .eq('tenant_id', currentTenant?.id);
@@ -64,9 +66,17 @@ export default function CustomersPage() {
         if (error) throw error;
 
         // Process data to calculate totals and per-customer stats
+        interface OrderSummary {
+          total_with_gst?: number;
+          total_amount: number;
+          advance_paid: number;
+        }
+
         const processedCustomers = (data || []).map(customer => {
-          const customerBusiness = customer.orders.reduce((acc: number, ord: { total_amount: number }) => acc + Number(ord.total_amount), 0);
-          const customerPaid = customer.orders.reduce((acc: number, ord: { advance_paid: number }) => acc + Number(ord.advance_paid), 0);
+          const customerBusiness = customer.orders.reduce((acc: number, ord: OrderSummary) => 
+            acc + Number(ord.total_with_gst || ord.total_amount), 0);
+          const customerPaid = customer.orders.reduce((acc: number, ord: OrderSummary) => 
+            acc + Number(ord.advance_paid), 0);
           const customerBalance = customerBusiness - customerPaid;
           
           return {
@@ -78,7 +88,7 @@ export default function CustomersPage() {
         }).sort((a, b) => a.name.localeCompare(b.name));
 
         const globalBusiness = processedCustomers.reduce((acc, c) => acc + c.business_value, 0);
-        const globalOutstanding = processedCustomers.reduce((acc, c) => acc + c.balance, 0);
+        const globalOutstanding = processedCustomers.reduce((acc, c) => acc + (c.balance > 0.01 ? c.balance : 0), 0);
 
         setCustomers(processedCustomers);
         setStats({
@@ -192,15 +202,15 @@ export default function CustomersPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <span className="text-sm  text-gray-900">{formatCurrency(customer.business_value)}</span>
+                      <span className="text-sm font-medium text-gray-900">{formatCurrency(customer.business_value)}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      {customer.balance > 0 ? (
-                        <span className="text-[10px]  text-red-600 bg-red-50 px-2 py-1 rounded-full uppercase tracking-tighter">
+                      {customer.balance > 0.01 ? (
+                        <span className="text-[10px] font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full uppercase tracking-tighter">
                           {t("Due", "బకాయి")}: {formatCurrency(customer.balance)}
                         </span>
                       ) : (
-                        <span className="text-[10px]  text-green-600 bg-green-50 px-2 py-1 rounded-full uppercase tracking-tighter">
+                        <span className="text-[10px] font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full uppercase tracking-tighter">
                           {t("Paid", "చెల్లించారు")}
                         </span>
                       )}
@@ -208,7 +218,7 @@ export default function CustomersPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <Link 
                         href={`/dashboard/customers/${customer.id}`}
-                        className="text-primary text-xs  hover:underline"
+                        className="text-primary text-xs font-medium hover:underline"
                       >
                         {t("View Details", "వివరాలు")}
                       </Link>

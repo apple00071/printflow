@@ -27,6 +27,7 @@ interface Order {
   friendly_id?: string;
   created_at: string;
   total_amount: number;
+  total_with_gst?: number;
   status: string;
   customers: {
     name: string;
@@ -39,6 +40,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<StatCard[]>([]);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [chartData, setChartData] = useState<{ name: string; value: number; color: string }[]>([]);
+
   useEffect(() => {
     async function fetchDashboardData() {
       setLoading(true);
@@ -85,7 +87,7 @@ export default function DashboardPage() {
 
           // 3. Process Stats for ALL data
           const todayOrders = (dbOrders || []).filter(o => o.created_at.startsWith(today));
-          const todayRevenue = todayOrders.reduce((acc, curr) => acc + Number(curr.total_amount || 0), 0);
+          const todayRevenue = todayOrders.reduce((acc, curr) => acc + Number(curr.total_with_gst || curr.total_amount || 0), 0);
           const pendingCount = (dbOrders || []).filter(o => o.status !== 'DELIVERED').length;
 
           setStats([
@@ -148,7 +150,7 @@ export default function DashboardPage() {
 
         // 3. Process Stats
         const todayOrders = (dbOrders || []).filter(o => o.created_at.startsWith(today));
-        const todayRevenue = todayOrders.reduce((acc, curr) => acc + Number(curr.total_amount || 0), 0);
+        const todayRevenue = todayOrders.reduce((acc, curr) => acc + Number(curr.total_with_gst || curr.total_amount || 0), 0);
         const pendingCount = (dbOrders || []).filter(o => o.status !== 'DELIVERED').length;
 
         setStats([
@@ -163,7 +165,7 @@ export default function DashboardPage() {
         // 4. Group by Job Type for Chart
         const jobGroups = (dbOrders || []).reduce((acc: Record<string, number>, curr) => {
           const type = curr.job_type || 'Other';
-          acc[type] = (acc[type] || 0) + Number(curr.total_amount || 0);
+          acc[type] = (acc[type] || 0) + Number(curr.total_with_gst || curr.total_amount || 0);
           return acc;
         }, {});
 
@@ -227,13 +229,13 @@ export default function DashboardPage() {
                     <p className="text-sm">{t("No recent orders found", "ఇటీవలి ఆర్డర్లు లేవు")}</p>
                 </div>
              ) : recentOrders.map((order) => (
-                <div key={order.id} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-lg border border-transparent hover:border-gray-100 transition-all">
+                <div key={order.id} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-lg border border-transparent hover:border-gray-100 transition-all cursor-pointer" onClick={() => window.location.href=`/dashboard/orders/${order.id}`}>
                    <div className="flex flex-col">
                       <span className="text-sm  text-gray-900">{order.customers?.name || "Unknown"}</span>
                       <span className="text-[10px] text-gray-400  font-mono uppercase">{order.friendly_id || `#${order.id.split('-')[0]}`}</span>
                    </div>
                    <div className="text-right">
-                      <p className="text-sm  text-primary">{formatCurrency(order.total_amount)}</p>
+                      <p className="text-sm font-medium text-primary">{formatCurrency(order.total_with_gst || order.total_amount)}</p>
                       <p className="text-[10px]  text-orange uppercase tracking-tighter">{order.status}</p>
                    </div>
                 </div>

@@ -10,13 +10,15 @@ import {
   FileText,
   Loader2,
   IndianRupee,
-  File as FileIcon
+  File as FileIcon,
+  X
 } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { PRESS_CONFIG } from "@/lib/config";
 import { getOrder, updateOrderStatus } from "@/lib/supabase/actions";
 import AddPaymentModal from "@/components/dashboard/AddPaymentModal";
+import CustomDatePicker from "@/components/ui/CustomDatePicker";
 
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -36,8 +38,18 @@ interface Order {
   paper_type?: string;
   size?: string;
   delivery_date?: string;
+  actual_delivery_date?: string;
+  created_at: string;
   instructions?: string;
   file_url?: string;
+  // Financial fields
+  taxable_amount: number;
+  total_with_gst: number;
+  gst_type: string;
+  gst_rate: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
 }
 
 export default function OrderDetailsPage({ params }: { params: { id: string } }) {
@@ -46,6 +58,8 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [showDeliveryModal, setShowDeliveryModal] = useState(false);
+  const [actualDeliveryDate, setActualDeliveryDate] = useState(new Date().toISOString().split('T')[0]);
 
   const statuses = [
     t("RECEIVED", "వచ్చింది"),
@@ -74,10 +88,21 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
 
   const handleStatusUpdate = async (newStatus: string) => {
     if (!order) return;
+    
+    // If status is DELIVERED, and we don't have a date yet, show the modal
+    if (newStatus === "DELIVERED" && !order.actual_delivery_date) {
+      setShowDeliveryModal(true);
+      return;
+    }
+
     setUpdating(true);
     try {
-      await updateOrderStatus(order.id, newStatus);
-      setOrder({ ...order, status: newStatus } as Order);
+      await updateOrderStatus(order.id, newStatus, newStatus === "DELIVERED" ? actualDeliveryDate : undefined);
+      setOrder({ 
+        ...order, 
+        status: newStatus, 
+        actual_delivery_date: newStatus === "DELIVERED" ? (actualDeliveryDate || order.actual_delivery_date) : null 
+      } as Order);
     } catch {
       console.error("Error updating status");
     } finally {
@@ -103,12 +128,15 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
   );
 
   const getWhatsAppLink = () => {
-    const balance = order.total_amount - order.advance_paid;
+    const rawTotal = order.total_with_gst || order.total_amount;
+    const total = Math.round(rawTotal * 100) / 100;
+    const balance = Math.round((total - order.advance_paid) * 100) / 100;
+    
     let message = "";
     if (language === "te") {
-      message = `నమస్కారం ${order.customers.name} గారు, మీ ${order.job_type} ఆర్డర్ సిద్ధంగా ఉంది. మొత్తం: ₹${order.total_amount}. అడ్వాన్స్: ₹${order.advance_paid}. బకాయి: ₹${balance}. - ${PRESS_CONFIG.name}, చీరాల.`;
+      message = `నమస్కారం ${order.customers.name} గారు, మీ ${order.job_type} ఆర్డర్ సిద్ధంగా ఉంది. మొత్తం: ₹${total}. అడ్వాన్స్: ₹${order.advance_paid}. బకాయి: ₹${balance}. - ${PRESS_CONFIG.name}, చీరాల.`;
     } else {
-      message = `Hi ${order.customers.name}, your order of ${order.job_type} is ready for pickup. Total: ₹${order.total_amount}. Advance: ₹${order.advance_paid}. Balance: ₹${balance}. - ${PRESS_CONFIG.name}, Chirala`;
+      message = `Hi ${order.customers.name}, your order of ${order.job_type} is ready for pickup. Total: ₹${total}. Advance: ₹${order.advance_paid}. Balance: ₹${balance}. - ${PRESS_CONFIG.name}, Chirala`;
     }
     return `https://wa.me/${order.customers.phone}?text=${encodeURIComponent(message)}`;
   };
@@ -210,9 +238,26 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                 <p className="text-sm text-gray-900">{order.size || t("N/A", "లేదు")}</p>
               </div>
               <div>
-                <p className="text-[10px] text-gray-400 uppercase tracking-wider">{t("Delivery Date", "డెలివరీ తేదీ")}</p>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wider">{t("Ordered On", "ఆర్డర్ చేసిన తేదీ")}</p>
+                <p className="text-sm text-gray-900">{formatDate(order.created_at)}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wider">{t("Promised Delivery", "డెలివరీ తేదీ")}</p>
                 <p className="text-sm text-gray-900">{order.delivery_date ? formatDate(order.delivery_date) : t("TBA", "త్వరలో")}</p>
               </div>
+              {order.status === "DELIVERED" && order.actual_delivery_date && (
+                <div>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wider">{t("Actual Delivery", "నిజమైన డెలివరీ తేదీ")}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-green-600 font-medium">{formatDate(order.actual_delivery_date)}</p>
+                    {order.delivery_date && new Date(order.actual_delivery_date).getTime() > new Date(order.delivery_date).getTime() && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium uppercase tracking-wider bg-red-100 text-red-700">
+                        {t("Delayed", "ఆలస్యం")}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="pt-4 border-t border-gray-50">
                <p className="text-[10px] text-gray-400 uppercase mb-2 tracking-wider">{t("Instructions", "సూచనలు")}</p>
@@ -251,21 +296,50 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
               <IndianRupee className="w-5 h-5 text-primary" />
               <h2 className="text-gray-900 uppercase tracking-wide text-sm">{t("Finances", "డబ్బు వివరాలు")}</h2>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-500">{t("Total Amount", "మొత్తం ధర")}</span>
-                <span className="text-gray-900">{formatCurrency(order.total_amount)}</span>
+                <span className="text-gray-500">{t("Taxable Amount", "పన్ను చెల్లించవలసిన మొత్తం")}</span>
+                <span className="text-gray-900 font-medium">{formatCurrency(order.taxable_amount || order.total_amount)}</span>
               </div>
+              
+              {order.gst_type !== 'NONE' && (
+                <div className="space-y-1.5 pt-1 border-t border-gray-50 mt-1">
+                  {order.gst_type === 'CGST_SGST' ? (
+                    <>
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="text-gray-400">CGST ({(order.gst_rate || 0)/2}%)</span>
+                        <span className="text-gray-600 font-normal">{formatCurrency(order.cgst || 0)}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="text-gray-400">SGST ({(order.gst_rate || 0)/2}%)</span>
+                        <span className="text-gray-600 font-normal">{formatCurrency(order.sgst || 0)}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex justify-between items-center text-[11px]">
+                      <span className="text-gray-400">IGST ({order.gst_rate || 0}%)</span>
+                      <span className="text-gray-600 font-normal">{formatCurrency(order.igst || 0)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-between items-center text-sm pt-2 border-t border-gray-100 mt-2">
+                <span className="text-gray-900 font-normal">{t("Total Amount", "మొత్తం ధర")}</span>
+                <span className="text-gray-900 font-semibold">{formatCurrency(order.total_with_gst || order.total_amount)}</span>
+              </div>
+
               <div className="flex justify-between items-center text-sm text-green-600">
                 <span className="text-gray-500">{t("Advance Paid", "చెల్లించిన అడ్వాన్స్")}</span>
-                <span>-{formatCurrency(order.advance_paid)}</span>
+                <span className="font-medium text-green-600">{formatCurrency(order.advance_paid)}</span>
               </div>
+              
               <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
-                <span className="text-xs text-gray-400 uppercase tracking-wider">{t("Balance Due", "బకాయి")}</span>
-                <span className="text-xl text-primary">{formatCurrency(order.total_amount - order.advance_paid)}</span>
+                <span className="text-xs text-gray-400 uppercase tracking-wider font-medium">{t("Balance Due", "బకాయి")}</span>
+                <span className="text-xl text-primary font-bold">{formatCurrency((order.total_with_gst || order.total_amount) - order.advance_paid)}</span>
               </div>
             </div>
-            {(order.total_amount - order.advance_paid) > 0 && (
+            {((order.total_with_gst || order.total_amount) - order.advance_paid) > 0 && (
               <button 
                 onClick={() => setIsPaymentModalOpen(true)}
                 className="w-full py-2.5 bg-primary text-white text-xs rounded-lg hover:bg-primary/90 transition-all shadow-md active:scale-95 mt-2 font-normal uppercase tracking-wider"
@@ -302,15 +376,64 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
       {isPaymentModalOpen && order && (
         <AddPaymentModal
           orderId={order.id}
-          balanceDue={order.total_amount - order.advance_paid}
+          balanceDue={Math.round(((order.total_with_gst || order.total_amount) - order.advance_paid) * 100) / 100}
           onClose={() => setIsPaymentModalOpen(false)}
           onSuccess={() => {
             fetchOrder();
           }}
         />
       )}
-    </div>
 
+      {/* Actual Delivery Date Modal */}
+      {showDeliveryModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-50 rounded-xl">
+                  <CheckCircle2 className="w-5 h-5 text-green-600" />
+                </div>
+                <h3 className="text-sm font-normal text-gray-900 uppercase tracking-tight">Capture Delivery</h3>
+              </div>
+              <button onClick={() => setShowDeliveryModal(false)} className="p-1 hover:bg-gray-50 rounded-lg text-gray-400 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <p className="text-xs text-gray-500 leading-relaxed uppercase tracking-wider">
+                Specify the actual date the order was delivered to the customer.
+              </p>
+              
+              <div className="space-y-2">
+                <label className="text-[10px] text-gray-400 uppercase tracking-widest px-1">Delivery Date</label>
+                <CustomDatePicker
+                  value={actualDeliveryDate}
+                  onChange={(val) => setActualDeliveryDate(val)}
+                />
+              </div>
+
+              <button
+                onClick={async () => {
+                  setUpdating(true);
+                  setShowDeliveryModal(false);
+                  try {
+                    await updateOrderStatus(order.id, "DELIVERED", actualDeliveryDate);
+                    setOrder({ ...order, status: "DELIVERED", actual_delivery_date: actualDeliveryDate } as Order);
+                  } catch {
+                    console.error("Error updating delivery date");
+                  } finally {
+                    setUpdating(false);
+                  }
+                }}
+                className="w-full py-3 bg-primary text-white text-xs rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 font-normal uppercase tracking-widest mt-2"
+              >
+                Confirm Delivery
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
-

@@ -19,6 +19,7 @@ interface Order {
   quantity: number;
   taxable_amount: number;
   total_amount: number;
+  total_with_gst?: number;
   advance_paid: number;
   gst_type: string;
   gst_rate: number;
@@ -80,6 +81,8 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
        <Link href="/dashboard/orders" className="bg-primary text-white px-8 py-3 rounded-xl shadow-lg shadow-primary/20">{t("Back to Orders", "ఆర్డర్‌లకు తిరిగి వెళ్లండి")}</Link>
     </div>
   );
+
+  const finalTotal = order.total_with_gst || order.total_amount;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 print:bg-white print:p-0">
@@ -187,7 +190,7 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
                       {order.gst_type !== 'NONE' && (
                         <td className="px-4 py-8 text-right">{order.gst_rate}%</td>
                       )}
-                      <td className="px-4 py-8 text-right font-normal text-gray-900">{formatCurrency(order.total_amount)}</td>
+                      <td className="px-4 py-8 text-right font-medium text-gray-900">{formatCurrency(finalTotal)}</td>
                     </tr>
                   </tbody>
                </table>
@@ -198,7 +201,7 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
                <div className="flex-1 space-y-6">
                  <div>
                     <h4 className="text-[10px] text-gray-400 uppercase tracking-widest mb-2">{t("Amount in words", "అక్షరాలలో మొత్తం")}</h4>
-                    <p className="text-sm font-normal text-gray-800 italic bg-gray-50 p-3 rounded-lg border border-gray-100">{amountInWords(order.total_amount)}</p>
+                    <p className="text-sm font-normal text-gray-800 italic bg-gray-50 p-3 rounded-lg border border-gray-100">{amountInWords(finalTotal)}</p>
                  </div>
                  
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -224,9 +227,9 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
 
                <div className="w-full md:w-80 space-y-3">
                   <div className="space-y-2 px-2 border-b border-gray-100 pb-4 mb-4">
-                    <div className="flex justify-between text-xs">
+                    <div className="flex justify-between text-xs font-medium">
                        <span className="text-gray-500">{t("Sub Total", "మొత్తం")}</span>
-                       <span className="font-normal">{formatCurrency(order.taxable_amount || order.total_amount)}</span>
+                       <span className="font-medium text-gray-900">{formatCurrency(order.taxable_amount || order.total_amount)}</span>
                     </div>
                     {order.gst_type === 'CGST_SGST' && (
                       <>
@@ -250,17 +253,17 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
 
                   <div className="flex justify-between items-center bg-primary text-white p-6 rounded-2xl shadow-2xl shadow-primary/30 transform scale-105 origin-right">
                     <span className="text-[10px] font-normal uppercase tracking-widest">{t("Grand Total", "మొత్తం చెల్లించాల్సింది")}</span>
-                    <span className="text-3xl font-normal">{formatCurrency(order.total_amount)}</span>
+                    <span className="text-3xl font-medium">{formatCurrency(finalTotal)}</span>
                   </div>
 
                   <div className="pt-8 space-y-2 px-4 italic">
                     <div className="flex justify-between text-sm text-green-600">
                        <span className="text-gray-400 uppercase text-[9px] tracking-widest">{t("Advance Paid", "అడ్వాన్స్")}</span>
-                       <span className="font-normal">-{formatCurrency(order.advance_paid)}</span>
+                       <span className="font-medium text-green-600">{formatCurrency(order.advance_paid)}</span>
                     </div>
                     <div className="flex justify-between text-lg font-normal text-primary pt-2 border-t border-dashed border-gray-200">
                        <span className="text-gray-400 uppercase text-[9px] tracking-widest font-normal">{t("Balance Due", "బకాయి")}</span>
-                       <span>{formatCurrency(order.total_amount - order.advance_paid)}</span>
+                       <span className="font-semibold">{formatCurrency(finalTotal - order.advance_paid)}</span>
                     </div>
                   </div>
                </div>

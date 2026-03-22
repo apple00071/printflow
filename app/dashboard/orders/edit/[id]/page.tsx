@@ -10,7 +10,6 @@ import {
   Hash,
   FileText,
   Upload,
-  Calendar,
   Loader2,
   IndianRupee,
   Receipt,
@@ -24,6 +23,9 @@ import { createClient } from "@/lib/supabase/client";
 import { getCurrentTenant } from "@/lib/tenant";
 import { calculateGST } from "@/lib/gst";
 import { useLanguage } from "@/lib/context/LanguageContext";
+import { JOB_TYPE_DEFAULTS, DEFAULT_GST_RATES } from "@/lib/config";
+import CustomSelect from "@/components/ui/CustomSelect";
+import CustomDatePicker from "@/components/ui/CustomDatePicker";
 
 export default function EditOrderPage({ params }: { params: { id: string } }) {
   const { t } = useLanguage();
@@ -241,15 +243,24 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
               <label className="text-xs text-gray-500 uppercase">{t("Job Type", "పని రకం")}</label>
-              <select
+              <CustomSelect
+                options={jobTypes.map(t => ({ value: t.id, label: t.label }))}
                 value={formData.jobType}
-                onChange={(e) => setFormData({ ...formData, jobType: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
-              >
-                {jobTypes.map((type) => (
-                  <option key={type.id} value={type.id}>{type.label}</option>
-                ))}
-              </select>
+                onChange={(value) => {
+                  const newJobType = String(value);
+                  const defaults = JOB_TYPE_DEFAULTS[newJobType];
+                  setFormData(prev => ({
+                    ...prev,
+                    jobType: newJobType,
+                    // Auto-apply HSN and GST if defaults exist
+                    ...(defaults ? {
+                      hsnCode: defaults.hsn,
+                      applyGST: true,
+                      gstRate: defaults.gst
+                    } : {})
+                  }));
+                }}
+              />
             </div>
             <div className="space-y-1">
               <label className="text-xs text-gray-500 uppercase">{t("Quantity", "పరిమాణం")}</label>
@@ -267,15 +278,10 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
             </div>
             <div className="space-y-1">
               <label className="text-xs text-gray-500 uppercase">{t("Delivery Date", "డెలివరీ తేదీ")}</label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="date"
-                  value={formData.deliveryDate}
-                  onChange={(e) => setFormData({ ...formData, deliveryDate: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
-                />
-              </div>
+              <CustomDatePicker
+                value={formData.deliveryDate}
+                onChange={(value) => setFormData({ ...formData, deliveryDate: value })}
+              />
             </div>
             <div className="space-y-1">
               <label className="text-xs text-gray-500 uppercase">{t("Paper Type", "కాగితం రకం")}</label>
@@ -379,16 +385,15 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-2">
               <div className="space-y-1">
                 <label className="text-xs text-gray-500 uppercase">{t("GST Rate", "GST శాతం")}</label>
-                <select
+                <CustomSelect
+                  options={[
+                    { value: 0, label: "0% (Nil)" },
+                    ...gstRates.map((rate) => ({ value: rate.rate, label: `${rate.label} (${rate.rate}%)` })),
+                    ...DEFAULT_GST_RATES.filter(std => !gstRates.some(r => r.rate === std.rate)).map((std) => ({ value: std.rate, label: `${std.label} (${std.rate}%)` }))
+                  ]}
                   value={formData.gstRate}
-                  onChange={(e) => setFormData({ ...formData, gstRate: parseFloat(e.target.value) })}
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
-                >
-                  <option value="0">0% (Nil)</option>
-                  {gstRates.map((rate) => (
-                    <option key={rate.id} value={rate.rate}>{rate.label} ({rate.rate}%)</option>
-                  ))}
-                </select>
+                  onChange={(value) => setFormData({...formData, gstRate: Number(value)})}
+                />
               </div>
               <div className="flex items-center gap-3 mt-6">
                 <input
@@ -439,11 +444,11 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
               <div className="bg-primary/5 p-4 rounded-xl border border-primary/10 space-y-2">
                 <div className="flex justify-between text-[10px] uppercase text-gray-500">
                   <span>{formData.isInterState ? "IGST" : "CGST + SGST"} ({formData.gstRate}%)</span>
-                  <span>₹ {formData.isInterState ? gstCalc.igst : (gstCalc.cgst + gstCalc.sgst)}</span>
+                  <span>₹ {formData.isInterState ? gstCalc.igst.toFixed(2) : (gstCalc.cgst + gstCalc.sgst).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-normal text-sm text-primary">
                   <span>{t("Total with GST", "మొత్తం GST కలిపి")}</span>
-                  <span>₹ {gstCalc.totalWithGST}</span>
+                  <span>₹ {gstCalc.totalWithGST.toFixed(2)}</span>
                 </div>
               </div>
             )}
@@ -462,7 +467,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
             </div>
             <div className="bg-gray-50 p-4 rounded-lg flex flex-col justify-center border border-gray-100">
               <p className="text-[10px] text-gray-400 uppercase">{t("Balance Due", "మిగిలిన మొత్తం")}</p>
-              <p className="text-xl text-primary">₹ {formData.applyGST ? (gstCalc.totalWithGST - formData.advancePaid) : (formData.totalAmount - formData.advancePaid)}</p>
+              <p className="text-xl text-primary">₹ {formData.applyGST ? (gstCalc.totalWithGST - formData.advancePaid).toFixed(2) : (formData.totalAmount - formData.advancePaid).toFixed(2)}</p>
             </div>
           </div>
         </section>

@@ -84,7 +84,7 @@ export default function GSTReportsPage() {
     cgst: acc.cgst + (order.cgst || 0),
     sgst: acc.sgst + (order.sgst || 0),
     igst: acc.igst + (order.igst || 0),
-    grand: acc.grand + (order.total_amount || 0),
+    grand: acc.grand + (order.total_with_gst || order.total_amount || 0),
   }), { taxable: 0, cgst: 0, sgst: 0, igst: 0, grand: 0 });
 
   const exportCSV = () => {
@@ -107,7 +107,7 @@ export default function GSTReportsPage() {
       o.igst || 0,
       o.cgst || 0,
       o.sgst || 0,
-      o.total_amount
+      o.total_with_gst || o.total_amount
     ]);
 
     const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
@@ -204,7 +204,7 @@ export default function GSTReportsPage() {
                  <div className="p-2 bg-white/10 rounded-lg"><PieChart className="w-5 h-5 text-white" /></div>
                  <h3 className="text-[10px] text-white/60 uppercase tracking-widest">{t("Grand Total", "మొత్తం చెల్లింపు")}</h3>
               </div>
-              <p className="text-2xl font-normal text-white">{formatCurrency(totals.grand)}</p>
+              <p className="text-2xl font-normal text-white">{formatCurrency(Math.round(totals.grand * 100) / 100)}</p>
             </div>
           </div>
 
@@ -243,7 +243,7 @@ export default function GSTReportsPage() {
                        <td className="px-6 py-4 text-right text-gray-500">{formatCurrency(o.cgst || 0)}</td>
                        <td className="px-6 py-4 text-right text-gray-500">{formatCurrency(o.sgst || 0)}</td>
                        <td className="px-6 py-4 text-right text-gray-500">{formatCurrency(o.igst || 0)}</td>
-                       <td className="px-6 py-4 text-right font-normal text-gray-900">{formatCurrency(o.total_amount)}</td>
+                       <td className="px-6 py-4 text-right font-normal text-gray-900">{formatCurrency(o.total_with_gst || o.total_amount)}</td>
                      </tr>
                    ))}
                    {orders.length === 0 && (

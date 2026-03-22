@@ -22,6 +22,7 @@ interface Order {
   status: string;
   total_amount: number;
   advance_paid: number;
+  total_with_gst?: number;
 }
 
 export default function OrdersPage() {
@@ -178,9 +179,13 @@ export default function OrdersPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className="flex flex-col">
-                        <span className="text-sm  text-gray-900">{formatCurrency(order.total_amount)}</span>
-                        {(order.total_amount - order.advance_paid) > 0 && (
-                          <span className="text-[10px] text-red-500  uppercase tracking-tight">Bal: {formatCurrency(order.total_amount - order.advance_paid)}</span>
+                        <span className="text-sm text-gray-900 font-medium">
+                          {formatCurrency(order.total_with_gst || order.total_amount)}
+                        </span>
+                        {((order.total_with_gst || order.total_amount) - order.advance_paid) > 0 && (
+                          <span className="text-[10px] text-red-500 uppercase tracking-tight font-medium">
+                            Bal: {formatCurrency((order.total_with_gst || order.total_amount) - order.advance_paid)}
+                          </span>
                         )}
                       </div>
                     </td>
