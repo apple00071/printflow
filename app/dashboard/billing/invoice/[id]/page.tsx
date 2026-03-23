@@ -85,8 +85,8 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
   const finalTotal = order.total_with_gst || order.total_amount;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 print:bg-white print:p-0">
-      <div className="max-w-full print:max-w-[210mm] mx-auto space-y-6">
+    <div className="bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 print:bg-white print:p-0">
+      <div className="max-w-full print:max-w-full mx-auto space-y-6 print:space-y-0">
         {/* Actions - Hidden on Print */}
         <div className="flex items-center justify-between print:hidden">
           <Link 
@@ -108,7 +108,7 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
         {/* Invoice Body */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden print:shadow-none print:border print:border-gray-200 print:rounded-none">
           {/* Header Section */}
-          <div className="p-8 sm:p-12 border-b-8 border-primary relative overflow-hidden">
+          <div className="p-8 sm:p-12 print:p-6 border-b-8 border-primary relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32" />
             
             <div className="flex flex-col md:flex-row justify-between gap-8 relative z-10">
@@ -148,9 +148,9 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
             </div>
           </div>
 
-          <div className="p-8 sm:p-12 space-y-12">
+          <div className="p-8 sm:p-12 print:p-6 space-y-12 print:space-y-4">
             {/* Customer Details */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-gray-50 p-6 rounded-2xl border border-gray-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:gap-4 bg-gray-50 print:bg-white p-6 print:p-4 rounded-2xl border border-gray-100">
               <div className="space-y-2">
                 <h3 className="text-[10px] text-gray-400 uppercase tracking-widest border-b border-gray-200 pb-2 mb-2">{t("Bill To", "కస్టమర్")}</h3>
                 <p className="text-lg font-normal text-gray-900">{order.customers.name}</p>
@@ -181,31 +181,31 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
                   </thead>
                   <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
                     <tr>
-                      <td className="px-4 py-8">
+                      <td className="px-4 py-8 print:py-4">
                         <p className="font-normal text-gray-900">{order.job_type}</p>
                         <p className="text-xs text-gray-500 mt-1">{order.paper_type || "Standard Printing"}</p>
                       </td>
-                      <td className="px-4 py-8 text-center">{order.quantity}</td>
-                      <td className="px-4 py-8 text-right font-normal">{formatCurrency(order.taxable_amount || order.total_amount)}</td>
+                      <td className="px-4 py-8 print:py-4 text-center">{order.quantity}</td>
+                      <td className="px-4 py-8 print:py-4 text-right font-normal">{formatCurrency(order.taxable_amount || order.total_amount)}</td>
                       {order.gst_type !== 'NONE' && (
-                        <td className="px-4 py-8 text-right">{order.gst_rate}%</td>
+                        <td className="px-4 py-8 print:py-4 text-right">{order.gst_rate}%</td>
                       )}
-                      <td className="px-4 py-8 text-right font-medium text-gray-900">{formatCurrency(finalTotal)}</td>
+                      <td className="px-4 py-8 print:py-4 text-right font-medium text-gray-900">{formatCurrency(finalTotal)}</td>
                     </tr>
                   </tbody>
                </table>
             </div>
 
             {/* Calculations & Summary */}
-            <div className="flex flex-col md:flex-row justify-between gap-12 border-t border-gray-100 pt-8">
-               <div className="flex-1 space-y-6">
+            <div className="flex flex-col md:flex-row justify-between gap-12 print:gap-4 border-t border-gray-100 pt-8 print:pt-4">
+               <div className="flex-1 space-y-6 print:space-y-4">
                  <div>
                     <h4 className="text-[10px] text-gray-400 uppercase tracking-widest mb-2">{t("Amount in words", "అక్షరాలలో మొత్తం")}</h4>
-                    <p className="text-sm font-normal text-gray-800 italic bg-gray-50 p-3 rounded-lg border border-gray-100">{amountInWords(finalTotal)}</p>
+                    <p className="text-sm font-normal text-gray-800 italic bg-gray-50 p-3 print:p-2 rounded-lg border border-gray-100">{amountInWords(finalTotal)}</p>
                  </div>
                  
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                   <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 print:gap-2">
+                    <div className="p-4 print:p-2 bg-primary/5 rounded-2xl border border-primary/10">
                       <h4 className="text-[10px] text-primary uppercase tracking-widest mb-2 flex items-center gap-2">
                          <Landmark className="w-3 h-3" />
                          {t("Payment Details", "చెల్లింపు వివరాలు")}
@@ -215,7 +215,7 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
                         {tenant.upi_id && `\nUPI: ${tenant.upi_id}`}
                       </p>
                    </div>
-                   <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                   <div className="p-4 print:p-2 bg-gray-50 rounded-2xl border border-gray-100">
                       <h4 className="text-[10px] text-gray-400 uppercase tracking-widest mb-2">{t("Terms", "షరతులు")}</h4>
                       <p className="text-[9px] text-gray-400 leading-tight italic">
                         {t("1. Goods once sold will not be taken back.", "1. అమ్మిన వస్తువులు తిరిగి తీసుకోబడవు.")}<br/>

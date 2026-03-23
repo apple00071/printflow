@@ -8,12 +8,19 @@ import {
   FileText,
   Loader2,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Mail,
+  Phone,
+  MapPin,
+  Package
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { getQuotation, updateQuotationStatus } from "@/lib/supabase/actions";
+import { createClient } from "@/lib/supabase/client";
+import { getCurrentTenant } from "@/lib/tenant";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { cn } from "@/lib/utils";
 
@@ -22,21 +29,29 @@ export default function QuotationDetailPage({ params }: { params: { id: string }
   const router = useRouter();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [quotation, setQuotation] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [tenant, setTenant] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
-    async function fetchQuotation() {
+    async function fetchData() {
+      setLoading(true);
       try {
-        const data = await getQuotation(params.id);
-        setQuotation(data);
+        const supabase = createClient();
+        const [quotationData, tenantData] = await Promise.all([
+          getQuotation(params.id),
+          getCurrentTenant(supabase)
+        ]);
+        setQuotation(quotationData);
+        setTenant(tenantData);
       } catch (error) {
         console.error("Error fetching quotation:", error);
       } finally {
         setLoading(false);
       }
     }
-    fetchQuotation();
+    fetchData();
   }, [params.id]);
 
   const handleStatusUpdate = async (newStatus: string) => {
@@ -52,8 +67,7 @@ export default function QuotationDetailPage({ params }: { params: { id: string }
   };
 
   const handleConvertToOrder = () => {
-    // Redirect to New Order with pre-filled data via query params
-    const params = new URLSearchParams({
+    const queryParams = new URLSearchParams({
       quotation_id: quotation.id,
       customerName: quotation.customers?.name || "",
       phone: quotation.customers?.phone || "",
@@ -67,7 +81,7 @@ export default function QuotationDetailPage({ params }: { params: { id: string }
       instructions: quotation.instructions || "",
       totalAmount: quotation.taxable_amount?.toString() || "0",
     });
-    router.push(`/dashboard/orders/new?${params.toString()}`);
+    router.push(`/dashboard/orders/new?${queryParams.toString()}`);
   };
 
   if (loading) return (
@@ -86,8 +100,8 @@ export default function QuotationDetailPage({ params }: { params: { id: string }
   );
 
   return (
-    <div className="max-w-full print:max-w-[210mm] mx-auto space-y-6 print:p-0">
-      {/* Header */}
+    <div className="max-w-full print:max-w-full mx-auto space-y-6 print:space-y-0 print:p-0">
+      {/* Actions - Hidden on Print */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
         <div className="flex items-center gap-4">
           <Link href="/dashboard/quotations" className="p-2 hover:bg-white rounded-lg transition-colors border border-gray-100">
@@ -118,114 +132,153 @@ export default function QuotationDetailPage({ params }: { params: { id: string }
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Details Card */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-50 pb-3 mb-4">
-              <FileText className="w-5 h-5 text-primary" />
-              <h2 className="text-gray-900 uppercase tracking-wide text-sm">{t("Estimate Details", "అంచనా వివరాలు")}</h2>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-              <DetailItem label={t("Job Type", "పని రకం")} value={quotation.job_type} />
-              <DetailItem label={t("Quantity", "పరిమాణం")} value={quotation.quantity} />
-              <DetailItem label={t("Paper Type", "పేపర్ రకం")} value={quotation.paper_type || t("Standard", "సాధారణ")} />
-              <DetailItem label={t("Size", "సైజు")} value={quotation.size || t("N/A", "లేదు")} />
-              <DetailItem label={t("Side", "ప్రింటింగ్ సైడ్")} value={quotation.printing_side || t("Single Side", "సింగిల్ సైడ్")} />
-              <DetailItem label={t("Lamination", "లామినేషన్")} value={quotation.lamination || t("None", "లేదు")} />
-              <DetailItem label={t("Date", "తేదీ")} value={formatDate(quotation.created_at)} />
-              <DetailItem label={t("Valid Until", "గడువు తేదీ")} value={formatDate(quotation.valid_until)} />
-            </div>
-            {quotation.finishing && (
-              <div className="pt-4 border-t border-gray-50">
-                <p className="text-[10px] text-gray-400 uppercase mb-1 tracking-wider">{t("Finishing & Others", "ఫినిషింగ్ వివరాలు")}</p>
-                <p className="text-sm text-gray-700 font-medium">{quotation.finishing}</p>
+      {/* Main Document Body */}
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden print:shadow-none print:border print:border-gray-200 print:rounded-none">
+        
+        {/* Professional Header Section (Visible on Print) */}
+        <div className="hidden print:block p-6 border-b-8 border-primary relative overflow-hidden">
+          <div className="flex flex-col md:flex-row justify-between gap-8 relative z-10">
+            <div className="space-y-4">
+              {tenant?.logo_url ? (
+                <div className="relative h-16 w-38 mb-2">
+                  <Image 
+                    src={tenant.logo_url} 
+                    alt={tenant.name} 
+                    fill
+                    className="object-contain object-left"
+                    unoptimized
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 mb-4">
+                  <Package className="w-10 h-10 text-primary" />
+                  <h1 className="text-3xl font-normal text-gray-900 tracking-tighter uppercase">{tenant?.name}</h1>
+                </div>
+              )}
+              
+              <div className="space-y-1 text-xs text-gray-500 leading-tight">
+                {tenant?.city && <p className="flex items-center gap-2"><MapPin className="w-3 h-3" /> {tenant.city}, {tenant.state}</p>}
+                {tenant?.phone && <p className="flex items-center gap-2"><Phone className="w-3 h-3" /> {tenant.phone}</p>}
+                {tenant?.email && <p className="flex items-center gap-2"><Mail className="w-3 h-3" /> {tenant.email}</p>}
               </div>
-            )}
-            {quotation.instructions && (
-              <div className="pt-4 border-t border-gray-50">
-                <p className="text-[10px] text-gray-400 uppercase mb-1 tracking-wider">{t("Instructions", "సూచనలు")}</p>
-                <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100 italic">{quotation.instructions}</p>
-              </div>
-            )}
-          </div>
+            </div>
 
-          {/* Pricing Card */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
-             <div className="flex items-center gap-2 border-b border-gray-50 pb-3 mb-1">
-                <FileText className="w-5 h-5 text-primary" />
-                <h2 className="text-gray-900 uppercase tracking-wide text-sm">{t("Pricing", "ధర వివరాలు")}</h2>
-             </div>
-             <div className="space-y-3">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-500">{t("Taxable Amount", "పన్ను చెల్లించవలసిన మొత్తం")}</span>
-                  <span className="text-gray-900 font-medium">{formatCurrency(quotation.taxable_amount)}</span>
-                </div>
-                {quotation.gst_rate > 0 && (
-                   <div className="flex justify-between items-center text-xs text-gray-400">
-                     <span>GST ({quotation.gst_rate}%)</span>
-                     <span>{formatCurrency(quotation.total_with_gst - quotation.taxable_amount)}</span>
-                   </div>
-                )}
-                <div className="flex justify-between items-center text-lg font-normal py-3 border-t border-gray-100 mt-2">
-                  <span className="text-gray-900">{t("Estimated Total", "మొత్తం అంచనా")}</span>
-                  <span className="text-primary font-bold">{formatCurrency(quotation.total_with_gst)}</span>
-                </div>
-             </div>
+            <div className="text-right space-y-2">
+              <h2 className="text-4xl font-normal text-primary/10 uppercase tracking-tighter leading-none">{t("Quotation", "కొటేషన్")}</h2>
+              <div className="pt-2">
+                <p className="text-sm font-normal text-gray-900">{t("Quotation #", "కొటేషన్ నంబర్:")} <span className="text-primary">{quotation.quotation_number}</span></p>
+                <p className="text-xs text-gray-500">{t("Date", "తేదీ")}: {formatDate(quotation.created_at)}</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Customer Card */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
-            <h3 className="text-[10px] text-gray-400 uppercase tracking-widest border-b border-gray-50 pb-3 mb-2">{t("Customer Profile", "కస్టమర్")}</h3>
-            <div className="flex items-center gap-3">
-               <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-medium">
-                 {quotation.customers?.name?.charAt(0)}
-               </div>
-               <div>
-                 <p className="text-sm font-medium text-gray-900">{quotation.customers?.name}</p>
-                 <p className="text-[11px] text-gray-500">{quotation.customers?.phone}</p>
-               </div>
-            </div>
-            <Link 
-              href={`/dashboard/customers/${quotation.customer_id}`}
-              className="block w-full text-center py-2 text-xs text-primary bg-primary/5 hover:bg-primary/10 rounded-lg transition-colors border border-primary/10"
-            >
-              {t("View Full Profile", "ప్రొఫైల్ చూడండి")}
-            </Link>
-          </div>
+        <div className="p-6 sm:p-8 print:p-6 space-y-8 print:space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:grid-cols-2 print:gap-x-12">
+            {/* Estimate Details Card */}
+            <div className="lg:col-span-2 space-y-6 print:space-y-4 print:border-r print:border-gray-50 print:pr-8">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 border-b border-gray-50 pb-3 mb-1">
+                  <FileText className="w-5 h-5 text-primary" />
+                  <h2 className="text-gray-900 uppercase tracking-wide text-sm">{t("Estimate Details", "అంచనా వివరాలు")}</h2>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 print:grid-cols-2 print:gap-4">
+                  <DetailItem label={t("Job Type", "పని రకం")} value={quotation.job_type} />
+                  <DetailItem label={t("Quantity", "పరిమాణం")} value={quotation.quantity} />
+                  <DetailItem label={t("Paper Type", "పేపర్ రకం")} value={quotation.paper_type || t("Standard", "సాధారణ")} />
+                  <DetailItem label={t("Size", "సైజు")} value={quotation.size || t("N/A", "లేదు")} />
+                  <DetailItem label={t("Side", "ప్రింటింగ్ సైడ్")} value={quotation.printing_side || t("Single Side", "సింగిల్ సైడ్")} />
+                  <DetailItem label={t("Lamination", "లామినేషన్")} value={quotation.lamination || t("None", "లేదు")} />
+                </div>
+                
+                {(quotation.finishing || quotation.instructions) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-50">
+                    {quotation.finishing && (
+                      <div className="space-y-1">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wider">{t("Finishing & Others", "ఫినిషింగ్ వివరాలు")}</p>
+                        <p className="text-sm text-gray-700 font-medium leading-relaxed">{quotation.finishing}</p>
+                      </div>
+                    )}
+                    {quotation.instructions && (
+                      <div className="space-y-1">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wider">{t("Instructions", "సూచనలు")}</p>
+                        <p className="text-xs text-gray-600 italic bg-gray-50 p-2 rounded border border-gray-100">{quotation.instructions}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
-          {/* Status/Activity Card */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
-            <h3 className="text-[10px] text-gray-400 uppercase tracking-widest border-b border-gray-50 pb-3 mb-2">{t("Quotation Status", "ఫ్లో")}</h3>
-            <div className="space-y-4">
-              <StatusOption 
-                label="DRAFT" 
-                active={quotation.status === 'DRAFT'} 
-                onClick={() => handleStatusUpdate('DRAFT')}
-                updating={updating}
-              />
-              <StatusOption 
-                label="SENT" 
-                active={quotation.status === 'SENT'} 
-                onClick={() => handleStatusUpdate('SENT')}
-                updating={updating}
-              />
-              <StatusOption 
-                label="ACCEPTED" 
-                active={quotation.status === 'ACCEPTED'} 
-                onClick={() => handleStatusUpdate('ACCEPTED')}
-                updating={updating}
-              />
-              <StatusOption 
-                label="EXPIRED" 
-                active={quotation.status === 'EXPIRED'} 
-                onClick={() => handleStatusUpdate('EXPIRED')}
-                updating={updating}
-              />
+              {/* Pricing Section */}
+              <div className="space-y-4 mt-8 print:mt-4">
+                <div className="flex items-center gap-2 border-b border-gray-50 pb-3 mb-1">
+                  <FileText className="w-5 h-5 text-primary" />
+                  <h2 className="text-gray-900 uppercase tracking-wide text-sm">{t("Pricing", "ధర వివరాలు")}</h2>
+                </div>
+                <div className="bg-gray-50 print:bg-white p-4 rounded-xl border border-gray-100 flex justify-between items-center">
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-gray-400 uppercase tracking-widest leading-none mb-1">{t("Estimated Total", "మొత్తం అంచనా")}</p>
+                    <p className="text-xl font-bold text-primary">{formatCurrency(quotation.total_with_gst)}</p>
+                  </div>
+                  <div className="text-right text-xs text-gray-500">
+                    <p>{t("Taxable Amount", "పన్ను చెల్లించవలసిన మొత్తం")}: {formatCurrency(quotation.taxable_amount)}</p>
+                    {quotation.gst_rate > 0 && <p>GST ({quotation.gst_rate}%): {formatCurrency(quotation.total_with_gst - quotation.taxable_amount)}</p>}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Customer Information (Sidebar on screen, below/beside on print) */}
+            <div className="space-y-6 print:space-y-4">
+              <div className="bg-gray-50 print:bg-white p-6 print:p-4 rounded-xl border border-gray-100 space-y-4">
+                <h3 className="text-[10px] text-gray-400 uppercase tracking-widest border-b border-gray-200 pb-2 mb-2">{t("Customer Information", "కస్టమర్")}</h3>
+                <div className="flex items-center gap-3 pb-2">
+                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-medium print:w-8 print:h-8 print:text-xs">
+                    {quotation.customers?.name?.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{quotation.customers?.name}</p>
+                    <p className="text-xs text-gray-500">{quotation.customers?.phone}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4 print:hidden">
+                  <Link 
+                    href={`/dashboard/customers/${quotation.customer_id}`}
+                    className="block w-full text-center py-2 text-xs text-primary bg-primary/5 hover:bg-primary/10 rounded-lg transition-colors border border-primary/10"
+                  >
+                    {t("View Full Profile", "ప్రొఫైల్ చూడండి")}
+                  </Link>
+                  
+                  <div className="pt-4 border-t border-gray-200">
+                    <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-3">{t("Update Status", "స్టేటస్ మార్చండి")}</p>
+                    <div className="space-y-2">
+                      {['DRAFT', 'SENT', 'ACCEPTED', 'EXPIRED'].map((status) => (
+                        <button
+                          key={status}
+                          disabled={quotation.status === status || updating}
+                          onClick={() => handleStatusUpdate(status)}
+                          className={cn(
+                            "w-full px-3 py-2 rounded-lg text-xs font-medium transition-all text-left flex items-center justify-between",
+                            quotation.status === status 
+                              ? "bg-primary text-white" 
+                              : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-100"
+                          )}
+                        >
+                          {status}
+                          {quotation.status === status && <CheckCircle2 className="w-3 h-3" />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="hidden print:block pt-8 border-t border-gray-100">
+                <p className="text-[9px] text-gray-400 leading-tight italic uppercase tracking-wider">
+                  {t("* This is a computer generated quotation and does not require a physical signature.", "* ఇది కంప్యూటర్ ద్వారా రూపొందించబడిన కొటేషన్, దీనికి సంతకం అవసరం లేదు.")}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -239,25 +292,7 @@ function DetailItem({ label, value }: { label: string, value: any }) {
   return (
     <div>
       <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">{label}</p>
-      <p className="text-sm text-gray-900 font-medium">{value}</p>
+      <p className="text-sm text-gray-900 font-medium truncate">{value}</p>
     </div>
-  );
-}
-
-function StatusOption({ label, active, onClick, updating }: { label: string, active: boolean, onClick: () => void, updating: boolean }) {
-  return (
-    <button
-      disabled={active || updating}
-      onClick={onClick}
-      className={cn(
-        "w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-xs transition-all",
-        active 
-          ? "bg-primary text-white border-primary shadow-lg shadow-primary/20 scale-[1.02]" 
-          : "bg-white text-gray-500 border-gray-100 hover:border-primary/20 hover:text-primary transition-colors disabled:opacity-50"
-      )}
-    >
-      <span className="font-medium tracking-wide">{label}</span>
-      {active && <CheckCircle2 className="w-4 h-4" />}
-    </button>
   );
 }

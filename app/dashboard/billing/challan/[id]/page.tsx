@@ -72,8 +72,8 @@ export default function DeliveryChallanPage({ params }: { params: { id: string }
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 print:bg-white print:p-0">
-      <div className="max-w-full print:max-w-[210mm] mx-auto space-y-6">
+    <div className="bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 print:bg-white print:p-0">
+      <div className="max-w-full print:max-w-full mx-auto space-y-6 print:space-y-0">
         {/* Actions - Hidden on Print */}
         <div className="flex items-center justify-between print:hidden">
           <Link 
@@ -95,7 +95,7 @@ export default function DeliveryChallanPage({ params }: { params: { id: string }
         {/* Challan Body */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden print:shadow-none print:border print:border-gray-200 print:rounded-none">
           {/* Header Section */}
-          <div className="p-8 sm:p-12 border-b-8 border-orange relative overflow-hidden">
+          <div className="p-8 sm:p-12 print:p-6 border-b-8 border-orange relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-orange/5 rounded-full -mr-32 -mt-32" />
             
             <div className="flex flex-col md:flex-row justify-between gap-8 relative z-10">
@@ -124,9 +124,9 @@ export default function DeliveryChallanPage({ params }: { params: { id: string }
                 </div>
               </div>
 
-              <div className="md:text-right space-y-4">
+              <div className="md:text-right space-y-4 print:space-y-1">
                 <h2 className="text-5xl font-normal text-orange/10 uppercase tracking-tighter absolute top-0 right-0 hidden md:block">{t("Challan", "చలాన్")}</h2>
-                <div className="pt-12 md:pt-16">
+                <div className="pt-12 md:pt-16 print:pt-4">
                   <p className="text-sm font-normal text-gray-900">{t("Challan #", "చలాన్ నంబర్:")} <span className="text-orange">{order.challan_number}</span></p>
                   <p className="text-xs text-gray-500">{t("Date", "తేదీ")}: {formatDate(order.challan_date || order.id)}</p>
                 </div>
@@ -134,9 +134,9 @@ export default function DeliveryChallanPage({ params }: { params: { id: string }
             </div>
           </div>
 
-          <div className="p-8 sm:p-12 space-y-12">
+          <div className="p-8 sm:p-12 print:p-6 space-y-12 print:space-y-4">
             {/* Customer Details */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-gray-50 p-6 rounded-2xl border border-gray-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:gap-4 bg-gray-50 print:bg-white p-6 print:p-4 rounded-2xl border border-gray-100">
               <div className="space-y-2">
                 <h3 className="text-[10px] text-gray-400 uppercase tracking-widest border-b border-gray-200 pb-2 mb-2">{t("Deliver To", "కస్టమర్")}</h3>
                 <p className="text-lg font-normal text-gray-900">{order.customers.name}</p>
@@ -162,36 +162,36 @@ export default function DeliveryChallanPage({ params }: { params: { id: string }
                   </thead>
                   <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
                     <tr>
-                      <td className="px-4 py-8">
+                      <td className="px-4 py-8 print:py-4">
                         <p className="font-normal text-gray-900">{order.job_type}</p>
                       </td>
-                      <td className="px-4 py-8">
+                      <td className="px-4 py-8 print:py-4">
                          <p className="text-xs text-gray-500">{order.paper_type || "Standard"}</p>
                          <p className="text-xs text-gray-500 mt-0.5">{order.size || "Standard Size"}</p>
                       </td>
-                      <td className="px-4 py-8 text-center text-lg font-medium text-gray-900">{order.quantity}</td>
-                      <td className="px-4 py-8 text-right text-xs text-gray-400 italic">Standard Packing</td>
+                      <td className="px-4 py-8 print:py-4 text-center text-lg font-medium text-gray-900">{order.quantity}</td>
+                      <td className="px-4 py-8 print:py-4 text-right text-xs text-gray-400 italic">Standard Packing</td>
                     </tr>
                   </tbody>
                </table>
             </div>
 
             {order.instructions && (
-              <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 italic">
+              <div className="bg-gray-50 print:bg-white p-6 print:p-4 rounded-2xl border border-gray-100 italic">
                  <h4 className="text-[10px] text-gray-400 uppercase tracking-widest mb-2">{t("Special Instructions", "సూచనలు")}</h4>
                  <p className="text-xs text-gray-600 leading-relaxed">{order.instructions}</p>
               </div>
             )}
 
             {/* Signature Area */}
-            <div className="pt-32 flex justify-between items-end">
-               <div className="text-center space-y-4">
+            <div className="pt-32 print:pt-12 flex justify-between items-end">
+               <div className="text-center space-y-4 print:space-y-2">
                   <div className="w-40 border-b border-gray-200 mx-auto" />
                   <p className="text-[10px] text-gray-400 uppercase tracking-widest">{t("Receiver's Sign", "గ్రహీత సంతకం")}</p>
                </div>
-               <div className="text-center space-y-2">
+               <div className="text-center space-y-2 print:space-y-1">
                   <p className="text-[10px] text-orange font-normal uppercase tracking-[0.2em]">{t("For", "కోసం")} {tenant.name}</p>
-                  <p className="text-[8px] text-gray-400 italic mb-8">{t("Authorized Signatory", "అధికారిక సంతకం")}</p>
+                  <p className="text-[8px] text-gray-400 italic mb-8 print:mb-2">{t("Authorized Signatory", "అధికారిక సంతకం")}</p>
                   <div className="w-48 border-b-2 border-orange mx-auto" />
                </div>
             </div>
