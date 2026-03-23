@@ -25,3 +25,63 @@ body {
     text-wrap: balance;
   }
 }
+
+/* Global Print Styles */
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide Dashboard Elements Globally */
+  aside, 
+  header, 
+  nav, 
+  footer,
+  .no-print,
+  [role="navigation"],
+  [role="banner"] { 
+    display: none !important; 
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    visibility: hidden !important;
+  }
+
+  /* Reset Dashboard Layout Margins */
+  .lg\:ml-56, 
+  .lg\:ml-20, 
+  .ml-56, 
+  .ml-20,
+  main { 
+    margin: 0 !important; 
+    padding: 0 !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+  }
+
+  /* Ensure main content takes full width */
+  main {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  /* Force background to be white in all conditions */
+  .bg-gray-50, 
+  .min-h-screen {
+    background: white !important;
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
+  /* Fix for sticky elements during print */
+  .sticky {
+    position: relative !important;
+  }
+}

@@ -86,44 +86,6 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 print:bg-white print:p-0">
-      <style dangerouslySetInnerHTML={{ __html: `
-        @media print {
-          @page { size: A4; margin: 10mm; }
-          
-          /* Hide all dashboard layout elements */
-          aside, header, nav, footer, .print:hidden, .print-hide { 
-            display: none !important; 
-          }
-          
-          /* Reset layout margins and paddings */
-          .lg\\:ml-56, .lg\\:ml-20, .ml-56, .ml-20 { 
-            margin-left: 0 !important; 
-          }
-          
-          main { 
-            padding: 0 !important; 
-            margin: 0 !important; 
-          }
-          
-          .min-h-screen {
-            min-height: 0 !important;
-            height: auto !important;
-            background: white !important;
-          }
-
-          body { 
-            background: white !important; 
-            -webkit-print-color-adjust: exact;
-          }
-          
-          /* Force the container to A4 width */
-          .max-w-full { 
-            max-width: 210mm !important; 
-            width: 210mm !important;
-            margin: 0 auto !important;
-          }
-        }
-      `}} />
       <div className="max-w-full print:max-w-[210mm] mx-auto space-y-6">
         {/* Actions - Hidden on Print */}
         <div className="flex items-center justify-between print:hidden">
