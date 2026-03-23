@@ -13,6 +13,9 @@ interface OrderData {
   quantity: number;
   paperType?: string;
   size?: string;
+  printingSide?: string;
+  lamination?: string;
+  finishing?: string;
   instructions?: string;
   deliveryDate?: string;
   totalAmount: number; // For non-GST orders, this is the final total. For GST orders, this is the taxable amount.
@@ -39,6 +42,9 @@ interface OrderInsertData {
   quantity: number;
   paper_type?: string;
   size?: string;
+  printing_side?: string;
+  lamination?: string;
+  finishing?: string;
   instructions?: string;
   delivery_date?: string | null;
   total_amount: number;
@@ -63,6 +69,29 @@ interface PaymentData {
   amount: number;
   method: string;
   tenant_id?: string;
+}
+
+export interface QuotationData {
+  customer_id?: string;
+  customerName?: string;
+  phone: string;
+  jobType: string;
+  quantity: number;
+  paperType?: string;
+  size?: string;
+  printingSide?: string;
+  lamination?: string;
+  finishing?: string;
+  instructions?: string;
+  taxableAmount: number;
+  totalWithGST: number;
+  gstType: string;
+  gstRate: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  validUntil?: string;
+  status?: string;
 }
 
 export async function createOrder(data: OrderData) {
@@ -170,6 +199,9 @@ export async function createOrder(data: OrderData) {
     quantity: data.quantity,
     paper_type: data.paperType,
     size: data.size,
+    printing_side: data.printingSide,
+    lamination: data.lamination,
+    finishing: data.finishing,
     instructions: data.instructions,
     delivery_date: data.deliveryDate ? new Date(data.deliveryDate).toISOString() : null,
     total_amount: data.totalAmount,
@@ -309,6 +341,160 @@ export async function updateOrderStatus(orderId: string, status: string, actualD
   }
 
   const { data, error } = await query.select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function assignChallanNumber(orderId: string) {
+  const supabase = createClient();
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant) throw new Error("Unauthorized");
+
+  const { data: challanNumber, error: rpcError } = await supabase.rpc('generate_document_number', {
+    p_tenant_id: tenant.id,
+    p_prefix: 'DC'
+  });
+
+  if (rpcError) throw rpcError;
+
+  const { data, error: updateError } = await supabase
+    .from("orders")
+    .update({ 
+      challan_number: challanNumber,
+      challan_date: new Date().toISOString()
+    })
+    .eq("id", orderId)
+    .eq("tenant_id", tenant.id)
+    .select(`
+      *,
+      customers (*)
+    `)
+    .single();
+
+  if (updateError) throw updateError;
+  return data;
+}
+
+export async function createQuotation(data: QuotationData) {
+  const supabase = createClient();
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant) throw new Error("Unauthorized");
+
+  // 1. Get/Create Customer
+  let customerId = data.customer_id;
+  if (!customerId) {
+    const { data: customer } = await supabase
+      .from("customers")
+      .select("id")
+      .eq("phone", data.phone)
+      .eq("tenant_id", tenant.id)
+      .maybeSingle();
+
+    if (customer) {
+      customerId = customer.id;
+    } else {
+      const { data: newCustomer, error: custError } = await supabase
+        .from("customers")
+        .insert({
+          name: data.customerName || data.phone,
+          phone: data.phone,
+          tenant_id: tenant.id
+        })
+        .select("id")
+        .single();
+      if (custError) throw custError;
+      customerId = newCustomer.id;
+    }
+  }
+
+  // 2. Generate Quotation Number
+  const { data: qtnNumber } = await supabase.rpc('generate_document_number', {
+    p_tenant_id: tenant.id,
+    p_prefix: 'QTN'
+  });
+
+  // 3. Insert Quotation
+  const { data: quotation, error } = await supabase
+    .from("quotations")
+    .insert({
+      tenant_id: tenant.id,
+      customer_id: customerId,
+      job_type: data.jobType,
+      quantity: data.quantity,
+      paper_type: data.paperType,
+      size: data.size,
+      printing_side: data.printingSide,
+      lamination: data.lamination,
+      finishing: data.finishing,
+      instructions: data.instructions,
+      taxable_amount: data.taxableAmount,
+      total_with_gst: data.totalWithGST,
+      gst_type: data.gstType,
+      gst_rate: data.gstRate,
+      cgst: data.cgst,
+      sgst: data.sgst,
+      igst: data.igst,
+      quotation_number: qtnNumber,
+      status: data.status || 'DRAFT',
+      valid_until: data.validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return quotation;
+}
+
+export async function getQuotations() {
+  const supabase = createClient();
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant) throw new Error("Unauthorized");
+
+  const { data, error } = await supabase
+    .from("quotations")
+    .select(`
+      *,
+      customers (*)
+    `)
+    .eq("tenant_id", tenant.id)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getQuotation(id: string) {
+  const supabase = createClient();
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant) throw new Error("Unauthorized");
+
+  const { data, error } = await supabase
+    .from("quotations")
+    .select(`
+      *,
+      customers (*)
+    `)
+    .eq("id", id)
+    .eq("tenant_id", tenant.id)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateQuotationStatus(id: string, status: string) {
+  const supabase = createClient();
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant) throw new Error("Unauthorized");
+
+  const { data, error } = await supabase
+    .from("quotations")
+    .update({ status })
+    .eq("id", id)
+    .eq("tenant_id", tenant.id)
+    .select()
+    .single();
+
   if (error) throw error;
   return data;
 }

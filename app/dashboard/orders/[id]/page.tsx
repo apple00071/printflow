@@ -16,7 +16,7 @@ import {
 import Link from "next/link";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { PRESS_CONFIG } from "@/lib/config";
-import { getOrder, updateOrderStatus } from "@/lib/supabase/actions";
+import { getOrder, updateOrderStatus, assignChallanNumber } from "@/lib/supabase/actions";
 import AddPaymentModal from "@/components/dashboard/AddPaymentModal";
 import CustomDatePicker from "@/components/ui/CustomDatePicker";
 
@@ -50,6 +50,8 @@ interface Order {
   cgst: number;
   sgst: number;
   igst: number;
+  challan_number?: string;
+  challan_date?: string;
 }
 
 export default function OrderDetailsPage({ params }: { params: { id: string } }) {
@@ -110,6 +112,20 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
     }
   };
 
+  const handleGenerateChallan = async () => {
+    if (!order) return;
+    setUpdating(true);
+    try {
+      const updatedOrder = await assignChallanNumber(order.id);
+      setOrder(updatedOrder as Order);
+    } catch (error) {
+      console.error("Error generating challan:", error);
+      alert("Failed to generate challan");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   if (loading) return (
     <div className="flex flex-col items-center justify-center p-20 text-gray-400">
        <Loader2 className="w-10 h-10 animate-spin mb-4 text-primary" />
@@ -134,11 +150,11 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
     
     let message = "";
     if (language === "te") {
-      message = `నమస్కారం ${order.customers.name} గారు, మీ ${order.job_type} ఆర్డర్ సిద్ధంగా ఉంది. మొత్తం: ₹${total}. అడ్వాన్స్: ₹${order.advance_paid}. బకాయి: ₹${balance}. - ${PRESS_CONFIG.name}, చీరాల.`;
+      message = `నమస్కారం ${order.customers?.name} గారు, మీ ${order.job_type} ఆర్డర్ సిద్ధంగా ఉంది. మొత్తం: ₹${total}. అడ్వాన్స్: ₹${order.advance_paid}. బకాయి: ₹${balance}. - ${PRESS_CONFIG.name}, చీరాల.`;
     } else {
-      message = `Hi ${order.customers.name}, your order of ${order.job_type} is ready for pickup. Total: ₹${total}. Advance: ₹${order.advance_paid}. Balance: ₹${balance}. - ${PRESS_CONFIG.name}, Chirala`;
+      message = `Hi ${order.customers?.name}, your order of ${order.job_type} is ready for pickup. Total: ₹${total}. Advance: ₹${order.advance_paid}. Balance: ₹${balance}. - ${PRESS_CONFIG.name}, Chirala`;
     }
-    return `https://wa.me/${order.customers.phone}?text=${encodeURIComponent(message)}`;
+    return `https://wa.me/${order.customers?.phone}?text=${encodeURIComponent(message)}`;
   };
 
   return (
@@ -151,7 +167,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
           </Link>
           <div>
             <h1 className="text-2xl text-gray-900">{t("Order", "ఆర్డర్")} {order.friendly_id || `#${order.id.split('-')[0]}`}</h1>
-            <p className="text-gray-500 text-sm">{order.job_type} {t("for", "కస్టమర్:")} {order.customers.name}</p>
+            <p className="text-gray-500 text-sm">{order.job_type} {t("for", "కస్టమర్:")} {order.customers?.name}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -162,6 +178,24 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
             <Printer className="w-4 h-4 text-primary" />
             {t("Print Invoice", "ఇన్వాయిస్ ప్రింట్ చేయండి")}
           </Link>
+          {order.challan_number ? (
+            <Link 
+              href={`/dashboard/billing/challan/${order.id}`}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              <Printer className="w-4 h-4 text-orange" />
+              {t("Print Challan", "చలాన్ ప్రింట్ చేయండి")}
+            </Link>
+          ) : (
+            <button 
+              onClick={handleGenerateChallan}
+              disabled={updating}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50"
+            >
+              <FileIcon className="w-4 h-4 text-orange" />
+              {t("Generate Challan", "చలాన్ జెనరేట్ చేయండి")}
+            </button>
+          )}
           <Link 
             href={`/dashboard/orders/edit/${order.id}`}
             className="p-2 bg-white border border-gray-200 rounded-lg text-gray-500 hover:text-primary transition-colors shadow-sm"

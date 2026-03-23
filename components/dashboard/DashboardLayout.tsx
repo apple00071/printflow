@@ -11,7 +11,8 @@ import {
   Settings, 
   LogOut,
   Menu,
-  Crown
+  Crown,
+  FileText
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { useLanguage } from "@/lib/context/LanguageContext";
@@ -36,6 +37,12 @@ const navItems = [
     telugu: "ఆర్డర్లు",
     href: "/dashboard/orders",
     icon: ClipboardList,
+  },
+  {
+    name: "Quotations",
+    telugu: "కొటేషన్లు",
+    href: "/dashboard/quotations",
+    icon: FileText,
   },
   {
     name: "Customers",
@@ -116,6 +123,8 @@ export default function DashboardLayout({
     if (pathname.includes("/orders/new")) return t("New Order", "కొత్త ఆర్డర్");
     if (pathname.includes("/orders/edit/")) return t("Edit Order", "ఆర్డర్ సవరించండి");
     if (pathname.includes("/orders/")) return t("Order Details", "ఆర్డర్ వివరాలు");
+    if (pathname.includes("/quotations/")) return t("Quotation Details", "కొటేషన్ వివరాలు");
+    if (pathname.includes("/quotations")) return t("Quotations", "కొటేషన్లు");
     if (pathname.includes("/customers/")) return t("Customer Profile", "కస్టమర్ ప్రొఫైల్");
     if (pathname.includes("/billing/invoice/")) return t("Invoice", "ఇన్వాయిస్");
     

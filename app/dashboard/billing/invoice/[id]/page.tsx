@@ -86,7 +86,13 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 print:bg-white print:p-0">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          @page { size: A4; margin: 10mm; }
+          body { background: white !important; }
+        }
+      `}} />
+      <div className="max-w-full print:max-w-[210mm] mx-auto space-y-6">
         {/* Actions - Hidden on Print */}
         <div className="flex items-center justify-between print:hidden">
           <Link 

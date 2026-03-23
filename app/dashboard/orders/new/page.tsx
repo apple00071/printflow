@@ -61,7 +61,34 @@ export default function NewOrderPage() {
     gstin: "",
     hsnCode: "",
     file_url: "",
+    quotation_id: "",
+    printingSide: "Single Side",
+    lamination: "None",
+    finishing: "",
   });
+
+  // Pre-fill from query params if coming from a quotation
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get("quotation_id")) {
+      setFormData(prev => ({
+        ...prev,
+        quotation_id: searchParams.get("quotation_id") || "",
+        customerName: searchParams.get("customerName") || "",
+        phone: searchParams.get("phone") || "",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        jobType: searchParams.get("jobType") as any || "Business Cards",
+        quantity: parseInt(searchParams.get("quantity") || "1"),
+        paperType: searchParams.get("paperType") || "",
+        size: searchParams.get("size") || "",
+        instructions: searchParams.get("instructions") || "",
+        totalAmount: parseFloat(searchParams.get("totalAmount") || "0"),
+        printingSide: searchParams.get("printingSide") || "Single Side",
+        lamination: searchParams.get("lamination") || "None",
+        finishing: searchParams.get("finishing") || "",
+      }));
+    }
+  }, []);
   
   const [uploading, setUploading] = useState(false);
   const [fileName, setFileName] = useState("");
@@ -256,9 +283,43 @@ export default function NewOrderPage() {
               <label className="text-xs  text-gray-500 uppercase">{t("Size", "సైజు")}</label>
               <input
                 type="text"
-                placeholder={t("e.g. A4, 10x12", "ఉదా: A4, 10x12")}
+                placeholder={t("e.g. A4, 10x15", "ఉదా: A4, 10x15")}
                 value={formData.size}
                 onChange={(e) => setFormData({...formData, size: e.target.value})}
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs  text-gray-500 uppercase">{t("Printing Side", "ప్రింటింగ్ సైడ్")}</label>
+              <CustomSelect
+                options={[
+                  { value: "Single Side", label: t("Single Side", "సింగిల్ సైడ్") },
+                  { value: "Double Side", label: t("Double Side", "డబుల్ సైడ్") }
+                ]}
+                value={formData.printingSide}
+                onChange={(val) => setFormData({...formData, printingSide: val as string})}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs  text-gray-500 uppercase">{t("Lamination", "లామినేషన్")}</label>
+              <CustomSelect
+                options={[
+                  { value: "None", label: t("None", "లేదు") },
+                  { value: "Gloss", label: t("Gloss", "గ్లాస్") },
+                  { value: "Matte", label: t("Matte", "మ్యాట్") },
+                  { value: "Velvet", label: t("Velvet", "వెల్వెట్") }
+                ]}
+                value={formData.lamination}
+                onChange={(val) => setFormData({...formData, lamination: val as string})}
+              />
+            </div>
+            <div className="md:col-span-1 space-y-1">
+              <label className="text-xs text-gray-500 uppercase">{t("Finishing", "ఫినిషింగ్")}</label>
+              <input
+                type="text"
+                placeholder={t("e.g. Folding, Creasing...", "ఉదా: ఫోల్డింగ్, క్రీజింగ్")}
+                value={formData.finishing}
+                onChange={(e) => setFormData({...formData, finishing: e.target.value})}
                 className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
               />
             </div>
