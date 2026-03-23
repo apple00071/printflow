@@ -90,11 +90,39 @@ export default function QuotationDetailPage({ params }: { params: { id: string }
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
           @page { size: A4; margin: 10mm; }
-          body { background: white !important; }
-          /* Hide sidebar and navbar if they exist in the layout */
-          nav, aside, header, .print-hide { display: none !important; }
-          .max-w-full { max-width: 210mm !important; }
-          .bg-gray-50 { background: white !important; }
+          
+          /* Hide all dashboard layout elements */
+          aside, header, nav, footer, .print:hidden, .print-hide { 
+            display: none !important; 
+          }
+          
+          /* Reset layout margins and paddings */
+          .lg\\:ml-56, .lg\\:ml-20, .ml-56, .ml-20 { 
+            margin-left: 0 !important; 
+          }
+          
+          main { 
+            padding: 0 !important; 
+            margin: 0 !important; 
+          }
+          
+          .min-h-screen {
+            min-height: 0 !important;
+            height: auto !important;
+            background: white !important;
+          }
+
+          body { 
+            background: white !important; 
+            -webkit-print-color-adjust: exact;
+          }
+          
+          /* Force the container to A4 width */
+          .max-w-full { 
+            max-width: 210mm !important; 
+            width: 210mm !important;
+            margin: 0 auto !important;
+          }
         }
       `}} />
       {/* Header */}
