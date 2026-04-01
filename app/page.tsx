@@ -663,27 +663,30 @@ export default function LandingPage() {
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-4xl font-normal font-syne text-center mb-12 text-[#1e3a5f]">
-            Trusted by print shops across India
+            {t.testimonials.title}
           </h2>
           
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-gray-50 p-6 rounded-xl">
-              <Quote className="w-8 h-8 text-[#f97316] mb-4" />
-              <p className="text-gray-700 mb-4 italic">
-                &quot;Earlier I used to write 30 invoices a week by hand. Now PrintFlow generates them in seconds with GST.&quot;
-              </p>
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-[#1e3a5f] text-white rounded-full flex items-center justify-center font-normal mr-3">RK</div>
-                <div>
-                  <p className="font-normal">Ravi Kumar</p>
-                  <p className="text-sm text-gray-600">Sri Lakshmi Printers, Vijayawada</p>
-                  <div className="flex text-yellow-400">
-                    {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
+            {t.testimonials.items.map((testimonial, idx) => (
+              <div key={idx} className="bg-gray-50 p-6 rounded-xl hover-lift">
+                <Quote className="w-8 h-8 text-[#f97316] mb-4" />
+                <p className="text-gray-700 mb-4 italic">
+                  &quot;{testimonial.quote}&quot;
+                </p>
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-[#1e3a5f] text-white rounded-full flex items-center justify-center font-normal mr-3">
+                    {testimonial.initials}
+                  </div>
+                  <div>
+                    <p className="font-normal">{testimonial.author}</p>
+                    <p className="text-sm text-gray-600">{testimonial.shop}</p>
+                    <div className="flex text-yellow-400">
+                      {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            {/* Add more testimonials if needed, or keep it concise */}
+            ))}
           </div>
         </div>
       </section>
