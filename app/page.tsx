@@ -299,7 +299,7 @@ export default function LandingPage() {
           </h2>
           
           <div className="grid md:grid-cols-3 gap-8">
-            {t.painPoints.items.map((item: any, idx: number) => (
+            {t.painPoints.items.map((item, idx) => (
               <div key={idx} className="bg-white p-6 rounded-xl border-l-4 border-[#f97316] shadow-sm hover-lift">
                 <div className="text-4xl mb-4">{item.emoji}</div>
                 <h3 className="text-xl font-normal mb-3 text-[#1e3a5f]">{item.title}</h3>

@@ -1,6 +1,82 @@
 export type Language = 'en' | 'te';
 
-export const translations: Record<Language, any> = {
+export interface TranslationStructure {
+  nav: {
+    features: string;
+    pricing: string;
+    whyUs: string;
+    login: string;
+    startFree: string;
+  };
+  hero: {
+    title1: string;
+    title2: string;
+    subtitle: string;
+    ctaPrimary: string;
+    ctaSecondary: string;
+    tags: {
+      free: string;
+      gst: string;
+      setup: string;
+      mobile: string;
+    };
+  };
+  painPoints: {
+    title: string;
+    items: {
+      emoji: string;
+      title: string;
+      desc: string;
+    }[];
+  };
+  features: {
+    title: string;
+    subtitle: string;
+    items: {
+      title: string;
+      desc: string;
+    }[];
+  };
+  howItWorks: {
+    title: string;
+    time: string;
+    desc: string;
+    steps: {
+      title: string;
+      desc: string;
+    }[];
+  };
+  pricing: {
+    title: string;
+    plans: {
+      free: {
+        name: string;
+        price: string;
+        desc: string;
+        cta: string;
+      };
+      pro: {
+        name: string;
+        price: string;
+        desc: string;
+        cta: string;
+      };
+      business: {
+        name: string;
+        price: string;
+        desc: string;
+        cta: string;
+      };
+    };
+    gstIncluded: string;
+  };
+  whatsapp: {
+    tooltip: string;
+    prefixedMessage: string;
+  };
+}
+
+export const translations: Record<Language, TranslationStructure> = {
   en: {
     nav: {
       features: "Features",
