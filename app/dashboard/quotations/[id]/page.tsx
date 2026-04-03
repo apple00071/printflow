@@ -76,7 +76,7 @@ export default function QuotationDetailPage({ params }: { params: { id: string }
       size: quotation.size || "",
       printingSide: quotation.printing_side || "",
       lamination: quotation.lamination || "",
-      finishing: quotation.finishing || "",
+      printingDate: quotation.printing_date || "",
       instructions: quotation.instructions || "",
       totalAmount: quotation.taxable_amount?.toString() || "0",
     });
@@ -190,12 +190,12 @@ export default function QuotationDetailPage({ params }: { params: { id: string }
                   <DetailItem label={t("Lamination", "లామినేషన్")} value={quotation.lamination || t("None", "లేదు")} />
                 </div>
                 
-                {(quotation.finishing || quotation.instructions) && (
+                {(quotation.printing_date || quotation.instructions) && (
                   <div className="grid grid-cols-1 gap-2 pt-2 border-t border-gray-50 print:pt-0.5">
-                    {quotation.finishing && (
+                    {quotation.printing_date && (
                       <div className="space-y-0.5">
-                        <p className="text-[9px] text-gray-400 uppercase tracking-wider">{t("Finishing", "ఫినిషింగ్ వివరాలు")}</p>
-                        <p className="text-xs text-gray-700 font-medium leading-relaxed">{quotation.finishing}</p>
+                        <p className="text-[9px] text-gray-400 uppercase tracking-wider">{t("Printing Date", "ప్రింటింగ్ తేదీ")}</p>
+                        <p className="text-xs text-gray-700 font-medium leading-relaxed">{formatDate(quotation.printing_date)}</p>
                       </div>
                     )}
                     {quotation.instructions && (

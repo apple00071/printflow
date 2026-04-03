@@ -16,43 +16,14 @@ import {
 import Link from "next/link";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { PRESS_CONFIG } from "@/lib/config";
-import { getOrder, updateOrderStatus, assignChallanNumber } from "@/lib/supabase/actions";
+import { getOrder, updateOrderStatus, assignChallanNumber, Order } from "@/lib/supabase/actions";
 import AddPaymentModal from "@/components/dashboard/AddPaymentModal";
 import CustomDatePicker from "@/components/ui/CustomDatePicker";
 
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { cn } from "@/lib/utils";
 
-interface Order {
-  id: string;
-  friendly_id?: string;
-  job_type: string;
-  customers: {
-    name: string;
-    phone: string;
-  };
-  total_amount: number;
-  advance_paid: number;
-  status: string;
-  quantity: number;
-  paper_type?: string;
-  size?: string;
-  delivery_date?: string;
-  actual_delivery_date?: string;
-  created_at: string;
-  instructions?: string;
-  file_url?: string;
-  // Financial fields
-  taxable_amount: number;
-  total_with_gst: number;
-  gst_type: string;
-  gst_rate: number;
-  cgst: number;
-  sgst: number;
-  igst: number;
-  challan_number?: string;
-  challan_date?: string;
-}
+
 
 export default function OrderDetailsPage({ params }: { params: { id: string } }) {
   const { t, language } = useLanguage();
@@ -279,6 +250,12 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                 <p className="text-[10px] text-gray-400 uppercase tracking-wider">{t("Promised Delivery", "డెలివరీ తేదీ")}</p>
                 <p className="text-sm text-gray-900">{order.delivery_date ? formatDate(order.delivery_date) : t("TBA", "త్వరలో")}</p>
               </div>
+              {order.printing_date && (
+                <div>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wider">{t("Printing Date", "ప్రింటింగ్ తేదీ")}</p>
+                  <p className="text-sm text-gray-900">{formatDate(order.printing_date)}</p>
+                </div>
+              )}
               {order.status === "DELIVERED" && order.actual_delivery_date && (
                 <div>
                   <p className="text-[10px] text-gray-400 uppercase tracking-wider">{t("Actual Delivery", "నిజమైన డెలివరీ తేదీ")}</p>

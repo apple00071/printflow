@@ -78,7 +78,7 @@ export default function QuotationBuilderPage() {
         customerName: customerInfo.name,
         phone: customerInfo.phone,
         jobType: selectedJob.name,
-        quantity: quantity,
+        quantity: String(quantity),
         taxableAmount: customPrice,
         totalWithGST: customPrice, // Assuming inclusive or no GST for quick quote
         gstType: 'NONE',

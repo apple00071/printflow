@@ -47,7 +47,7 @@ export default function NewOrderPage() {
     customerName: "",
     phone: "",
     jobType: "Business Cards",
-    quantity: 1,
+    quantity: "1",
     paperType: "",
     size: "",
     instructions: "",
@@ -64,7 +64,7 @@ export default function NewOrderPage() {
     quotation_id: "",
     printingSide: "Single Side",
     lamination: "None",
-    finishing: "",
+    printingDate: "",
   });
 
   // Pre-fill from query params if coming from a quotation
@@ -78,14 +78,14 @@ export default function NewOrderPage() {
         phone: searchParams.get("phone") || "",
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         jobType: searchParams.get("jobType") as any || "Business Cards",
-        quantity: parseInt(searchParams.get("quantity") || "1"),
+        quantity: searchParams.get("quantity") || "1",
         paperType: searchParams.get("paperType") || "",
         size: searchParams.get("size") || "",
         instructions: searchParams.get("instructions") || "",
         totalAmount: parseFloat(searchParams.get("totalAmount") || "0"),
         printingSide: searchParams.get("printingSide") || "Single Side",
         lamination: searchParams.get("lamination") || "None",
-        finishing: searchParams.get("finishing") || "",
+        printingDate: searchParams.get("printingDate") || "",
       }));
     }
   }, []);
@@ -209,11 +209,10 @@ export default function NewOrderPage() {
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="tel"
-                  required
                   value={formData.phone}
                   onChange={(e) => setFormData({...formData, phone: e.target.value})}
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
-                  placeholder={t("e.g. 9876543210", "ఉదా: 9876543210")}
+                  placeholder={t("e.g. 9876543210 (Optional)", "ఉదా: 9876543210 (ఐచ్ఛికం)")}
                 />
               </div>
             </div>
@@ -229,36 +228,47 @@ export default function NewOrderPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
               <label className="text-xs  text-gray-500 uppercase">{t("Job Type", "పని రకం")}</label>
-              <CustomSelect
-                options={jobTypes.map(t => ({ value: t.id, label: t.label }))}
-                value={formData.jobType}
-                onChange={(value) => {
-                  const newJobType = String(value);
-                  const defaults = JOB_TYPE_DEFAULTS[newJobType];
-                  setFormData(prev => ({
-                    ...prev,
-                    jobType: newJobType,
-                    // Auto-apply HSN and GST if defaults exist
-                    ...(defaults ? {
-                      hsnCode: defaults.hsn,
-                      applyGST: true,
-                      gstRate: defaults.gst
-                    } : {})
-                  }));
-                }}
-              />
+              <div className="relative">
+                <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  list="job-types"
+                  type="text"
+                  required
+                  value={formData.jobType}
+                  onChange={(e) => {
+                    const newJobType = e.target.value;
+                    const defaults = JOB_TYPE_DEFAULTS[newJobType];
+                    setFormData(prev => ({
+                      ...prev,
+                      jobType: newJobType,
+                      ...(defaults ? {
+                        hsnCode: defaults.hsn,
+                        applyGST: true,
+                        gstRate: defaults.gst
+                      } : {})
+                    }));
+                  }}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
+                  placeholder={t("e.g. Business Cards, Banners...", "ఉదా: విజిటింగ్ కార్డ్స్, బ్యానర్లు...")}
+                />
+                <datalist id="job-types">
+                  {jobTypes.map(t => (
+                    <option key={t.id} value={t.id}>{t.label}</option>
+                  ))}
+                </datalist>
+              </div>
             </div>
             <div className="space-y-1">
               <label className="text-xs  text-gray-500 uppercase">{t("Quantity", "పరిమాణం")}</label>
               <div className="relative">
                 <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
-                  type="number"
-                  min="1"
+                  type="text"
                   required
                   value={formData.quantity}
-                  onChange={(e) => setFormData({...formData, quantity: parseInt(e.target.value) || 0})}
+                  onChange={(e) => setFormData({...formData, quantity: e.target.value})}
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
+                  placeholder={t("e.g. 100 or 500+500", "ఉదా: 100 లేదా 500+500")}
                 />
               </div>
             </div>
@@ -313,14 +323,11 @@ export default function NewOrderPage() {
                 onChange={(val) => setFormData({...formData, lamination: val as string})}
               />
             </div>
-            <div className="md:col-span-1 space-y-1">
-              <label className="text-xs text-gray-500 uppercase">{t("Finishing", "ఫినిషింగ్")}</label>
-              <input
-                type="text"
-                placeholder={t("e.g. Folding, Creasing...", "ఉదా: ఫోల్డింగ్, క్రీజింగ్")}
-                value={formData.finishing}
-                onChange={(e) => setFormData({...formData, finishing: e.target.value})}
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase">{t("Printing Date", "ప్రింటింగ్ తేదీ")}</label>
+              <CustomDatePicker
+                value={formData.printingDate}
+                onChange={(value) => setFormData({ ...formData, printingDate: value })}
               />
             </div>
             <div className="space-y-1">

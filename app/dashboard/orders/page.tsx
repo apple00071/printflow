@@ -18,7 +18,7 @@ interface Order {
     phone: string;
   } | null;
   job_type: string;
-  quantity: number;
+  quantity: string;
   status: string;
   total_amount: number;
   advance_paid: number;

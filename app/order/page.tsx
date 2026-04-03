@@ -33,7 +33,7 @@ export default function PublicOrderPage() {
     customerName: "",
     phone: "",
     jobType: "Business Cards / విజిటింగ్ కార్డ్స్",
-    quantity: 1,
+    quantity: "1",
     size: "",
     instructions: "",
     designFile: null as File | null,
@@ -167,7 +167,7 @@ export default function PublicOrderPage() {
                       required
                       min="1"
                       value={formData.quantity}
-                      onChange={(e) => setFormData({...formData, quantity: parseInt(e.target.value) || 1})}
+                      onChange={(e) => setFormData({...formData, quantity: e.target.value})}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none"
                     />
                   </div>

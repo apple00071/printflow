@@ -8,17 +8,17 @@ import { calculateGST } from "@/lib/gst";
 
 interface OrderData {
   customerName?: string;
-  phone: string;
+  phone?: string;
   jobType: string;
-  quantity: number;
+  quantity: string;
   paperType?: string;
   size?: string;
   printingSide?: string;
   lamination?: string;
-  finishing?: string;
+  printingDate?: string;
   instructions?: string;
   deliveryDate?: string;
-  totalAmount: number; // For non-GST orders, this is the final total. For GST orders, this is the taxable amount.
+  totalAmount: number;
   advancePaid: number;
   // GST Fields
   applyGST?: boolean;
@@ -27,24 +27,25 @@ interface OrderData {
   gstin?: string;
   hsnCode?: string;
   file_url?: string;
-  tenantId?: string; // Optional for public orders
+  quotation_id?: string;
+  tenantId?: string;
 }
 
 interface CustomerData {
   name: string;
-  phone: string;
+  phone: string | null;
   tenant_id?: string;
 }
 
 interface OrderInsertData {
   customer_id: string;
   job_type: string;
-  quantity: number;
+  quantity: string;
   paper_type?: string;
   size?: string;
   printing_side?: string;
   lamination?: string;
-  finishing?: string;
+  printing_date?: string | null;
   instructions?: string;
   delivery_date?: string | null;
   total_amount: number;
@@ -64,6 +65,23 @@ interface OrderInsertData {
   tenant_id?: string;
 }
 
+export interface Order extends OrderInsertData {
+  id: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  friendly_id?: string;
+  actual_delivery_date?: string | null;
+  challan_number?: string | null;
+  challan_date?: string | null;
+  customers?: {
+    id: string;
+    name: string;
+    phone: string | null;
+    gstin?: string | null;
+  };
+}
+
 interface PaymentData {
   order_id: string;
   amount: number;
@@ -74,14 +92,14 @@ interface PaymentData {
 export interface QuotationData {
   customer_id?: string;
   customerName?: string;
-  phone: string;
+  phone?: string | null;
   jobType: string;
-  quantity: number;
+  quantity: string;
   paperType?: string;
   size?: string;
   printingSide?: string;
   lamination?: string;
-  finishing?: string;
+  printingDate?: string;
   instructions?: string;
   taxableAmount: number;
   totalWithGST: number;
@@ -98,9 +116,8 @@ export async function createOrder(data: OrderData) {
   const supabase = createClient();
   const superAdmin = await isSuperAdmin(supabase);
   
-  // For super admin, create orders without tenant restriction
-  // For regular users, require tenant context (either from session or passed explicitly for public pages)
-  let tenant;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let tenant: any;
   if (superAdmin) {
     // Super admin can create orders directly (optionally for a tenant if tenantId is provided)
     if (data.tenantId) {
@@ -130,26 +147,28 @@ export async function createOrder(data: OrderData) {
     }
   }
 
-  // 1. Check if customer exists by phone
-  let customerQuery = supabase
-    .from("customers")
-    .select("id")
-    .eq("phone", data.phone);
+  // 1. Check if customer exists by phone (if provided and not empty)
+  let customerId = null;
   
-  // Only filter by tenant_id if not super admin
-  if (!superAdmin) {
-    customerQuery = customerQuery.eq("tenant_id", tenant.id);
+  if (data.phone && data.phone.trim() !== "") {
+    let customerQuery = supabase
+      .from("customers")
+      .select("id")
+      .eq("phone", data.phone);
+    
+    if (!superAdmin && tenant?.id) {
+      customerQuery = customerQuery.eq("tenant_id", tenant.id);
+    }
+    
+    const { data: customer } = await customerQuery.maybeSingle();
+    customerId = customer?.id;
   }
-  
-  const { data: customer } = await customerQuery.single();
-
-  let customerId = customer?.id;
 
   // 2. Auto-create customer if not found
-  if (!customer) {
+  if (!customerId) {
     const customerData: CustomerData = {
-      name: data.customerName || data.phone,
-      phone: data.phone,
+      name: data.customerName || data.phone || "Unknown",
+      phone: data.phone && data.phone.trim() !== "" ? data.phone : null,
     };
     
     // Only add tenant_id if not super admin
@@ -201,7 +220,7 @@ export async function createOrder(data: OrderData) {
     size: data.size,
     printing_side: data.printingSide,
     lamination: data.lamination,
-    finishing: data.finishing,
+    printing_date: data.printingDate ? new Date(data.printingDate).toISOString() : null,
     instructions: data.instructions,
     delivery_date: data.deliveryDate ? new Date(data.deliveryDate).toISOString() : null,
     total_amount: data.totalAmount,
@@ -292,7 +311,7 @@ export async function getOrders(filter: { status?: string; search?: string } = {
   return data;
 }
 
-export async function getOrder(id: string) {
+export async function getOrder(id: string): Promise<Order> {
   const supabase = createClient();
   const superAdmin = await isSuperAdmin(supabase);
   
@@ -386,7 +405,7 @@ export async function createQuotation(data: QuotationData) {
     const { data: customer } = await supabase
       .from("customers")
       .select("id")
-      .eq("phone", data.phone)
+      .eq("phone", data.phone || "")
       .eq("tenant_id", tenant.id)
       .maybeSingle();
 
@@ -396,8 +415,8 @@ export async function createQuotation(data: QuotationData) {
       const { data: newCustomer, error: custError } = await supabase
         .from("customers")
         .insert({
-          name: data.customerName || data.phone,
-          phone: data.phone,
+          name: data.customerName || data.phone || "Guest",
+          phone: data.phone && data.phone.trim() !== "" ? data.phone : null,
           tenant_id: tenant.id
         })
         .select("id")
@@ -425,7 +444,7 @@ export async function createQuotation(data: QuotationData) {
       size: data.size,
       printing_side: data.printingSide,
       lamination: data.lamination,
-      finishing: data.finishing,
+      printing_date: data.printingDate ? new Date(data.printingDate).toISOString() : null,
       instructions: data.instructions,
       taxable_amount: data.taxableAmount,
       total_with_gst: data.totalWithGST,
@@ -504,7 +523,8 @@ export async function updateOrder(id: string, data: OrderData) {
   const superAdmin = await isSuperAdmin(supabase);
   
   // Get tenant context
-  let tenant;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let tenant: any;
   if (superAdmin) {
     // For updates, super admin also needs tenant context
     const { data: existingOrder } = await supabase
@@ -550,6 +570,7 @@ export async function updateOrder(id: string, data: OrderData) {
       quantity: data.quantity,
       paper_type: data.paperType,
       size: data.size,
+      printing_date: data.printingDate ? new Date(data.printingDate).toISOString() : null,
       instructions: data.instructions,
       delivery_date: data.deliveryDate ? new Date(data.deliveryDate).toISOString() : null,
       total_amount: data.totalAmount,

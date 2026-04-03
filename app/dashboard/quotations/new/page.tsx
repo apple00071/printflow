@@ -23,6 +23,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getCurrentTenant } from "@/lib/tenant";
 import { cn } from "@/lib/utils";
 import CustomSelect from "@/components/ui/CustomSelect";
+import CustomDatePicker from "@/components/ui/CustomDatePicker";
 import { useLanguage } from "@/lib/context/LanguageContext";
 
 interface Customer {
@@ -51,7 +52,8 @@ export default function NewQuotationPage() {
   const [paperType, setPaperType] = useState("");
   const [printingSide, setPrintingSide] = useState("Single Side");
   const [lamination, setLamination] = useState("None");
-  const [finishing, setFinishing] = useState("");
+  const [printingDate, setPrintingDate] = useState("");
+  const [instructions, setInstructions] = useState("");
   
   // Custom Pricing
   const baseTotal = selectedJob.basePrice * quantity;
@@ -126,12 +128,13 @@ export default function NewQuotationPage() {
         customerName: name,
         phone: phone,
         jobType: selectedJob.id === 'other' ? customJobName : t(selectedJob.name, selectedJob.telugu),
-        quantity: quantity,
+        quantity: String(quantity),
         size: size,
         paperType: paperType,
         printingSide: printingSide,
         lamination: lamination,
-        finishing: finishing,
+        printingDate: printingDate,
+        instructions: instructions,
         taxableAmount: customPrice,
         totalWithGST: customPrice, 
         gstType: 'NONE',
@@ -428,15 +431,23 @@ export default function NewQuotationPage() {
                  />
               </div>
 
-              <div className="xl:col-span-5 space-y-1">
-                 <label className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">{t("Additional Finishing & instructions", "అదనపు ఫినిషింగ్ & సూచనలు")}</label>
-                 <textarea
-                    rows={2}
-                    placeholder="Folding, Creasing, Binding, Special instructions..."
-                    value={finishing}
-                    onChange={(e) => setFinishing(e.target.value)}
-                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary outline-none text-sm resize-none"
-                  />
+              <div className="space-y-1">
+                <label className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">{t("Printing Date", "ప్రింటింగ్ తేదీ")}</label>
+                <CustomDatePicker
+                  value={printingDate}
+                  onChange={(val) => setPrintingDate(val)}
+                />
+              </div>
+              
+              <div className="xl:col-span-4 space-y-1">
+                <label className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">{t("Special Instructions", "సూచనలు")}</label>
+                <textarea
+                  rows={1}
+                  placeholder="Special instructions..."
+                  value={instructions}
+                  onChange={(e) => setInstructions(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary outline-none text-sm resize-none"
+                />
               </div>
             </div>
           </div>
@@ -504,14 +515,14 @@ export default function NewQuotationPage() {
                  </div>
                  {size && (
                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">{t("Size", "సైజు")}</span>
-                      <span className="font-medium text-gray-900">{size}</span>
+                       <span className="text-gray-500">{t("Size", "సైజు")}</span>
+                       <span className="font-medium text-gray-900">{size}</span>
                    </div>
                  )}
                  {paperType && (
                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">{t("Paper / GSM", "పేపర్ / GSM")}</span>
-                      <span className="font-medium text-gray-900">{paperType}</span>
+                       <span className="text-gray-500">{t("Paper / GSM", "పేపర్ / GSM")}</span>
+                       <span className="font-medium text-gray-900">{paperType}</span>
                    </div>
                  )}
                  <div className="flex justify-between text-xs">

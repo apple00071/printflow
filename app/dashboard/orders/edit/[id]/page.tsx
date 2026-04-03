@@ -49,7 +49,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
     customerName: "",
     phone: "",
     jobType: "Business Cards",
-    quantity: 1,
+    quantity: "1",
     paperType: "",
     size: "",
     instructions: "",
@@ -63,6 +63,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
     gstin: "",
     hsnCode: "",
     file_url: "",
+    printingDate: "",
   });
 
   const [uploading, setUploading] = useState(false);
@@ -100,7 +101,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
             customerName: order.customers?.name || "",
             phone: order.customers?.phone || "",
             jobType: order.job_type,
-            quantity: order.quantity,
+            quantity: String(order.quantity),
             paperType: order.paper_type || "",
             size: order.size || "",
             instructions: order.instructions || "",
@@ -113,6 +114,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
             gstin: order.customers?.gstin || "",
             hsnCode: order.hsn_code || "",
             file_url: order.file_url || "",
+            printingDate: order.printing_date || "",
           });
           if (order.file_url) {
             setFileName(order.file_url.split('/').pop() || "");
@@ -243,36 +245,47 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
               <label className="text-xs text-gray-500 uppercase">{t("Job Type", "పని రకం")}</label>
-              <CustomSelect
-                options={jobTypes.map(t => ({ value: t.id, label: t.label }))}
-                value={formData.jobType}
-                onChange={(value) => {
-                  const newJobType = String(value);
-                  const defaults = JOB_TYPE_DEFAULTS[newJobType];
-                  setFormData(prev => ({
-                    ...prev,
-                    jobType: newJobType,
-                    // Auto-apply HSN and GST if defaults exist
-                    ...(defaults ? {
-                      hsnCode: defaults.hsn,
-                      applyGST: true,
-                      gstRate: defaults.gst
-                    } : {})
-                  }));
-                }}
-              />
+              <div className="relative">
+                <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  list="job-types"
+                  type="text"
+                  required
+                  value={formData.jobType}
+                  onChange={(e) => {
+                    const newJobType = e.target.value;
+                    const defaults = JOB_TYPE_DEFAULTS[newJobType];
+                    setFormData(prev => ({
+                      ...prev,
+                      jobType: newJobType,
+                      ...(defaults ? {
+                        hsnCode: defaults.hsn,
+                        applyGST: true,
+                        gstRate: defaults.gst
+                      } : {})
+                    }));
+                  }}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
+                  placeholder={t("e.g. Business Cards, Banners...", "ఉదా: విజిటింగ్ కార్డ్స్, బ్యానర్లు...")}
+                />
+                <datalist id="job-types">
+                  {jobTypes.map(t => (
+                    <option key={t.id} value={t.id}>{t.label}</option>
+                  ))}
+                </datalist>
+              </div>
             </div>
             <div className="space-y-1">
               <label className="text-xs text-gray-500 uppercase">{t("Quantity", "పరిమాణం")}</label>
               <div className="relative">
                 <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
-                  type="number"
-                  min="1"
+                  type="text"
                   required
                   value={formData.quantity}
-                  onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
+                  onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
+                  placeholder={t("e.g. 100 or 500+500", "ఉదా: 100 లేదా 500+500")}
                 />
               </div>
             </div>
@@ -301,6 +314,13 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
                 value={formData.size}
                 onChange={(e) => setFormData({ ...formData, size: e.target.value })}
                 className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase">{t("Printing Date", "ప్రింటింగ్ తేదీ")}</label>
+              <CustomDatePicker
+                value={formData.printingDate}
+                onChange={(value) => setFormData({ ...formData, printingDate: value })}
               />
             </div>
             <div className="space-y-1">
