@@ -360,24 +360,91 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
             )}
           </div>
 
+          {/* Proofing Workflow */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-50 pb-3">
+              <CheckCircle2 className={cn("w-5 h-5", order.proof_status === 'APPROVED' ? 'text-green-500' : 'text-orange')} />
+              <h2 className="text-gray-900 uppercase tracking-widest text-[10px] font-bold">{t("Design Approval", "డిజైన్ అనుమతి", "डिजाइन की अनुमति")}</h2>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("Status", "స్థితి", "स्थिति")}</span>
+                 <span className={cn(
+                    "px-2 py-1 rounded text-[10px] font-bold uppercase",
+                    order.proof_status === 'APPROVED' ? 'bg-green-50 text-green-600' :
+                    order.proof_status === 'REVISION_REQUESTED' ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-400'
+                 )}>
+                    {order.proof_status}
+                 </span>
+              </div>
+
+              {order.proof_feedback && (
+                  <div className="bg-orange/5 p-3 rounded-lg border border-orange/10">
+                     <p className="text-[10px] font-bold text-orange uppercase tracking-widest mb-1">{t("Customer Feedback", "కస్టమర్ సూచనలు", "ग्राहक का फीडबैक")}</p>
+                     <p className="text-xs text-gray-600 italic">&quot;{order.proof_feedback}&quot;</p>
+                  </div>
+              )}
+
+              <div className="space-y-1">
+                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-loose">{t("Proof Preview Link", "ప్రూఫ్ లింక్", "प्रूफ प्रीव्यू लिंक")}</label>
+                 <div className="flex gap-2">
+                    <input 
+                       type="text" 
+                       placeholder="https://..."
+                       defaultValue={order.proof_image_url || ""}
+                       onBlur={async (e) => {
+                          if (e.target.value !== order.proof_image_url) {
+                             const { updateOrderProof } = await import("@/lib/supabase/actions");
+                             await updateOrderProof(order.id, { proof_image_url: e.target.value });
+                             fetchOrder();
+                          }
+                       }}
+                       className="flex-1 bg-gray-50 border border-gray-100 px-3 py-2 rounded-lg text-xs outline-none focus:border-primary transition-all font-mono"
+                    />
+                 </div>
+              </div>
+
+              <div className="pt-2 grid grid-cols-2 gap-2">
+                 <button 
+                    onClick={() => {
+                       const link = `${window.location.origin}/proof/${order.id}?token=${order.proofing_token}`;
+                       navigator.clipboard.writeText(link);
+                       alert(t("Link copied to clipboard!", "లింక్ కాపీ చేయబడింది!", "लिंक कॉपी हो गया!"));
+                    }}
+                    className="py-2.5 bg-gray-50 text-gray-700 text-[10px] font-bold rounded-lg border border-gray-100 hover:bg-gray-100 transition-all uppercase tracking-wider"
+                 >
+                    {t("Copy Link", "లింక్ కాపీ చేయండి", "लिंक कॉपी करें")}
+                 </button>
+                 <a 
+                    href={`https://wa.me/${order.customers?.phone}?text=${encodeURIComponent(`Hi ${order.customers?.name}, please approve your design proof here: ${window.location.origin}/proof/${order.id}?token=${order.proofing_token}`)}`}
+                    target="_blank"
+                    className="py-2.5 bg-green-500 text-white text-[10px] font-bold rounded-lg hover:bg-green-600 transition-all uppercase tracking-wider flex items-center justify-center gap-1.5"
+                 >
+                    <MessageSquare className="w-3 h-3" /> WHATSAPP
+                 </a>
+              </div>
+            </div>
+          </div>
+
           {/* WhatsApp Notification */}
           {order.status === "READY" && (
             <div className="bg-green-50 p-6 rounded-xl border border-green-200 space-y-4 shadow-sm">
               <div className="flex items-center gap-2 text-green-700">
                 <MessageSquare className="w-5 h-5" />
-                <h3 className="text-sm uppercase">{t("Notify Customer", "కస్టమర్‌కు తెలియజేయండి")}</h3>
+                <h3 className="text-sm uppercase tracking-widest font-bold text-[10px]">{t("Notify Customer", "కస్టమర్‌కు తెలియజేయండి", "ग्राहक को सूचित करें")}</h3>
               </div>
               <p className="text-xs text-green-600 leading-relaxed">
-                {t("The order is READY. Send a WhatsApp notification to the customer about pickup and balance.", "ఆర్డర్ సిద్ధంగా ఉంది. పికప్ మరియు బకాయి గురించి వాట్సాప్ ద్వారా కస్టమర్‌కు తెలియజేయండి.")}
+                {t("The order is READY. Send a WhatsApp notification to the customer about pickup and balance.", "ఆర్డర్ సిద్ధంగా ఉంది. పికప్ మరియు బకాయి గురించి వాట్సాప్ ద్వారా కస్టమర్‌కు తెలియజేయండి.", "ऑर्डर तैयार है। ग्राहक को व्हाट्सएप पर सूचित करें।")}
               </p>
               <a 
                 href={getWhatsAppLink()}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-all shadow-lg shadow-green-200 active:scale-95"
+                className="flex items-center justify-center gap-2 w-full py-3 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-all shadow-lg shadow-green-200 active:scale-95 font-bold"
               >
                 <MessageSquare className="w-4 h-4" />
-                {t("Send WhatsApp", "వాట్సాప్ పంపండి")}
+                {t("Send WhatsApp", "వాట్సాప్ పంపండి", "व्हाट्सएप भेजें")}
               </a>
             </div>
           )}

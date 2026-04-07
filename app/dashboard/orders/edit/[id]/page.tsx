@@ -91,6 +91,12 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
     }
     init();
   }, []);
+ 
+  const gstOptions = [
+    { value: "0", label: "0% (Nil)" },
+    ...gstRates.map((rate) => ({ value: rate.rate.toString(), label: `${rate.label} (${rate.rate}%)` })),
+    ...DEFAULT_GST_RATES.filter(std => !gstRates.some(r => r.rate === std.rate)).map((std) => ({ value: std.rate.toString(), label: `${std.label} (${std.rate}%)` }))
+  ];
 
   useEffect(() => {
     async function fetchOrder() {
@@ -406,12 +412,8 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
               <div className="space-y-1">
                 <label className="text-xs text-gray-500 uppercase">{t("GST Rate", "GST శాతం")}</label>
                 <CustomSelect
-                  options={[
-                    { value: 0, label: "0% (Nil)" },
-                    ...gstRates.map((rate) => ({ value: rate.rate, label: `${rate.label} (${rate.rate}%)` })),
-                    ...DEFAULT_GST_RATES.filter(std => !gstRates.some(r => r.rate === std.rate)).map((std) => ({ value: std.rate, label: `${std.label} (${std.rate}%)` }))
-                  ]}
-                  value={formData.gstRate}
+                  options={gstOptions}
+                  value={formData.gstRate.toString()}
                   onChange={(value) => setFormData({...formData, gstRate: Number(value)})}
                 />
               </div>

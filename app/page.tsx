@@ -771,13 +771,16 @@ export default function LandingPage() {
       {/* Floating Widgets */}
       <div className="fixed bottom-6 left-6 z-[60] flex flex-col gap-3">
         <button
-          onClick={() => setLang(lang === 'en' ? 'te' : 'en')}
+          onClick={() => {
+            const nextLang: Record<Language, Language> = { en: 'te', te: 'hi', hi: 'en' };
+            setLang(nextLang[lang]);
+          }}
           className="bg-white border border-gray-200 text-[#1e3a5f] p-3 rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center group relative"
-          title={lang === 'en' ? 'Switch to Telugu' : 'Switch to English'}
+          title={lang === 'en' ? 'తెలుగుకు మార్చండి' : lang === 'te' ? 'हिंदी में बदलें' : 'Switch to English'}
         >
           <Languages className="w-6 h-6" />
           <span className="max-w-0 overflow-hidden group-hover:max-w-xs group-hover:ml-2 transition-all duration-300 font-medium whitespace-nowrap">
-            {lang === 'en' ? 'తెలుగు' : 'English'}
+            {lang === 'en' ? 'తెలుగు' : lang === 'te' ? 'हिंदी' : 'English'}
           </span>
           <span className="absolute -top-2 -right-2 bg-[#f97316] text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold uppercase">
             {lang.toUpperCase()}

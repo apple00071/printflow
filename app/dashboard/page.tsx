@@ -40,6 +40,8 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<StatCard[]>([]);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [chartData, setChartData] = useState<{ name: string; value: number; color: string }[]>([]);
+  const [monthlyTrend, setMonthlyTrend] = useState<{ name: string; value: number }[]>([]);
+  const [paymentBreakdown, setPaymentBreakdown] = useState<{ name: string; value: number; color: string }[]>([]);
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -48,75 +50,6 @@ export default function DashboardPage() {
         const supabase = createClient();
         const currentTenant = await getCurrentTenant(supabase);
 
-        // Check if user is super admin
-        const { data: { user } } = await supabase.auth.getUser();
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role, tenant_id')
-          .eq('id', user?.id)
-          .single();
-        
-        const isSuperAdmin = profile?.role === 'ADMIN' && !profile?.tenant_id;
-        
-        if (isSuperAdmin) {
-          console.log('Super admin accessing tenant dashboard - showing overview of all data');
-          // For super admin, show all data across all tenants
-          
-          const today = new Date().toISOString().split('T')[0];
-
-          // 1. Fetch ALL Orders (super admin can see all)
-          const { data: dbOrders, error: orderError } = await supabase
-            .from("orders")
-            .select("*, customers(name)")
-            .order('created_at', { ascending: false });
-          
-          if (orderError) {
-            console.error('Dashboard - Order error:', orderError);
-            throw orderError;
-          }
-
-          // 2. Fetch ALL Customers Count (super admin can see all)
-          const { count: customerCount, error: custError } = await supabase
-            .from("customers")
-            .select("*", { count: 'exact', head: true });
-          
-          if (custError) {
-            console.error('Dashboard - Customer error:', custError);
-            throw custError;
-          }
-
-          // 3. Process Stats for ALL data
-          const todayOrders = (dbOrders || []).filter(o => o.created_at.startsWith(today));
-          const todayRevenue = todayOrders.reduce((acc, curr) => acc + Number(curr.total_with_gst || curr.total_amount || 0), 0);
-          const pendingCount = (dbOrders || []).filter(o => o.status !== 'DELIVERED').length;
-
-          setStats([
-            { label: t("Today's Orders", "నేటి ఆర్డర్లు"), value: todayOrders.length.toString(), icon: ShoppingBag, color: "bg-blue-500" },
-            { label: t("Pending Orders", "పెండింగ్ ఆర్డర్లు"), value: pendingCount.toString(), icon: Clock, color: "bg-orange" },
-            { label: t("Today's Revenue", "నేటి ఆదాయం"), value: formatCurrency(todayRevenue), icon: IndianRupee, color: "bg-green-500" },
-            { label: t("Total Customers", "మొత్తం కస్టమర్లు"), value: customerCount?.toString() || "0", icon: Users, color: "bg-purple" }
-          ]);
-
-          setRecentOrders(dbOrders?.slice(0, 5) || []);
-          
-          // Process chart data for all orders
-          const statusCounts = (dbOrders || []).reduce((acc, order) => {
-            acc[order.status] = (acc[order.status] || 0) + 1;
-            return acc;
-          }, {} as Record<string, number>);
-
-          const chartData = Object.entries(statusCounts).map(([status, count]) => ({
-            name: status,
-            value: Number(count),
-            color: status === 'DELIVERED' ? '#10b981' : status === 'PENDING' ? '#f59e0b' : '#3b82f6'
-          }));
-
-          setChartData(chartData);
-          setLoading(false);
-          return;
-        }
-
-        // Regular tenant user logic continues...
         if (!currentTenant) {
           console.error('No tenant found for dashboard');
           setLoading(false);
@@ -124,6 +57,8 @@ export default function DashboardPage() {
         }
 
         const today = new Date().toISOString().split('T')[0];
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
         // 1. Fetch Orders (filtered by tenant)
         const { data: dbOrders, error: orderError } = await supabase
@@ -132,53 +67,80 @@ export default function DashboardPage() {
           .eq('tenant_id', currentTenant.id)
           .order('created_at', { ascending: false });
         
-        if (orderError) {
-          console.error('Dashboard - Order error:', orderError);
-          throw orderError;
-        }
+        if (orderError) throw orderError;
 
-        // 2. Fetch Customers Count (filtered by tenant)
-        const { count: customerCount, error: custError } = await supabase
+        // 2. Fetch Payments (for method breakdown and trend)
+        const { data: dbPayments, error: payError } = await supabase
+            .from("payments")
+            .select("*")
+            .eq('tenant_id', currentTenant.id)
+            .gte('paid_at', sixMonthsAgo.toISOString());
+        
+        if (payError) throw payError;
+
+        const { count: customerCount } = await supabase
           .from("customers")
           .select("*", { count: 'exact', head: true })
           .eq('tenant_id', currentTenant.id);
-        
-        if (custError) {
-          console.error('Dashboard - Customer error:', custError);
-          throw custError;
-        }
 
         // 3. Process Stats
         const todayOrders = (dbOrders || []).filter(o => o.created_at.startsWith(today));
-        const todayRevenue = todayOrders.reduce((acc, curr) => acc + Number(curr.total_with_gst || curr.total_amount || 0), 0);
+        
         const pendingCount = (dbOrders || []).filter(o => o.status !== 'DELIVERED').length;
+        const totalBalanceDue = (dbOrders || []).reduce((acc, curr) => acc + Number(curr.balance_due || 0), 0);
 
         setStats([
           { label: t("Today's Orders", "నేటి ఆర్డర్లు"), value: todayOrders.length.toString(), icon: ShoppingBag, color: "bg-blue-500" },
           { label: t("Pending Orders", "పెండింగ్ ఆర్డర్లు"), value: pendingCount.toString(), icon: Clock, color: "bg-orange" },
-          { label: t("Today's Revenue", "నేటి ఆదాయం"), value: formatCurrency(todayRevenue), icon: IndianRupee, color: "bg-green-500" },
+          { label: t("Balance Due", "రావాల్సిన బాకీ"), value: formatCurrency(totalBalanceDue), icon: IndianRupee, color: "bg-red-500" },
           { label: t("Total Customers", "కస్టమర్లు"), value: (customerCount || 0).toString(), icon: Users, color: "bg-purple-500" },
         ]);
 
         setRecentOrders((dbOrders || []).slice(0, 5));
 
-        // 4. Group by Job Type for Chart
+        // 4. Job Types Chart
         const jobGroups = (dbOrders || []).reduce((acc: Record<string, number>, curr) => {
           const type = curr.job_type || 'Other';
           acc[type] = (acc[type] || 0) + Number(curr.total_with_gst || curr.total_amount || 0);
           return acc;
         }, {});
-
         const chartColors = ["#1e3a5f", "#f97316", "#10b981", "#8b5cf6", "#ef4444", "#ec4899", "#14b8a6"];
-        const localChartData = Object.keys(jobGroups).map((name, i) => ({
+        setChartData(Object.keys(jobGroups).map((name, i) => ({
           name,
           value: jobGroups[name],
           color: chartColors[i % chartColors.length]
-        })).sort((a, b) => b.value - a.value).slice(0, 6);
+        })).sort((a, b) => b.value - a.value).slice(0, 6));
 
-        setChartData(localChartData);
-      } catch {
-        console.error("Dashboard error");
+        // 5. Monthly Trend
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const trendData: Record<string, number> = {};
+        for(let j = 5; j >= 0; j--) {
+            const d = new Date();
+            d.setMonth(d.getMonth() - j);
+            const key = `${months[d.getMonth()]} ${d.getFullYear()}`;
+            trendData[key] = 0;
+        }
+        (dbPayments || []).forEach(p => {
+            const d = new Date(p.paid_at);
+            const key = `${months[d.getMonth()]} ${d.getFullYear()}`;
+            if(trendData[key] !== undefined) trendData[key] += Number(p.amount);
+        });
+        setMonthlyTrend(Object.entries(trendData).map(([name, value]) => ({ name, value })));
+
+        // 6. Payment Breakdown
+        const payGroups = (dbPayments || []).reduce((acc: Record<string, number>, curr) => {
+            const method = curr.method?.toUpperCase() || 'OTHER';
+            acc[method] = (acc[method] || 0) + Number(curr.amount);
+            return acc;
+        }, {});
+        setPaymentBreakdown(Object.entries(payGroups).map(([name, value]) => ({
+            name,
+            value: Number(value),
+            color: name === 'CASH' ? '#10b981' : name === 'UPI' ? '#3b82f6' : '#f59e0b'
+        })));
+
+      } catch (err) {
+        console.error("Dashboard error:", err);
       } finally {
         setLoading(false);
       }
@@ -201,19 +163,59 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-sm text-gray-500 ">{stat.label}</p>
-              <p className="text-2xl  text-gray-900">{stat.value}</p>
+              <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Content Grid */}
+      {/* Analytics Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Revenue Trend */}
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[350px]">
+          <h2 className="text-lg font-bold text-gray-900 mb-6">{t("Revenue Trend (Last 6 Months)", "ఆదాయం సరళి (గత 6 నెలలు)")}</h2>
+          {loading ? (
+            <div className="flex flex-col items-center justify-center p-10">
+                <Loader2 className="w-8 h-8 animate-spin text-gray-200" />
+            </div>
+          ) : (
+            <DashboardCharts data={monthlyTrend} type="line" />
+          )}
+        </div>
+
+        {/* Payment Methods */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[350px]">
+          <h2 className="text-lg font-bold text-gray-900 mb-6">{t("Payment Methods", "చెల్లింపు పద్ధతులు")}</h2>
+          {loading ? (
+             <div className="flex flex-col items-center justify-center p-10">
+                <Loader2 className="w-8 h-8 animate-spin text-gray-200" />
+             </div>
+          ) : (
+            <div className="relative">
+                <DashboardCharts data={paymentBreakdown} type="pie" />
+                <div className="mt-4 space-y-2">
+                    {paymentBreakdown.map((item) => (
+                        <div key={item.name} className="flex items-center justify-between text-xs">
+                           <div className="flex items-center gap-2">
+                               <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                               <span className="text-gray-600">{item.name}</span>
+                           </div>
+                           <span className="font-bold">{formatCurrency(item.value)}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Orders */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[350px]">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg  text-gray-900">{t("Recent Orders", "ఇటీవలి ఆర్డర్లు")}</h2>
-            <Link href="/dashboard/orders" className="text-primary text-sm  hover:underline">
+            <h2 className="text-lg font-bold text-gray-900">{t("Recent Orders", "ఇటీవలి ఆర్డర్లు")}</h2>
+            <Link href="/dashboard/orders" className="text-primary text-sm font-medium hover:underline">
               {t("View All", "అన్నీ చూడండి")}
             </Link>
           </div>
@@ -221,7 +223,6 @@ export default function DashboardPage() {
              {loading ? (
                 <div className="flex flex-col items-center justify-center p-10 text-gray-400">
                    <Loader2 className="w-8 h-8 animate-spin mb-2" />
-                   <p className="text-sm">{t("Loading orders...", "ఆర్డర్లు లోడ్ అవుతున్నాయి...")}</p>
                 </div>
              ) : recentOrders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-10 text-gray-400">
@@ -231,32 +232,28 @@ export default function DashboardPage() {
              ) : recentOrders.map((order) => (
                 <div key={order.id} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-lg border border-transparent hover:border-gray-100 transition-all cursor-pointer" onClick={() => window.location.href=`/dashboard/orders/${order.id}`}>
                    <div className="flex flex-col">
-                      <span className="text-sm  text-gray-900">{order.customers?.name || "Unknown"}</span>
-                      <span className="text-[10px] text-gray-400  font-mono uppercase">{order.friendly_id || `#${order.id.split('-')[0]}`}</span>
+                      <span className="text-sm font-medium text-gray-900">{order.customers?.name || "Unknown"}</span>
+                      <span className="text-[10px] text-gray-400 font-mono uppercase">{order.friendly_id || `#${order.id.split('-')[0]}`}</span>
                    </div>
                    <div className="text-right">
-                      <p className="text-sm font-medium text-primary">{formatCurrency(order.total_with_gst || order.total_amount)}</p>
-                      <p className="text-[10px]  text-orange uppercase tracking-tighter">{order.status}</p>
+                      <p className="text-sm font-bold text-primary">{formatCurrency(order.total_with_gst || order.total_amount)}</p>
+                      <p className="text-[10px] font-bold text-orange uppercase tracking-tighter">{order.status}</p>
                    </div>
                 </div>
              ))}
           </div>
         </div>
 
-        {/* Right Column: Usage & Revenue */}
-        <div className="space-y-8">
-          {/* Orders by Job Type */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[350px]">
-            <h2 className="text-lg  text-gray-900 mb-6">{t("Revenue by Job Type", "ఆర్డర్ రకాలు")}</h2>
-            {loading ? (
+        {/* Revenue by Job Type */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[350px]">
+          <h2 className="text-lg font-bold text-gray-900 mb-6">{t("Revenue by Job Type", "ఆర్డర్ రకాలు")}</h2>
+          {loading ? (
               <div className="flex flex-col items-center justify-center p-10 text-gray-400">
                   <Loader2 className="w-8 h-8 animate-spin mb-2" />
-                  <p className="text-sm">{t("Generating chart...", "చార్ట్ తయారవుతోంది...")}</p>
               </div>
-            ) : (
-              <DashboardCharts data={chartData} />
-            )}
-          </div>
+          ) : (
+            <DashboardCharts data={chartData} type="bar" />
+          )}
         </div>
       </div>
     </div>

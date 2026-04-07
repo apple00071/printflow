@@ -2,12 +2,12 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-type Language = "en" | "te";
+type Language = "en" | "te" | "hi";
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (en: string, te: string) => string;
+  t: (en: string, te: string, hi?: string) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -15,15 +15,10 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>("en");
 
-  console.log("LanguageProvider Rendering, language:", language);
-
   useEffect(() => {
-    console.log("LanguageProvider Mounted");
     const savedLang = localStorage.getItem("app-language") as Language;
-    if (savedLang) {
-      setLanguageState(savedLang);
-    }
-    if (savedLang) {
+    const validLangs: Language[] = ["en", "te", "hi"];
+    if (savedLang && validLangs.includes(savedLang)) {
       setLanguageState(savedLang);
     }
   }, []);
@@ -33,8 +28,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("app-language", lang);
   };
 
-  const t = (en: string, te: string) => {
-    return language === "te" ? te : en;
+  const t = (en: string, te: string, hi?: string) => {
+    if (language === "te") return te;
+    if (language === "hi") return hi || en;
+    return en;
   };
 
   return (

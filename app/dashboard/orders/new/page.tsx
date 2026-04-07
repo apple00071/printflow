@@ -65,7 +65,11 @@ export default function NewOrderPage() {
     printingSide: "Single Side",
     lamination: "None",
     printingDate: "",
+    inventory_id: "",
+    material_units_per_order: 1,
   });
+
+  const [inventoryItems, setInventoryItems] = useState<{ id: string; name: string; unit: string; quantity: number }[]>([]);
 
   // Pre-fill from query params if coming from a quotation
   useEffect(() => {
@@ -112,10 +116,24 @@ export default function NewOrderPage() {
         if (defaultRate) {
           setFormData(prev => ({ ...prev, gstRate: defaultRate.rate }));
         }
+
+        // Fetch Inventory
+        const { data: inv } = await supabase
+          .from('inventory')
+          .select('id, name, unit, quantity')
+          .eq('tenant_id', currentTenant.id)
+          .order('name');
+        setInventoryItems(inv || []);
       }
     }
     init();
   }, []);
+  
+  const gstOptions = [
+    { value: "0", label: "0% (Nil)" },
+    ...gstRates.map((rate) => ({ value: rate.rate.toString(), label: `${rate.label} (${rate.rate}%)` })),
+    ...DEFAULT_GST_RATES.filter(std => !gstRates.some(r => r.rate === std.rate)).map((std) => ({ value: std.rate.toString(), label: `${std.label} (${std.rate}%)` }))
+  ];
   
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -413,12 +431,8 @@ export default function NewOrderPage() {
               <div className="space-y-1">
                 <label className="text-xs text-gray-500 uppercase">{t("GST Rate", "GST శాతం")}</label>
                 <CustomSelect
-                  options={[
-                    { value: 0, label: "0% (Nil)" },
-                    ...gstRates.map((rate) => ({ value: rate.rate, label: `${rate.label} (${rate.rate}%)` })),
-                    ...DEFAULT_GST_RATES.filter(std => !gstRates.some(r => r.rate === std.rate)).map((std) => ({ value: std.rate, label: `${std.label} (${std.rate}%)` }))
-                  ]}
-                  value={formData.gstRate}
+                  options={gstOptions}
+                  value={formData.gstRate.toString()}
                   onChange={(value) => setFormData({...formData, gstRate: Number(value)})}
                 />
               </div>
@@ -496,6 +510,55 @@ export default function NewOrderPage() {
                <p className="text-[10px]  text-gray-400 uppercase">{t("Balance Due", "మిగిలిన మొత్తం")}</p>
                <p className="text-xl  text-primary">₹ {formData.applyGST ? (gstCalc.totalWithGST - formData.advancePaid).toFixed(2) : (formData.totalAmount - formData.advancePaid).toFixed(2)}</p>
             </div>
+          </div>
+        </section>
+
+        {/* Stock / Material Automation */}
+        <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
+          <div className="flex items-center gap-2 border-b border-gray-50 pb-3 mb-4">
+            <Hash className="w-5 h-5 text-primary" />
+            <h2 className="font-normal text-gray-900 uppercase tracking-wide text-sm">{t("Stock / Material Automation", "స్టాక్ / మెటీరియల్ ఆటోమేషన్", "स्टॉक / सामग्री स्वचालन")}</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase">{t("Select Material from Inventory", "మెటీరియల్ ఎంచుకోండి", "इन्वेंट्री से सामग्री चुनें")}</label>
+              <CustomSelect
+                options={[
+                  { value: "", label: t("No Material (Manual Tracking)", "ఏదీ లేదు (మ్యాన్యువల్)", "कोई सामग्री नहीं (मैनुअल ट्रैक)") },
+                  ...inventoryItems.map(item => ({ 
+                    value: item.id, 
+                    label: `${item.name} (${item.quantity} ${item.unit} available)` 
+                  }))
+                ]}
+                value={formData.inventory_id}
+                onChange={(val) => setFormData({...formData, inventory_id: val})}
+              />
+              <p className="text-[10px] text-gray-400 italic">
+                {t("Stock will be automatically deducted upon saving.", "సేవ్ చేసినప్పుడు స్టాక్ ఆటోమేటిక్‌గా తగ్గుతుంది.", "सहेजने पर स्टॉक अपने आप कम हो जाएगा।")}
+              </p>
+            </div>
+
+            {formData.inventory_id && (
+              <div className="space-y-1 animate-in fade-in slide-in-from-left-2 transition-all">
+                <label className="text-xs text-gray-500 uppercase">{t("Usage Per Unit (e.g. Sheets per Card)", "యూనిట్‌కు వినియోగం", "प्रति इकाई उपयोग")}</label>
+                <div className="flex items-center gap-2">
+                   <input
+                    type="number"
+                    step="0.0001"
+                    value={formData.material_units_per_order}
+                    onChange={(e) => setFormData({...formData, material_units_per_order: parseFloat(e.target.value) || 0})}
+                    className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none font-bold"
+                  />
+                  <span className="text-sm text-gray-400 font-bold uppercase tracking-wider">
+                    {inventoryItems.find(i => i.id === formData.inventory_id)?.unit}
+                  </span>
+                </div>
+                <p className="text-[10px] text-primary font-bold">
+                  {t("Total Deduction", "మొత్తం తగ్గింపు", "कुल कटौती")}: {(parseFloat(formData.quantity) * formData.material_units_per_order).toFixed(2)} {inventoryItems.find(i => i.id === formData.inventory_id)?.unit}
+                </p>
+              </div>
+            )}
           </div>
         </section>
 

@@ -29,6 +29,8 @@ interface OrderData {
   file_url?: string;
   quotation_id?: string;
   tenantId?: string;
+  inventory_id?: string;
+  material_units_per_order?: number;
 }
 
 interface CustomerData {
@@ -63,6 +65,12 @@ interface OrderInsertData {
   hsn_code?: string | null;
   file_url?: string | null;
   tenant_id?: string;
+  proof_image_url?: string | null;
+  proof_status?: string;
+  proof_feedback?: string | null;
+  proofing_token?: string;
+  inventory_id?: string | null;
+  material_units_per_order?: number;
 }
 
 export interface Order extends OrderInsertData {
@@ -74,6 +82,9 @@ export interface Order extends OrderInsertData {
   actual_delivery_date?: string | null;
   challan_number?: string | null;
   challan_date?: string | null;
+  inventory_id?: string | null;
+  material_units_per_order?: number;
+  total_material_deducted?: number;
   customers?: {
     id: string;
     name: string;
@@ -238,6 +249,8 @@ export async function createOrder(data: OrderData) {
     is_inter_state: !!data.isInterState,
     hsn_code: data.hsnCode || null,
     file_url: data.file_url || null,
+    inventory_id: data.inventory_id || null,
+    material_units_per_order: data.material_units_per_order || 1,
   };
   
   // Only add tenant_id if not super admin
@@ -711,4 +724,21 @@ export async function acceptInvitation(email: string, userId: string, name: stri
   }
 
   return { success: true };
+}
+
+export async function updateOrderProof(orderId: string, data: { proof_image_url?: string, proof_status?: string }) {
+  const supabase = createClient();
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant) throw new Error("Unauthorized");
+
+  const { data: updatedOrder, error } = await supabase
+    .from("orders")
+    .update(data)
+    .eq("id", orderId)
+    .eq("tenant_id", tenant.id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return updatedOrder;
 }

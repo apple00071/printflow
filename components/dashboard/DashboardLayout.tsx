@@ -11,15 +11,15 @@ import {
   Settings, 
   LogOut,
   Menu,
-  Crown,
-  FileText
+  FileText,
+  Wallet,
+  Package
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { useEffect } from "react";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -29,42 +29,63 @@ const navItems = [
   {
     name: "Dashboard",
     telugu: "డాష్బోర్డ్",
+    hindi: "डैशबोर्ड",
     href: "/dashboard",
     icon: LayoutDashboard,
   },
   {
     name: "Orders",
     telugu: "ఆర్డర్లు",
+    hindi: "ऑर्डर",
     href: "/dashboard/orders",
     icon: ClipboardList,
   },
   {
     name: "Quotations",
     telugu: "కొటేషన్లు",
+    hindi: "कोटेशन",
     href: "/dashboard/quotations",
     icon: FileText,
   },
   {
+    name: "Inventory",
+    telugu: "ఇన్వెంటరీ",
+    hindi: "इन्वेंटरी",
+    href: "/dashboard/inventory",
+    icon: Package,
+  },
+  {
+    name: "Expenses",
+    telugu: "ఖర్చులు",
+    hindi: "खर्चे",
+    href: "/dashboard/expenses",
+    icon: Wallet,
+  },
+  {
     name: "Customers",
     telugu: "కస్టమర్లు",
+    hindi: "ग्राहक",
     href: "/dashboard/customers",
     icon: Users,
   },
   {
     name: "Billing",
     telugu: "బిల్లింగ్",
+    hindi: "बिलिंग",
     href: "/dashboard/billing",
     icon: Receipt,
   },
   {
     name: "Team",
     telugu: "టీమ్",
+    hindi: "टीम",
     href: "/dashboard/team",
     icon: Users,
   },
   {
     name: "Settings",
     telugu: "సెట్టింగులు",
+    hindi: "सेटिंग्स",
     href: "/dashboard/settings",
     icon: Settings,
   },
@@ -76,59 +97,32 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { language, setLanguage, t } = useLanguage();
   const supabase = createClient();
 
-  // Check if user is super admin
-  useEffect(() => {
-    async function checkSuperAdmin() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role, tenant_id')
-            .eq('id', user.id)
-            .single();
-          
-          // Super admin = ADMIN role + no tenant_id
-          setIsSuperAdmin(profile?.role === 'ADMIN' && !profile?.tenant_id);
-        }
-      } catch (error) {
-        console.error('Error checking super admin:', error);
-        setIsSuperAdmin(false);
-      }
-    }
-    
-    checkSuperAdmin();
-  }, [supabase]);
+  // Check if user is super admin - Removed unused state
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     router.push("/login");
   };
 
-  // Dynamic Title Mapping
   const getPageTitle = () => {
-    // Check for admin route first
     if (pathname === "/admin") return "Super Admin";
     
     const item = navItems.find(item => item.href === pathname);
-    if (item) return t(item.name, item.telugu);
+    if (item) return t(item.name, item.telugu, item.hindi);
     
-    // Sub-routes handling
-    if (pathname.includes("/orders/new")) return t("New Order", "కొత్త ఆర్డర్");
-    if (pathname.includes("/orders/edit/")) return t("Edit Order", "ఆర్డర్ సవరించండి");
-    if (pathname.includes("/orders/")) return t("Order Details", "ఆర్డర్ వివరాలు");
-    if (pathname.includes("/quotations/")) return t("Quotation Details", "కొటేషన్ వివరాలు");
-    if (pathname.includes("/quotations")) return t("Quotations", "కొటేషన్లు");
-    if (pathname.includes("/customers/")) return t("Customer Profile", "కస్టమర్ ప్రొఫైల్");
-    if (pathname.includes("/billing/invoice/")) return t("Invoice", "ఇన్వాయిస్");
+    // Sub-routes
+    if (pathname.includes("/inventory")) return t("Inventory", "ఇన్వెంటరీ", "इन्वेंटरी");
+    if (pathname.includes("/expenses")) return t("Expenses", "ఖర్చులు", "खर्चे");
+    if (pathname.includes("/orders/new")) return t("New Order", "కొత్త ఆర్డర్", "नया ऑर्डर");
+    if (pathname.includes("/orders/")) return t("Order Details", "ఆర్డర్ వివరాలు", "ऑर्डर विवरण");
+    if (pathname.includes("/customers/")) return t("Customer Profile", "కస్టమర్ ప్రొఫైల్", "ग्राहक प्रोफाइल");
     
-    return t("Dashboard", "డాష్బోర్డ్");
+    return t("Dashboard", "డాష్బోర్డ్", "डैशबोर्ड");
   };
 
   return (
@@ -147,24 +141,15 @@ export default function DashboardLayout({
         onMouseLeave={() => setIsSidebarOpen(false)}
         className={cn(
           "fixed inset-y-0 left-0 z-40 bg-primary text-white transition-all duration-300 ease-in-out transform",
-          "w-56", // Mobile width
+          "w-56",
           isSidebarOpen ? "translate-x-0 lg:w-56" : "-translate-x-full lg:w-20 lg:translate-x-0"
         )}
       >
         <div className="flex flex-col h-full overflow-hidden">
           <div className="p-4 border-b border-white/10 flex items-center justify-start overflow-hidden whitespace-nowrap">
-             <Logo 
-               variant="light" 
-               showText={isSidebarOpen} 
-               size="sm"
-               className={cn(
-                 "transition-all duration-300",
-                 !isSidebarOpen && "scale-110 ml-1"
-               )} 
-             />
+             <Logo variant="light" showText={isSidebarOpen} size="sm" className={cn("transition-all duration-300", !isSidebarOpen && "scale-110 ml-1")} />
           </div>
 
-          {/* Navigation */}
           <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
@@ -176,7 +161,7 @@ export default function DashboardLayout({
                   className={cn(
                     "flex items-center gap-3 px-3.5 py-3 rounded-lg transition-all duration-200 group overflow-hidden whitespace-nowrap",
                     isActive 
-                      ? "bg-white text-primary  shadow-md" 
+                      ? "bg-white text-primary shadow-md" 
                       : "text-white/70 hover:bg-white/20 hover:text-white"
                   )}
                 >
@@ -184,55 +169,22 @@ export default function DashboardLayout({
                     "w-5 h-5 shrink-0 transition-transform",
                     isActive ? "text-primary scale-110" : "text-white/50 group-hover:text-white group-hover:scale-110"
                   )} />
-                  <div className={cn(
-                    "flex flex-col transition-all duration-300",
-                    isSidebarOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 pointer-events-none"
-                  )}>
-                    <span className="text-sm">{t(item.name, item.telugu)}</span>
+                  <div className={cn("flex flex-col transition-all duration-300", isSidebarOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 pointer-events-none")}>
+                    <span className="text-sm font-medium">{t(item.name, item.telugu, item.hindi)}</span>
                   </div>
                 </Link>
               );
             })}
-
-            {/* Super Admin Menu Item - Only show for super admin */}
-            {isSuperAdmin && (
-              <Link
-                href="/admin"
-                onClick={() => setIsSidebarOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 px-3.5 py-3 rounded-lg transition-all duration-200 group overflow-hidden whitespace-nowrap",
-                  pathname === "/admin" 
-                    ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md" 
-                    : "text-purple-200 hover:bg-purple-600/30 hover:text-white border border-purple-400/30"
-                )}
-              >
-                <Crown className={cn(
-                  "w-5 h-5 shrink-0 transition-transform",
-                  pathname === "/admin" ? "text-white scale-110" : "text-purple-300 group-hover:text-white group-hover:scale-110"
-                )} />
-                <div className={cn(
-                  "flex flex-col transition-all duration-300",
-                  isSidebarOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 pointer-events-none"
-                )}>
-                  <span className="text-sm font-normal">Super Admin</span>
-                  <span className="text-[10px] opacity-70">SaaS Management</span>
-                </div>
-              </Link>
-            )}
           </nav>
 
-          {/* User Profile / Logout */}
           <div className="p-4 border-t border-white/10">
             <button 
               onClick={handleSignOut}
               className="flex items-center gap-3 w-full px-3.5 py-3 text-white/70 hover:text-white hover:bg-white/20 rounded-lg transition-all duration-200 overflow-hidden whitespace-nowrap"
             >
               <LogOut className="w-5 h-5 shrink-0" />
-              <div className={cn(
-                "flex flex-col items-start transition-all duration-300",
-                isSidebarOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 pointer-events-none"
-              )}>
-                <span className="text-sm ">{t("Logout", "లాగ్అవుట్")}</span>
+              <div className={cn("flex flex-col items-start transition-all duration-300", isSidebarOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 pointer-events-none")}>
+                <span className="text-sm font-medium">{t("Logout", "లాగ్అవుట్", "लॉगआउट")}</span>
               </div>
             </button>
           </div>
@@ -240,51 +192,24 @@ export default function DashboardLayout({
       </aside>
 
       {/* Main Content */}
-      <div className={cn(
-        "flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out",
-        isSidebarOpen ? "lg:ml-56" : "lg:ml-20"
-      )}>
-        {/* Header - Global Selection */}
+      <div className={cn("flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out", isSidebarOpen ? "lg:ml-56" : "lg:ml-20")}>
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-20">
           <div className="flex items-center gap-4">
-            <button 
-              onClick={() => setIsSidebarOpen(true)}
-              className="p-2 lg:hidden text-gray-600 hover:bg-gray-100 rounded-md"
-            >
+            <button onClick={() => setIsSidebarOpen(true)} className="p-2 lg:hidden text-gray-600 hover:bg-gray-100 rounded-md">
               <Menu className="w-6 h-6" />
             </button>
-            <h1 className="text-xl  text-gray-900 tracking-tight uppercase">
-              {getPageTitle()}
-            </h1>
+            <h1 className="text-lg font-bold text-gray-900 uppercase tracking-tight">{getPageTitle()}</h1>
           </div>
 
-          <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-xl border border-gray-100">
-             <button 
-               onClick={() => setLanguage("en")}
-               className={cn(
-                 "px-4 py-1.5 rounded-lg text-[10px]  transition-all",
-                 language === "en" ? "bg-white text-primary shadow-sm" : "text-gray-400 hover:text-gray-600"
-               )}
-             >
-               ENGLISH
-             </button>
-             <button 
-               onClick={() => setLanguage("te")}
-               className={cn(
-                 "px-4 py-1.5 rounded-lg text-[10px]  transition-all",
-                 language === "te" ? "bg-primary text-white shadow-sm" : "text-gray-400 hover:text-gray-600"
-               )}
-             >
-               తెలుగు
-             </button>
+          <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100">
+             <button onClick={() => setLanguage("en")} className={cn("px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all", language === "en" ? "bg-white text-primary shadow-sm" : "text-gray-400 hover:text-gray-600")}>EN</button>
+             <button onClick={() => setLanguage("te")} className={cn("px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all", language === "te" ? "bg-primary text-white shadow-sm" : "text-gray-400 hover:text-gray-600")}>తె</button>
+             <button onClick={() => setLanguage("hi")} className={cn("px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all", language === "hi" ? "bg-orange text-white shadow-sm" : "text-gray-400 hover:text-gray-600")}>हि</button>
           </div>
         </header>
 
-        {/* Page Content */}
         <main className="flex-1 p-4 lg:p-8">
-          <div className="max-w-full mx-auto">
-            {children}
-          </div>
+          <div className="max-w-full mx-auto">{children}</div>
         </main>
       </div>
     </div>

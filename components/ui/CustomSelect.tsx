@@ -1,35 +1,33 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Option {
-  id?: string;
-  value: string | number;
+  value: string;
   label: string;
 }
 
 interface CustomSelectProps {
-  options: Option[];
-  value: string | number;
-  onChange: (value: string | number) => void;
-  className?: string;
+  options: (string | Option)[];
+  value: string;
+  onChange: (value: string) => void;
+  label?: string;
   placeholder?: string;
+  className?: string;
 }
 
-export default function CustomSelect({ 
-  options, 
-  value, 
-  onChange, 
-  className = "",
-  placeholder = "Select an option"
-}: CustomSelectProps) {
+export default function CustomSelect({ options, value, onChange, label, placeholder, className }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const selectedOption = options.find(opt => opt.value === value);
+  const normalizedOptions = options.map(opt => 
+    typeof opt === 'string' ? { value: opt, label: opt } : opt
+  );
 
-  // Close when clicking outside
+  const selectedOption = normalizedOptions.find(opt => opt.value === value);
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -41,22 +39,30 @@ export default function CustomSelect({
   }, []);
 
   return (
-    <div ref={containerRef} className={`relative ${className}`}>
+    <div className={cn("space-y-1 relative", className)} ref={containerRef}>
+      {label && (
+        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">
+          {label}
+        </label>
+      )}
+      
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-3 py-2 bg-gray-50/50 rounded-lg text-sm text-left hover:bg-gray-100/50 transition-all outline-none focus:ring-1 focus:ring-primary/10 shadow-sm"
+        className={cn(
+          "w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm text-left flex items-center justify-between transition-all outline-none",
+          isOpen ? "border-primary ring-2 ring-primary/5 bg-white shadow-sm" : "hover:bg-gray-100",
+          "font-bold text-gray-900"
+        )}
       >
-        <span className={selectedOption ? "text-gray-900" : "text-gray-400"}>
-          {selectedOption ? selectedOption.label : placeholder}
-        </span>
-        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <span>{selectedOption ? selectedOption.label : (placeholder || "Select...")}</span>
+        <ChevronDown className={cn("w-4 h-4 text-gray-400 transition-transform duration-200", isOpen && "rotate-180")} />
       </button>
 
       {isOpen && (
-        <div className="absolute z-[100] w-full mt-1 bg-white border border-gray-100 rounded-lg shadow-xl shadow-gray-200/50 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
-          <div className="max-h-60 overflow-y-auto">
-            {options.map((option) => (
+        <div className="absolute z-[100] w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="max-h-60 overflow-y-auto py-1">
+            {normalizedOptions.map((option) => (
               <button
                 key={option.value}
                 type="button"
@@ -64,16 +70,13 @@ export default function CustomSelect({
                   onChange(option.value);
                   setIsOpen(false);
                 }}
-                className={`w-full px-3 py-2.5 text-sm text-left transition-colors flex items-center justify-between ${
-                  option.value === value 
-                    ? "bg-primary/5 text-primary font-medium" 
-                    : "text-gray-700 hover:bg-gray-50"
-                }`}
+                className={cn(
+                  "w-full px-4 py-2.5 text-sm text-left flex items-center justify-between transition-colors",
+                  value === option.value ? "bg-primary/5 text-primary font-bold" : "text-gray-600 hover:bg-gray-50"
+                )}
               >
                 {option.label}
-                {option.value === value && (
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                )}
+                {value === option.value && <Check className="w-4 h-4" />}
               </button>
             ))}
           </div>
