@@ -6,14 +6,15 @@ import Image from "next/image";
 import { 
   CheckCircle2, 
   MessageSquare, 
-  ShieldCheck,
   AlertCircle,
   Loader2,
   FileImage,
-  ExternalLink
+  ExternalLink,
+  FileText
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Logo } from "@/components/Logo";
+import { cn } from "@/lib/utils";
  
 interface OrderProofData {
     id?: string;
@@ -137,10 +138,6 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
                     <CheckCircle2 className="w-4 h-4 text-green-500" />
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Status: <span className="text-gray-900">{order.proof_status}</span></span>
                 </div>
-                <div className="bg-gray-50 px-3 py-2 rounded-lg flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-primary" />
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Secure Approval Link</span>
-                </div>
             </div>
          </div>
 
@@ -159,14 +156,31 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
 
             <div className="bg-gray-100 rounded-xl overflow-hidden min-h-[400px] flex items-center justify-center border border-gray-100 relative group">
                 {order.proof_image_url ? (
-                    <Image 
-                        src={order.proof_image_url} 
-                        alt="Design Proof" 
-                        width={800}
-                        height={600}
-                        className="max-w-full h-auto object-contain cursor-zoom-in"
-                        unoptimized
-                    />
+                    order.proof_image_url.toLowerCase().endsWith('.pdf') ? (
+                      <div className="text-center p-10 flex flex-col items-center">
+                          <div className="w-20 h-20 bg-red-50 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
+                            <FileText className="w-10 h-10 text-red-500" />
+                          </div>
+                          <h3 className="text-lg font-bold text-gray-900 mb-2">PDF Document Ready</h3>
+                          <p className="text-sm text-gray-500 mb-6 max-w-xs mx-auto">This design was uploaded as a PDF. Please view it in full size to approve.</p>
+                          <a 
+                             href={order.proof_image_url} 
+                             target="_blank" 
+                             className="bg-primary text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center gap-2"
+                          >
+                             OPEN PDF IN NEW TAB <ExternalLink className="w-4 h-4" />
+                          </a>
+                      </div>
+                    ) : (
+                      <Image 
+                          src={order.proof_image_url} 
+                          alt="Design Proof" 
+                          width={800}
+                          height={600}
+                          className="max-w-full h-auto object-contain cursor-zoom-in"
+                          unoptimized
+                      />
+                    )
                 ) : (
                     <div className="text-center p-10">
                         <FileImage className="w-16 h-16 text-gray-200 mx-auto mb-4" />
@@ -228,13 +242,40 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
                 </div>
             </div>
          ) : (
-             <div className="bg-green-50 md:rounded-2xl p-8 border border-green-100 text-center space-y-3 animate-in fade-in duration-500">
-                <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto" />
-                <h2 className="text-2xl font-bold text-green-900">Success!</h2>
-                <p className="text-green-700 text-sm">Your approval has been received. We&apos;ve notified the team to start printing your order.</p>
+             <div className={cn(
+                "md:rounded-2xl p-8 border text-center space-y-3 animate-in fade-in duration-500",
+                order.proof_status === 'APPROVED' ? "bg-green-50 border-green-100" : "bg-orange/5 border-orange/20"
+             )}>
+                {order.proof_status === 'APPROVED' ? (
+                   <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto" />
+                ) : (
+                   <MessageSquare className="w-16 h-16 text-orange mx-auto" />
+                )}
+                <h2 className={cn(
+                   "text-2xl font-bold",
+                   order.proof_status === 'APPROVED' ? "text-green-900" : "text-orange"
+                )}>
+                   {order.proof_status === 'APPROVED' ? "Success!" : "Feedback Received!"}
+                </h2>
+                <p className={cn(
+                   "text-sm",
+                   order.proof_status === 'APPROVED' ? "text-green-700" : "text-gray-600"
+                )}>
+                   {order.proof_status === 'APPROVED' 
+                      ? "Your approval has been received. We've notified the team to start printing your order." 
+                      : "Your change requests have been sent to our designers. We'll contact you once the revisions are ready."}
+                </p>
                 <div className="pt-4">
-                    <span className="text-[10px] font-bold text-green-400 uppercase tracking-widest">Confirmation Token</span>
-                    <p className="text-xs font-mono text-green-600">{order?.id?.split('-')[0]}-{order.proofing_token?.split('-')[0]}</p>
+                    <span className={cn(
+                       "text-[10px] font-bold uppercase tracking-widest",
+                       order.proof_status === 'APPROVED' ? "text-green-400" : "text-gray-400"
+                    )}>
+                       Confirmation Token
+                    </span>
+                    <p className={cn(
+                       "text-xs font-mono",
+                       order.proof_status === 'APPROVED' ? "text-green-600" : "text-gray-500"
+                    )}>{order?.id?.split('-')[0]}-{order.proofing_token?.split('-')[0]}</p>
                 </div>
              </div>
          )}

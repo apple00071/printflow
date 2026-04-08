@@ -11,7 +11,8 @@ import {
   Loader2,
   IndianRupee,
   File as FileIcon,
-  X
+  X,
+  Upload
 } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
@@ -30,6 +31,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const [actualDeliveryDate, setActualDeliveryDate] = useState(new Date().toISOString().split('T')[0]);
@@ -402,6 +404,72 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                        }}
                        className="flex-1 bg-gray-50 border border-gray-100 px-3 py-2 rounded-lg text-xs outline-none focus:border-primary transition-all font-mono"
                     />
+                    <input 
+                      type="file"
+                      id="proof-upload"
+                      className="hidden"
+                      accept="image/*,application/pdf"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file || !order) return;
+                        
+                        setUpdating(true);
+                        setUploadProgress(5);
+                        
+                        const progressInterval = setInterval(() => {
+                          setUploadProgress(prev => {
+                            if (prev >= 95) return 95;
+                            return prev + (Math.random() * 15);
+                          });
+                        }, 300);
+
+                        try {
+                          const { createClient: createClientBrowser } = await import("@/lib/supabase/client");
+                          const { getCurrentTenant: getTenant } = await import("@/lib/tenant");
+                          const { updateOrderProof: updateProof } = await import("@/lib/supabase/actions");
+                          
+                          const supabase = createClientBrowser();
+                          const tenant = await getTenant(supabase);
+                          if (!tenant) throw new Error("Tenant not found");
+                          
+                          const fileExt = file.name.split('.').pop();
+                          const filePath = `${tenant.id}/proofs/${order.id}-${Date.now()}.${fileExt}`;
+                          
+                          const { error: uploadError } = await supabase.storage
+                            .from('printflow-files')
+                            .upload(filePath, file);
+                            
+                          if (uploadError) throw uploadError;
+                          
+                          const { data: { publicUrl } } = supabase.storage
+                            .from('printflow-files')
+                            .getPublicUrl(filePath);
+                            
+                          await updateProof(order.id, { proof_image_url: publicUrl });
+                          clearInterval(progressInterval);
+                          setUploadProgress(100);
+                          fetchOrder();
+                        } catch (err) {
+                          console.error("Upload failed", err);
+                          alert("Upload failed. Please try again.");
+                          clearInterval(progressInterval);
+                          setUploadProgress(0);
+                        } finally {
+                          setTimeout(() => {
+                            setUpdating(false);
+                            setUploadProgress(0);
+                          }, 1000);
+                        }
+                      }}
+                    />
+                    <button 
+                       onClick={() => document.getElementById('proof-upload')?.click()}
+                       disabled={updating}
+                       className="px-3 py-4 bg-primary/5 border border-primary/20 rounded-lg group hover:bg-primary transition-all flex items-center justify-center min-w-[40px]"
+                       title={t("Upload Proof", "ప్రూఫ్ అప్‌లోడ్", "प्रूफ अपलोड करें")}
+                    >
+                       <Upload className="w-4 h-4 text-primary group-hover:text-white" />
+                    </button>
                  </div>
               </div>
 
@@ -424,6 +492,21 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                     <MessageSquare className="w-3 h-3" /> WHATSAPP
                  </a>
               </div>
+
+              {updating && (
+                <div className="space-y-1.5 animate-in fade-in slide-in-from-top-1">
+                   <div className="flex justify-between items-center px-1">
+                      <span className="text-[9px] font-bold text-primary uppercase tracking-widest">{uploadProgress === 100 ? "Complete!" : "Uploading design..."}</span>
+                      <span className="text-[9px] font-mono font-bold text-primary">{uploadProgress}%</span>
+                   </div>
+                   <div className="w-full h-1.5 bg-primary/10 rounded-full overflow-hidden border border-primary/5">
+                      <div 
+                        className="h-full bg-primary transition-all duration-300 ease-out shadow-[0_0_8px_rgba(var(--primary-rgb),0.4)]" 
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                   </div>
+                </div>
+              )}
             </div>
           </div>
 
