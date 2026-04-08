@@ -27,7 +27,7 @@ const jobTypes = [
 export default function PublicOrderPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [orderId, setOrderId] = useState("");
+  const [displayId, setDisplayId] = useState("");
 
   const [formData, setFormData] = useState({
     customerName: "",
@@ -54,7 +54,7 @@ export default function PublicOrderPage() {
         advancePaid: 0,
       };
       const order = await createOrder(data);
-      setOrderId(order.id);
+      setDisplayId(order.friendly_id || order.id);
       setSubmitted(true);
     } catch (error) {
       console.error("Submission error:", error);
@@ -74,7 +74,7 @@ export default function PublicOrderPage() {
           <h1 className="text-2xl  text-gray-900 uppercase">Received / అందుకున్నాము!</h1>
           <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
             <p className="text-xs  text-gray-400 uppercase mb-1">Order Reference</p>
-            <p className="text-lg  text-primary">#{orderId.substring(0, 8).toUpperCase()}</p>
+            <p className="text-lg  text-primary">{displayId.length > 10 ? `#${displayId.substring(0, 8).toUpperCase()}` : displayId}</p>
           </div>
           <p className="text-gray-600 text-sm leading-relaxed">
             Hi <strong>{formData.customerName}</strong>, we have received your request for <strong>{formData.jobType}</strong>. 

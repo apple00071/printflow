@@ -42,7 +42,7 @@ export default function TenantPublicOrderPage({ params }: { params: { slug: stri
   const [fetchingTenant, setFetchingTenant] = useState(true);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [orderId, setOrderId] = useState("");
+  const [displayId, setDisplayId] = useState("");
 
   const [formData, setFormData] = useState({
     customerName: "",
@@ -80,7 +80,7 @@ export default function TenantPublicOrderPage({ params }: { params: { slug: stri
         tenantId: tenant.id
       };
       const order = await createOrder(data);
-      setOrderId(order.id);
+      setDisplayId(order.friendly_id || order.id);
       setSubmitted(true);
     } catch (error) {
       console.error("Submission error:", error);
@@ -133,7 +133,7 @@ export default function TenantPublicOrderPage({ params }: { params: { slug: stri
 
           <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 space-y-1">
             <p className="text-[10px] font-normal text-gray-400 uppercase tracking-widest leading-none">Order Reference</p>
-            <p className="text-2xl font-normal text-blue-600 tracking-tight">#{orderId.substring(0, 8).toUpperCase()}</p>
+            <p className="text-2xl font-normal text-blue-600 tracking-tight">{displayId.length > 10 ? `#${displayId.substring(0, 8).toUpperCase()}` : displayId}</p>
           </div>
 
           <p className="text-gray-600 text-sm leading-relaxed font-normal">

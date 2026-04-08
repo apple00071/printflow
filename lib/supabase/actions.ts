@@ -261,7 +261,7 @@ export async function createOrder(data: OrderData) {
   const { data: order, error: orderError } = await supabase
     .from("orders")
     .insert(orderData)
-    .select("id")
+    .select("id, friendly_id")
     .single();
 
   if (orderError) throw orderError;
