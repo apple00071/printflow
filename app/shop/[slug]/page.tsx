@@ -291,7 +291,7 @@ export default function ShopIntakePage({ params }: { params: { slug: string } })
                   <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                      <div className="px-6 py-4 bg-gray-50/50 border-b border-gray-100">
                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                           <FileBadge className="w-3.5 h-3.5" /> Artwork Asset
+                           <FileBadge className="w-3.5 h-3.5" /> DESIGN FILE
                         </h4>
                      </div>
                      <div className="p-6">
