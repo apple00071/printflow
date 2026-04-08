@@ -124,7 +124,7 @@ export default function InventoryPage() {
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="bg-primary text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-primary/90 transition-all font-bold shadow-sm"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 text-sm font-medium"
         >
           <Plus className="w-5 h-5" />
           {t("Add New Item", "కొత్త వస్తువును జోడించండి", "नई सामग्री जोड़ें")}
@@ -137,14 +137,14 @@ export default function InventoryPage() {
             <div className={`p-3 w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${lowStockItems.length > 0 ? 'bg-orange/10 text-orange' : 'bg-green-100 text-green-600'}`}>
                 <AlertTriangle className="w-6 h-6" />
             </div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{t("Low Stock Alerts", "తక్కువ స్టాక్ హెచ్చరికలు", "स्टॉक कम होने की चेतावनी")}</p>
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-1">{t("Low Stock Alerts", "తక్కువ స్టాక్ హెచ్చరికలు", "स्टॉक कम होने की चेतावनी")}</p>
             <p className="text-2xl font-bold">{lowStockItems.length}</p>
          </div>
          <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
             <div className="p-3 w-12 h-12 rounded-xl flex items-center justify-center mb-4 bg-blue-50 text-blue-600">
                 <Package className="w-6 h-6" />
             </div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{t("Total Items", "మొత్తం వస్తువులు", "कुल सामान")}</p>
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-1">{t("Total Items", "మొత్తం వస్తువులు", "మొత్తం సాహిత్యం")}</p>
             <p className="text-2xl font-bold">{items.length}</p>
          </div>
       </div>
@@ -249,7 +249,7 @@ export default function InventoryPage() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in duration-200">
              <div className="p-6 bg-primary text-white">
-                <h2 className="text-xl font-bold">{t("New Stock Item", "కొత్త వస్తువు", "नया सामना")}</h2>
+                <h2 className="text-xl font-bold">{t("New Stock Item", "కొత్త స్టాక్ ఐటమ్", "नया स्टॉक आइटम")}</h2>
              </div>
              
              <form onSubmit={handleSubmit} className="p-6 space-y-4">

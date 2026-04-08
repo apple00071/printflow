@@ -84,9 +84,9 @@ export default function OrdersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-4">
         <Link 
           href="/dashboard/orders/new" 
-          className="bg-orange text-white px-4 py-2 rounded-lg  flex items-center gap-2 hover:bg-orange/90 transition-colors w-full sm:w-auto justify-center"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 text-sm font-medium w-full sm:w-auto justify-center"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-4 h-4" />
           <span>{t("New Order", "కొత్త ఆర్డర్")}</span>
         </Link>
       </div>
@@ -152,8 +152,8 @@ export default function OrdersPage() {
                     onClick={() => router.push(`/dashboard/orders/${order.id}`)}
                     className="hover:bg-gray-50/50 transition-colors cursor-pointer group"
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-[10px]  font-mono text-primary uppercase">
-                       {order.friendly_id || `#${order.id.split('-')[0]}`}
+                    <td className="px-6 py-4 whitespace-nowrap text-xs font-semibold text-primary uppercase">
+                       {order.friendly_id || `#${order.id.slice(0, 8)}`}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
@@ -170,8 +170,8 @@ export default function OrdersPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={cn(
-                        "px-2 py-1 rounded-full text-[10px]  uppercase tracking-wider font-mono",
+                       <span className={cn(
+                        "px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider",
                         getStatusColor(order.status)
                       )}>
                         {order.status}
@@ -183,7 +183,7 @@ export default function OrdersPage() {
                           {formatCurrency(order.total_with_gst || order.total_amount)}
                         </span>
                         {((order.total_with_gst || order.total_amount) - order.advance_paid) > 0 && (
-                          <span className="text-[10px] text-red-500 uppercase tracking-tight font-medium">
+                          <span className="text-[10px] text-red-500 uppercase tracking-tight font-semibold">
                             Bal: {formatCurrency((order.total_with_gst || order.total_amount) - order.advance_paid)}
                           </span>
                         )}

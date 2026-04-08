@@ -121,8 +121,8 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
          <div className="max-w-screen-md mx-auto flex items-center justify-between">
             <Logo size="sm" />
             <div className="flex flex-col items-end">
-               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">ORDER ID</span>
-               <span className="text-xs font-mono font-bold text-primary">{order.friendly_id || `#${order?.id?.split('-')[0]}`}</span>
+               <span className="text-[10px] font-medium text-gray-400 uppercase tracking-widest leading-none">ORDER ID</span>
+               <span className="text-xs font-semibold text-primary mt-1 block">{order.friendly_id || `#${order?.id?.split('-')[0]}`}</span>
             </div>
          </div>
       </header>

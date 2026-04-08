@@ -131,9 +131,9 @@ export default function ExpensesPage() {
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="bg-primary text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-primary/90 transition-all font-bold shadow-sm"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 text-sm font-medium"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-4 h-4" />
           {t("Add Expense", "ఖర్చును జోడించండి", "खर्चा जोड़ें")}
         </button>
       </div>
@@ -145,7 +145,7 @@ export default function ExpensesPage() {
              <Wallet className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs uppercase font-bold text-gray-400 tracking-wider font-mono">{t("Total Spent", "మొత్తం ఖర్చు", "कुल खर्च")}</p>
+            <p className="text-xs uppercase font-medium text-gray-400 tracking-widest mb-1">{t("Total Spent", "మొత్తం ఖర్చు", "कुल खर्च")}</p>
             <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalSpent)}</p>
           </div>
         </div>
@@ -154,7 +154,7 @@ export default function ExpensesPage() {
              <Tag className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs uppercase font-bold text-gray-400 tracking-wider font-mono">{t("Avg / Expense", "సగటు ఖర్చు", "औसत खर्च")}</p>
+            <p className="text-xs uppercase font-medium text-gray-400 tracking-widest mb-1">{t("Avg / Expense", "సగటు ఖర్చు", "औसत खर्च")}</p>
             <p className="text-2xl font-bold text-gray-900">{formatCurrency(expenses.length ? totalSpent / expenses.length : 0)}</p>
           </div>
         </div>
@@ -163,7 +163,7 @@ export default function ExpensesPage() {
              <CalendarIcon className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs uppercase font-bold text-gray-400 tracking-wider font-mono">{t("Total Items", "మొత్తం వస్తువులు", "कुल खर्चे")}</p>
+            <p className="text-xs uppercase font-medium text-gray-400 tracking-widest mb-1">{t("Total Items", "మొత్తం వస్తువులు", "कुल खर्चे")}</p>
             <p className="text-2xl font-bold text-gray-900">{expenses.length}</p>
           </div>
         </div>
@@ -191,7 +191,7 @@ export default function ExpensesPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-gray-100 text-[10px] uppercase tracking-widest text-gray-400 font-mono">
+              <tr className="border-b border-gray-100 text-[10px] uppercase tracking-widest text-gray-400 font-medium">
                 <th className="px-6 py-4">{t("Date", "తేదీ", "तारीख")}</th>
                 <th className="px-6 py-4">{t("Category", "రకం", "कैटेगरी")}</th>
                 <th className="px-6 py-4">{t("Description", "వివరాలు", "विवरण")}</th>
