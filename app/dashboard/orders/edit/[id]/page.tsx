@@ -64,6 +64,8 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
     hsnCode: "",
     file_url: "",
     printingDate: "",
+    printingSide: "Single Side",
+    lamination: "None",
   });
 
   const [uploading, setUploading] = useState(false);
@@ -121,6 +123,8 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
             hsnCode: order.hsn_code || "",
             file_url: order.file_url || "",
             printingDate: order.printing_date || "",
+            printingSide: order.printing_side || "Single Side",
+            lamination: order.lamination || "None",
           });
           if (order.file_url) {
             setFileName(order.file_url.split('/').pop() || "");
@@ -320,6 +324,30 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
                 value={formData.size}
                 onChange={(e) => setFormData({ ...formData, size: e.target.value })}
                 className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase">{t("Printing Side", "ప్రింటింగ్ సైడ్")}</label>
+              <CustomSelect
+                options={[
+                  { value: "Single Side", label: t("Single Side", "సింగిల్ సైడ్") },
+                  { value: "Double Side", label: t("Double Side", "డబుల్ సైడ్") }
+                ]}
+                value={formData.printingSide}
+                onChange={(val) => setFormData({...formData, printingSide: val as string})}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase">{t("Lamination", "లామినేషన్")}</label>
+              <CustomSelect
+                options={[
+                  { value: "None", label: t("None", "లేదు") },
+                  { value: "Gloss", label: t("Gloss", "గ్లాస్") },
+                  { value: "Matte", label: t("Matte", "మ్యాట్") },
+                  { value: "Velvet", label: t("Velvet", "వెల్వెట్") }
+                ]}
+                value={formData.lamination}
+                onChange={(val) => setFormData({...formData, lamination: val as string})}
               />
             </div>
             <div className="space-y-1">

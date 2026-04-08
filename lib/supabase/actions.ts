@@ -583,6 +583,8 @@ export async function updateOrder(id: string, data: OrderData) {
       quantity: data.quantity,
       paper_type: data.paperType,
       size: data.size,
+      printing_side: data.printingSide,
+      lamination: data.lamination,
       printing_date: data.printingDate ? new Date(data.printingDate).toISOString() : null,
       instructions: data.instructions,
       delivery_date: data.deliveryDate ? new Date(data.deliveryDate).toISOString() : null,

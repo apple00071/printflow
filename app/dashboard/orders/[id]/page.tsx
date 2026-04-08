@@ -246,6 +246,14 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                 <p className="text-sm text-gray-900">{order.size || t("N/A", "లేదు")}</p>
               </div>
               <div>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wider">{t("Printing Side", "ప్రింటింగ్ సైడ్")}</p>
+                <p className="text-sm text-gray-900">{order.printing_side || t("Single Side", "సింగిల్ సైడ్")}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wider">{t("Lamination", "లామినేషన్")}</p>
+                <p className="text-sm text-gray-900">{order.lamination || t("None", "లేదు")}</p>
+              </div>
+              <div>
                 <p className="text-[10px] text-gray-400 uppercase tracking-wider">{t("Ordered On", "ఆర్డర్ చేసిన తేదీ")}</p>
                 <p className="text-sm text-gray-900">{formatDate(order.created_at)}</p>
               </div>

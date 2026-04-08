@@ -28,6 +28,10 @@ interface OrderProofData {
         phone: string;
     };
     friendly_id?: string;
+    printing_side?: string;
+    lamination?: string;
+    paper_type?: string;
+    size?: string;
 }
 
 export default function ProofingPage({ params }: { params: { orderId: string } }) {
@@ -330,6 +334,11 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
                     )}>
                        {order?.id?.split('-')[0].toUpperCase()}—{order.proofing_token?.split('-')[0].toUpperCase()}
                     </div>
+                   <div className="bg-gray-50/80 px-3 py-1.5 rounded-full border border-gray-100 flex items-center gap-2">
+                       <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                         {order.printing_side || "Single Side"} • {order.lamination || "No Lamination"}
+                       </span>
+                   </div>
                 </div>
              </div>
          )}

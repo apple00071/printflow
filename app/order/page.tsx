@@ -35,6 +35,9 @@ export default function PublicOrderPage() {
     jobType: "Business Cards / విజిటింగ్ కార్డ్స్",
     quantity: "1",
     size: "",
+    paperType: "",
+    printingSide: "Single Side",
+    lamination: "None",
     instructions: "",
     designFile: null as File | null,
   });
@@ -180,6 +183,42 @@ export default function PublicOrderPage() {
                       onChange={(e) => setFormData({...formData, size: e.target.value})}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none"
                     />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs  text-gray-700">Paper Type / కాగితం రకం (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 300 GSM Matte"
+                    value={formData.paperType}
+                    onChange={(e) => setFormData({...formData, paperType: e.target.value})}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs  text-gray-700">Printing Side / సైడ్</label>
+                    <select
+                      value={formData.printingSide}
+                      onChange={(e) => setFormData({...formData, printingSide: e.target.value})}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none appearance-none"
+                    >
+                      <option value="Single Side">Single Side</option>
+                      <option value="Double Side">Double Side</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs  text-gray-700">Lamination / లామినేషన్</label>
+                    <select
+                      value={formData.lamination}
+                      onChange={(e) => setFormData({...formData, lamination: e.target.value})}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none appearance-none"
+                    >
+                      <option value="None">None</option>
+                      <option value="Gloss">Gloss</option>
+                      <option value="Matte">Matte</option>
+                      <option value="Velvet">Velvet</option>
+                    </select>
                   </div>
                 </div>
                 <div className="space-y-1">
