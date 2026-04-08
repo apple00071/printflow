@@ -115,111 +115,148 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
   const isApproved = order.proof_status === 'APPROVED';
 
   return (
-    <div className="min-h-screen bg-white md:bg-gray-50 pb-20">
-      {/* Mobile-Friendly Header */}
-      <header className="bg-white border-b border-gray-100 p-4 sticky top-0 z-20 shadow-sm md:shadow-none">
+    <div className="min-h-screen bg-[#F8FAFC] font-sans selection:bg-primary/10">
+      {/* Premium Glass Header */}
+      <header className="bg-white/70 backdrop-blur-xl border-b border-gray-200/50 p-4 sticky top-0 z-50 transition-all">
          <div className="max-w-screen-md mx-auto flex items-center justify-between">
-            <Logo size="sm" />
+            <div className="flex items-center gap-2">
+               <Logo size="sm" />
+               <div className="h-4 w-[1px] bg-gray-200 mx-1 hidden md:block" />
+               <span className="text-[10px] font-bold text-gray-400 tracking-[0.2em] hidden md:block">APPROVAL PORTAL</span>
+            </div>
             <div className="flex flex-col items-end">
-               <span className="text-[10px] font-medium text-gray-400 uppercase tracking-widest leading-none">ORDER ID</span>
-               <span className="text-xs font-semibold text-primary mt-1 block">{order.friendly_id || `#${order?.id?.split('-')[0]}`}</span>
+               <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">ORDER ID</span>
+               <span className="text-xs font-bold text-gray-900 mt-1 tabular-nums px-2 py-0.5 bg-gray-100 rounded-md border border-gray-200/50">
+                  {order.friendly_id || `#${order?.id?.split('-')[0]}`}
+               </span>
             </div>
          </div>
       </header>
 
-      <main className="max-w-screen-md mx-auto py-8 px-4 space-y-6">
+      <main className="max-w-screen-md mx-auto py-10 px-4 space-y-8">
          {/* Welcome & Info */}
-         <div className="bg-white md:rounded-2xl md:border md:border-gray-100 p-6 md:shadow-sm space-y-2">
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Design Approval Needed</h1>
-            <p className="text-gray-500 text-sm">Hi <span className="font-bold text-gray-800">{order.customers?.name}</span>, please review the design for your <span className="font-bold text-primary">{order.job_type}</span> order below.</p>
-            
-            <div className="pt-4 flex flex-wrap gap-4">
-                <div className="bg-gray-50 px-3 py-2 rounded-lg flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Status: <span className="text-gray-900">{order.proof_status}</span></span>
-                </div>
+         <div className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-primary/5 to-orange/5 rounded-3xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+            <div className="relative bg-white rounded-3xl border border-gray-100/80 p-8 shadow-sm space-y-3">
+               <div className="flex items-center gap-3 mb-1">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                     <FileImage className="w-4 h-4 text-primary" />
+                  </div>
+                  <h1 className="text-2xl font-black text-gray-900 tracking-tight">Design Approval</h1>
+               </div>
+               <p className="text-gray-500 text-sm leading-relaxed">
+                  Hi <span className="font-bold text-gray-900">{order.customers?.name}</span>, please review the final design for your <span className="text-primary font-semibold">{order.job_type}</span>. Changes can be requested or approval granted below.
+               </p>
+               
+               <div className="pt-2 flex flex-wrap gap-4">
+                  <div className="bg-gray-50/80 px-3 py-1.5 rounded-full border border-gray-100 flex items-center gap-2">
+                      <div className={cn(
+                        "w-1.5 h-1.5 rounded-full animate-pulse",
+                        order.proof_status === 'APPROVED' ? "bg-green-500" : "bg-orange"
+                      )} />
+                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                        Current Status: <span className={cn(
+                           "font-black",
+                           order.proof_status === 'APPROVED' ? "text-green-600" : "text-orange"
+                        )}>{order.proof_status}</span>
+                      </span>
+                  </div>
+               </div>
             </div>
          </div>
 
          {/* Design Image Container */}
-         <div className="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-bold text-gray-900 uppercase tracking-widest flex items-center gap-2">
-                    <FileImage className="w-4 h-4" /> Design Preview
+         <div className="bg-white rounded-3xl border border-gray-100/80 p-5 shadow-sm space-y-5">
+            <div className="flex items-center justify-between px-1">
+                <h2 className="text-xs font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                    Design Preview
                 </h2>
                 {order.proof_image_url && (
-                    <a href={order.proof_image_url} target="_blank" className="text-[10px] font-bold text-primary flex items-center gap-1">
-                        VIEW FULL SIZE <ExternalLink className="w-3 h-3" />
+                    <a href={order.proof_image_url} target="_blank" className="text-[10px] font-bold text-primary hover:text-primary/80 flex items-center gap-1.5 transition-colors group">
+                        VIEW FULL SIZE <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                     </a>
                 )}
             </div>
 
-            <div className="bg-gray-100 rounded-xl overflow-hidden min-h-[400px] flex items-center justify-center border border-gray-100 relative group">
+            <div className="bg-[#F8FAFC] rounded-2xl overflow-hidden min-h-[400px] flex items-center justify-center border border-gray-100 relative group/preview shadow-inner">
                 {order.proof_image_url ? (
                     order.proof_image_url.toLowerCase().endsWith('.pdf') ? (
-                      <div className="text-center p-10 flex flex-col items-center">
-                          <div className="w-20 h-20 bg-red-50 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
-                            <FileText className="w-10 h-10 text-red-500" />
+                      <div className="text-center p-12 flex flex-col items-center">
+                          <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-red-500/5 border border-red-50/50">
+                            <FileText className="w-12 h-12 text-red-500" />
                           </div>
-                          <h3 className="text-lg font-bold text-gray-900 mb-2">PDF Document Ready</h3>
-                          <p className="text-sm text-gray-500 mb-6 max-w-xs mx-auto">This design was uploaded as a PDF. Please view it in full size to approve.</p>
+                          <h3 className="text-xl font-black text-gray-900 mb-3">PDF Document Ready</h3>
+                          <p className="text-sm text-gray-500 mb-8 max-w-[280px] leading-relaxed">This design is a high-resolution PDF. Please review it in its native viewer before approving.</p>
                           <a 
                              href={order.proof_image_url} 
                              target="_blank" 
-                             className="bg-primary text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center gap-2"
+                             className="bg-gray-900 text-white px-8 py-3.5 rounded-2xl text-sm font-bold shadow-2xl shadow-gray-900/20 hover:bg-gray-800 transition-all flex items-center gap-2 active:scale-95"
                           >
                              OPEN PDF IN NEW TAB <ExternalLink className="w-4 h-4" />
                           </a>
                       </div>
                     ) : (
-                      <Image 
-                          src={order.proof_image_url} 
-                          alt="Design Proof" 
-                          width={800}
-                          height={600}
-                          className="max-w-full h-auto object-contain cursor-zoom-in"
-                          unoptimized
-                      />
+                      <div className="relative cursor-zoom-in transition-transform duration-500 group-hover/preview:scale-[1.02]">
+                         <Image 
+                             src={order.proof_image_url} 
+                             alt="Design Proof" 
+                             width={1200}
+                             height={900}
+                             className="max-w-full h-auto object-contain"
+                             unoptimized
+                         />
+                         <div className="absolute inset-0 bg-black/0 group-hover/preview:bg-black/5 transition-colors flex items-center justify-center opacity-0 group-hover/preview:opacity-100">
+                             <div className="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-[10px] font-black tracking-widest text-gray-900 shadow-xl border border-white">
+                                 CLICK TO ENLARGE
+                             </div>
+                         </div>
+                      </div>
                     )
                 ) : (
-                    <div className="text-center p-10">
-                        <FileImage className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-                        <p className="text-sm text-gray-400 italic">No preview image uploaded yet.</p>
+                    <div className="text-center p-12">
+                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 grayscale">
+                           <FileImage className="w-10 h-10 text-gray-300" />
+                        </div>
+                        <p className="text-sm text-gray-400 font-medium italic">No preview image uploaded yet</p>
                     </div>
                 )}
             </div>
          </div>
 
-         {/* Approval Actions - Float on mobile? */}
+         {/* Approval Actions */}
          {!isApproved && status !== 'SUCCESS' ? (
-            <div className="bg-white md:rounded-2xl border-t md:border-t-0 p-6 md:shadow-sm space-y-4">
+            <div className="bg-white rounded-3xl border border-gray-100/80 p-8 shadow-sm space-y-6">
                 {showFeedback && (
-                    <div className="space-y-2 animate-in slide-in-from-bottom-2 duration-300">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Share your feedback or requested changes</label>
+                    <div className="space-y-3 animate-in slide-in-from-bottom-4 duration-500">
+                        <div className="flex items-center justify-between">
+                           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Share Revision Details</label>
+                           <span className="text-[10px] font-bold text-orange px-2 py-0.5 bg-orange/10 rounded">Changes Required</span>
+                        </div>
                         <textarea 
                             value={feedback}
                             onChange={(e) => setFeedback(e.target.value)}
-                            placeholder="Example: Change the background to blue, Increase the logo size..."
-                            className="w-full p-4 border border-gray-200 rounded-xl text-sm outline-none focus:border-orange transition-all min-h-[120px]"
+                            placeholder="Example: Please increase the logo size by 20% and change the font color to Navy Blue..."
+                            className="w-full p-6 bg-gray-50/50 border border-gray-100 rounded-2xl text-sm outline-none focus:bg-white focus:border-orange/30 focus:ring-4 focus:ring-orange/5 transition-all min-h-[140px] resize-none leading-relaxed"
                         />
                     </div>
                 )}
 
-                <div className="flex flex-col md:flex-row gap-3">
+                <div className="flex flex-col md:flex-row gap-4">
                     {!showFeedback ? (
                         <>
                             <button 
                                 onClick={() => handleApproval(true)}
                                 disabled={status === 'SAVING'}
-                                className="flex-1 bg-green-500 text-white font-bold h-14 md:h-12 rounded-xl shadow-lg shadow-green-500/20 flex items-center justify-center gap-2 hover:bg-green-600 transition-all transform active:scale-[0.98]"
+                                className="flex-[1.5] bg-gradient-to-r from-green-500 to-green-600 text-white font-black h-16 rounded-2xl shadow-xl shadow-green-500/25 flex items-center justify-center gap-3 hover:shadow-green-500/40 translate-y-0 hover:-translate-y-0.5 transition-all active:scale-[0.98] active:translate-y-0"
                             >
-                                {status === 'SAVING' ? <Loader2 className="w-5 h-5 animate-spin" /> : <><CheckCircle2 className="w-5 h-5" /> YES, APPROVE & PRINT</>}
+                                {status === 'SAVING' ? <Loader2 className="w-6 h-6 animate-spin" /> : <><CheckCircle2 className="w-6 h-6" /> YES, APPROVE & PRINT</>}
                             </button>
                             <button 
                                 onClick={() => setShowFeedback(true)}
-                                className="flex-1 border-2 border-gray-100 text-gray-600 font-bold h-14 md:h-12 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-50 transition-all"
+                                className="flex-1 bg-white border border-gray-200 text-gray-600 font-black h-16 rounded-2xl flex items-center justify-center gap-2 hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-[0.98]"
                             >
-                                <MessageSquare className="w-5 h-5" /> REQUEST CHANGES
+                                <MessageSquare className="w-5 h-5" /> REVISIONS
                             </button>
                         </>
                     ) : (
@@ -227,15 +264,15 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
                             <button 
                                 onClick={() => handleApproval(false)}
                                 disabled={status === 'SAVING' || !feedback.trim()}
-                                className="flex-1 bg-orange text-white font-bold h-14 md:h-12 rounded-xl shadow-lg shadow-orange/20 flex items-center justify-center gap-2 hover:bg-orange/90 transition-all disabled:opacity-50"
+                                className="flex-[2] bg-orange text-white font-black h-16 rounded-2xl shadow-xl shadow-orange/25 flex items-center justify-center gap-3 hover:bg-orange/90 transition-all active:scale-[0.98] disabled:opacity-50 disabled:shadow-none"
                             >
-                                {status === 'SAVING' ? <Loader2 className="w-5 h-5 animate-spin" /> : "SUBMIT FEEDBACK"}
+                                {status === 'SAVING' ? <Loader2 className="w-6 h-6 animate-spin" /> : "SUBMIT REVISION REQUEST"}
                             </button>
                             <button 
                                 onClick={() => setShowFeedback(false)}
-                                className="md:w-32 border-2 border-gray-100 text-gray-600 font-bold h-14 md:h-12 rounded-xl flex items-center justify-center hover:bg-gray-50 transition-all"
+                                className="flex-1 border-2 border-gray-100 text-gray-600 font-black h-16 rounded-2xl flex items-center justify-center hover:bg-gray-50 transition-all active:scale-[0.98]"
                             >
-                                BACK
+                                CANCEL
                             </button>
                         </>
                     )}
@@ -243,50 +280,82 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
             </div>
          ) : (
              <div className={cn(
-                "md:rounded-2xl p-8 border text-center space-y-3 animate-in fade-in duration-500",
-                order.proof_status === 'APPROVED' ? "bg-green-50 border-green-100" : "bg-orange/5 border-orange/20"
+                "rounded-[40px] p-12 border relative overflow-hidden text-center space-y-6 animate-in zoom-in-95 duration-700",
+                order.proof_status === 'APPROVED' ? "bg-green-50 border-green-100/50" : "bg-orange/5 border-orange/10"
              )}>
-                {order.proof_status === 'APPROVED' ? (
-                   <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto" />
-                ) : (
-                   <MessageSquare className="w-16 h-16 text-orange mx-auto" />
-                )}
-                <h2 className={cn(
-                   "text-2xl font-bold",
-                   order.proof_status === 'APPROVED' ? "text-green-900" : "text-orange"
-                )}>
-                   {order.proof_status === 'APPROVED' ? "Success!" : "Feedback Received!"}
-                </h2>
-                <p className={cn(
-                   "text-sm",
-                   order.proof_status === 'APPROVED' ? "text-green-700" : "text-gray-600"
-                )}>
-                   {order.proof_status === 'APPROVED' 
-                      ? "Your approval has been received. We've notified the team to start printing your order." 
-                      : "Your change requests have been sent to our designers. We'll contact you once the revisions are ready."}
-                </p>
-                <div className="pt-4">
+                {/* Decorative Elements */}
+                <div className="absolute top-0 right-0 p-8 opacity-10">
+                   {order.proof_status === 'APPROVED' ? <CheckCircle2 className="w-32 h-32" /> : <MessageSquare className="w-32 h-32" />}
+                </div>
+
+                <div className="relative space-y-4">
+                  <div className={cn(
+                     "w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl",
+                     order.proof_status === 'APPROVED' ? "bg-white text-green-500 shadow-green-500/20" : "bg-white text-orange shadow-orange/20"
+                  )}>
+                     {order.proof_status === 'APPROVED' ? (
+                        <CheckCircle2 className="w-12 h-12" />
+                     ) : (
+                        <MessageSquare className="w-12 h-12" />
+                     )}
+                  </div>
+                  
+                  <h2 className={cn(
+                     "text-4xl font-black tracking-tight",
+                     order.proof_status === 'APPROVED' ? "text-green-900" : "text-orange"
+                  )}>
+                     {order.proof_status === 'APPROVED' ? "Order Approved!" : "Changes Sent!"}
+                  </h2>
+                  
+                  <p className={cn(
+                     "text-base max-w-sm mx-auto leading-relaxed",
+                     order.proof_status === 'APPROVED' ? "text-green-700/80" : "text-gray-600"
+                  )}>
+                     {order.proof_status === 'APPROVED' 
+                        ? "Great choice! Our production team has been notified and will begin printing your order immediately." 
+                        : "Your revision requests have been received. Our designers will update the artwork and send you a new proof shortly."}
+                  </p>
+                </div>
+
+                <div className="pt-8 border-t border-black/5 inline-flex flex-col items-center">
                     <span className={cn(
-                       "text-[10px] font-bold uppercase tracking-widest",
+                       "text-[10px] font-black uppercase tracking-[0.3em] mb-2",
                        order.proof_status === 'APPROVED' ? "text-green-400" : "text-gray-400"
                     )}>
-                       Confirmation Token
+                       CONFIRMATION TOKEN
                     </span>
-                    <p className={cn(
-                       "text-xs font-mono",
-                       order.proof_status === 'APPROVED' ? "text-green-600" : "text-gray-500"
-                    )}>{order?.id?.split('-')[0]}-{order.proofing_token?.split('-')[0]}</p>
+                    <div className={cn(
+                       "px-4 py-2 rounded-xl font-mono text-sm tracking-widest",
+                       order.proof_status === 'APPROVED' ? "bg-green-100/50 text-green-700" : "bg-gray-100 text-gray-500"
+                    )}>
+                       {order?.id?.split('-')[0].toUpperCase()}—{order.proofing_token?.split('-')[0].toUpperCase()}
+                    </div>
                 </div>
              </div>
          )}
       </main>
 
-      {/* Trust Footer */}
-      <footer className="max-w-screen-md mx-auto px-4 py-10 text-center space-y-4">
-         <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-loose">
-            SECURE DESIGN APPROVAL PORTAL PORTAL POWERED BY PRINTFLOW SAAS<br/>
-            ALL RIGHTS RESERVED © 2026
-         </p>
+      {/* Security Footer Badge */}
+      <footer className="max-w-screen-md mx-auto px-4 py-16 text-center space-y-6">
+         <div className="flex items-center justify-center gap-6 opacity-40 grayscale group-hover:grayscale-0 transition-all duration-500">
+            <div className="h-[1px] w-12 bg-gray-300" />
+            <div className="flex items-center gap-2">
+               <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200">
+                  <CheckCircle2 className="w-4 h-4 text-gray-400" />
+               </div>
+               <span className="text-[9px] font-black tracking-widest text-gray-400 uppercase">Secure Verification</span>
+            </div>
+            <div className="h-[1px] w-12 bg-gray-300" />
+         </div>
+         
+         <div className="space-y-1">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-loose">
+               SECURE DESIGN APPROVAL PORTAL POWERED BY PRINTFLOW SAAS
+            </p>
+            <p className="text-[9px] font-bold text-gray-300 tracking-widest">
+               ENCRYPTED END-TO-END • ALL RIGHTS RESERVED © 2026
+            </p>
+         </div>
       </footer>
     </div>
   );

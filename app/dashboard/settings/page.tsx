@@ -11,7 +11,11 @@ import {
   Loader2,
   Users,
   Shield,
-  Crown
+  Crown,
+  QrCode,
+  Download,
+  ExternalLink,
+  Store
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -28,6 +32,7 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: "business", label: t("Business Details", "బిజినెస్ వివరాలు"), icon: Settings },
+    { id: "qr", label: t("QR Storefront", "QR స్టోర్‌ఫ్రంట్"), icon: QrCode },
     { id: "subscription", label: t("Subscription", "సబ్‌స్క్రిప్షన్"), icon: Hash },
     { id: "profile", label: t("My Profile", "నా ప్రొఫైల్"), icon: User },
   ];
@@ -36,6 +41,7 @@ export default function SettingsPage() {
   interface Tenant {
     id: string;
     name: string;
+    slug: string;
     city?: string;
     phone?: string;
     gst_number?: string;
@@ -112,6 +118,102 @@ export default function SettingsPage() {
 
          {/* Settings Content Area */}
          <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            {activeTab === "qr" && (
+              <div className="p-8 space-y-10">
+                 <div className="border-b border-gray-100 pb-6 flex items-center justify-between">
+                    <div className="space-y-1">
+                       <h2 className="text-xl font-normal text-gray-900 uppercase tracking-tighter">{t("Counter QR Storefront", "కౌంటర్ QR స్టోర్‌ఫ్రంట్")}</h2>
+                       <p className="text-[10px] text-gray-400 uppercase tracking-widest">{t("Let customers order by scanning a code", "ఖాతాదారులు కోడ్‌ని స్కాన్ చేయడం ద్వారా ఆర్డర్ చేయనివ్వండి")}</p>
+                    </div>
+                    <div className="bg-green-500/10 text-green-600 px-3 py-1 rounded-full flex items-center gap-1.5 animate-pulse">
+                       <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                       <span className="text-[10px] font-black uppercase tracking-widest">Live</span>
+                    </div>
+                 </div>
+
+                 <div className="grid lg:grid-cols-2 gap-12 items-start">
+                    {/* Visual QR Preview */}
+                    <div className="space-y-6">
+                       <div className="aspect-square max-w-[320px] mx-auto bg-white rounded-3xl border border-gray-100 shadow-2xl p-8 flex flex-col items-center justify-center relative group">
+                          <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl" />
+                          <div className="relative z-10 w-full h-full">
+                             {/* eslint-disable-next-line @next/next/no-img-element */}
+                             <img 
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/shop/${tenant?.slug || ''}` : '')}`} 
+                                alt="Shop QR Code"
+                                className="w-full h-full object-contain"
+                             />
+                          </div>
+                       </div>
+                       
+                       <div className="flex flex-col gap-3">
+                          <button 
+                             onClick={() => {
+                                const url = `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=${encodeURIComponent(`${window.location.origin}/shop/${tenant?.slug || ''}`)}`;
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = `${tenant?.slug || 'shop'}-qr-code.png`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                             }}
+                             className="w-full bg-primary text-white h-14 rounded-xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-xl shadow-primary/20 hover:-translate-y-0.5 transition-all active:scale-95"
+                          >
+                             <Download className="w-4 h-4" /> {t("Download QR for Print", "ప్రింట్ కోసం QR డౌన్‌లోడ్ చేయండి")}
+                          </button>
+                          <a 
+                             href={`/shop/${tenant?.slug}`} 
+                             target="_blank"
+                             className="w-full bg-white border border-gray-100 text-gray-500 h-14 rounded-xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-gray-50 transition-all"
+                          >
+                             <ExternalLink className="w-4 h-4" /> {t("Test Storefront Link", "స్టోర్‌ఫ్రంట్ లింక్‌ను పరీక్షించండి")}
+                          </a>
+                       </div>
+                    </div>
+
+                    {/* How it works info */}
+                    <div className="space-y-8">
+                       <div className="space-y-4">
+                          <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">{t("How it works", "ఇది ఎలా పనిచేస్తుంది")}</h3>
+                          <div className="space-y-6">
+                             <div className="flex gap-4">
+                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black text-xs shrink-0">1</div>
+                                <div className="space-y-1">
+                                   <p className="font-bold text-gray-900">{t("Print the QR Code", "QR కోడ్‌ను ప్రింట్ చేయండి")}</p>
+                                   <p className="text-xs text-gray-500 leading-relaxed">{t("Place it on your billing counter where customers can easily scan it.", "ఖాతాదారులు సులభంగా స్కాన్ చేయగల మీ బిల్లింగ్ కౌంటర్‌లో దీన్ని ఉంచండి.")}</p>
+                                </div>
+                             </div>
+                             <div className="flex gap-4">
+                                <div className="w-8 h-8 rounded-full bg-orange/10 flex items-center justify-center text-orange font-black text-xs shrink-0">2</div>
+                                <div className="space-y-1">
+                                   <p className="font-bold text-gray-900">{t("Customer Scans & Submits", "కస్టమర్ స్కాన్ చేసి సబ్మిట్ చేస్తారు")}</p>
+                                   <p className="text-xs text-gray-500 leading-relaxed">{t("They enter their name, phone, and upload their design files directly from their phone.", "వారు తమ పేరు, ఫోన్ నంబర్ నమోదు చేసి, నేరుగా వారి ఫోన్ నుండి వారి డిజైన్ ఫైల్‌లను అప్‌లోడ్ చేస్తారు.")}</p>
+                                </div>
+                             </div>
+                             <div className="flex gap-4">
+                                <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center text-green-600 font-black text-xs shrink-0">3</div>
+                                <div className="space-y-1">
+                                   <p className="font-bold text-gray-900">{t("Immediate Order Alert", "తక్షణ ఆర్డర్ అలర్ట్")}</p>
+                                   <p className="text-xs text-gray-500 leading-relaxed">{t("The order appears in your 'Orders' dashboard. You can then quote the price and start printing.", "ఆర్డర్ మీ 'ఆర్డర్లు' డాష్‌బోర్డ్‌లో కనిపిస్తుంది. మీరు అప్పుడు ధరను కోట్ చేసి ప్రింట్ చేయడం ప్రారంభించవచ్చు.")}</p>
+                                </div>
+                             </div>
+                          </div>
+                       </div>
+
+                       <div className="bg-[#1e3a5f] p-8 rounded-[32px] text-white space-y-4 relative overflow-hidden group">
+                          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                             <Store className="w-32 h-32" />
+                          </div>
+                          <h4 className="text-sm font-black uppercase tracking-widest">{t("Storefront Link", "స్టోర్‌ఫ్రంట్ లింక్")}</h4>
+                          <div className="bg-white/10 p-4 rounded-xl font-mono text-xs break-all border border-white/5">
+                             {typeof window !== 'undefined' ? `${window.location.origin}/shop/${tenant?.slug}` : ''}
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+            )}
+
             {activeTab === "business" && (
               <div className="p-8 space-y-8">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-6">
