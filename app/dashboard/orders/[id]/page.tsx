@@ -12,7 +12,8 @@ import {
   IndianRupee,
   File as FileIcon,
   X,
-  Upload
+  Upload,
+  Download
 } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
@@ -280,22 +281,37 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
             </div>
 
             {order.file_url && (
-              <div className="pt-4 border-t border-gray-50">
-                <p className="text-[10px] text-gray-400 uppercase mb-2 tracking-wider">{t("Design File", "డిజైన్ ఫైల్")}</p>
-                <a 
-                  href={order.file_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-3 px-4 py-3 bg-primary/5 border border-primary/10 rounded-xl hover:bg-primary/10 transition-colors group"
-                >
-                  <FileIcon className="w-5 h-5 text-primary" />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-normal text-gray-900 group-hover:text-primary transition-colors">
-                      {t("View Design File", "డిజైన్ ఫైల్ చూడండి")}
-                    </span>
-                    <span className="text-[10px] text-gray-400 uppercase">{t("Click to open in new tab", "కొత్త ట్యాబ్‌లో తెరవడానికి క్లిక్ చేయండి")}</span>
+              <div className="pt-4 border-t border-gray-50 flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <p className="text-[10px] text-gray-400 uppercase mb-2 tracking-wider">{t("Design File", "డిజైన్ ఫైల్")}</p>
+                  <div className="flex flex-wrap gap-3">
+                    <a 
+                      href={order.file_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-3 px-4 py-2.5 bg-primary/5 border border-primary/10 rounded-xl hover:bg-primary/10 transition-colors group"
+                    >
+                      <FileIcon className="w-5 h-5 text-primary" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-normal text-gray-900 group-hover:text-primary transition-colors">
+                          {t("View Design", "డిజైన్ చూడండి")}
+                        </span>
+                      </div>
+                    </a>
+
+                    <a 
+                      href={order.file_url} 
+                      download
+                      target="_blank"
+                      className="inline-flex items-center gap-3 px-4 py-2.5 bg-gray-900 border border-gray-900 rounded-xl hover:bg-black transition-colors text-white shadow-lg shadow-gray-200"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span className="text-sm font-normal">
+                        {t("Download File", "ఫైల్ డౌన్‌లోడ్")}
+                      </span>
+                    </a>
                   </div>
-                </a>
+                </div>
               </div>
             )}
           </div>
