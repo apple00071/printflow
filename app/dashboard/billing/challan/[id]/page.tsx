@@ -123,7 +123,7 @@ export default function DeliveryChallanPage({ params }: { params: { id: string }
               <h2 className="text-5xl print:text-2xl font-normal text-orange/10 print:text-orange uppercase tracking-tighter absolute top-0 right-0 hidden md:block print:relative print:top-auto print:right-auto">{t("Challan", "చలాన్")}</h2>
               <div className="pt-12 md:pt-16 print:pt-2">
                 <p className="text-sm font-normal text-gray-900">{t("Challan #", "చలాన్ నంబర్:")} <span className="text-orange">{order.challan_number}</span></p>
-                <p className="text-xs text-gray-500">{t("Date", "తేదీ")}: {formatDate(order.challan_date || order.id)}</p>
+                <p className="text-xs text-gray-500">{t("Date", "తేదీ")}: {formatDate(order.challan_date || order.created_at)}</p>
               </div>
             </div>
           </div>
@@ -139,7 +139,7 @@ export default function DeliveryChallanPage({ params }: { params: { id: string }
             </div>
             <div className="space-y-2 print:space-y-0">
               <h3 className="text-[10px] text-gray-400 uppercase tracking-widest border-b border-gray-200 pb-2 mb-2 print:pb-1 print:mb-1">{t("Order Info", "ఆర్డర్ వివరాలు")}</h3>
-              <p className="text-sm print:text-xs text-gray-700"><span className="text-gray-400 uppercase text-[9px] tracking-wider">{t("Order ID", "ఆర్డర్ ID")}:</span> {order.id.split('-')[0].toUpperCase()}</p>
+              <p className="text-sm print:text-xs text-gray-700 font-bold"><span className="text-gray-400 uppercase text-[9px] tracking-wider font-normal">{t("Order ID", "ఆర్డర్ ID")}:</span> {order.friendly_id || `#${order.id.split('-')[0].toUpperCase()}`}</p>
               <p className="text-sm print:text-xs text-gray-700"><span className="text-gray-400 uppercase text-[9px] tracking-wider">{t("Delivery", "తేదీ")}:</span> {formatDate(order.challan_date || order.id)}</p>
             </div>
           </div>
