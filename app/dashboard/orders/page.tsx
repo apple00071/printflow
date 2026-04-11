@@ -134,7 +134,8 @@ export default function OrdersPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            {/* Desktop Table */}
+            <table className="w-full text-left hidden sm:table">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
                   <th className="px-6 py-4 text-xs  text-gray-500 uppercase tracking-wider">{t("Order ID", "ఆర్డర్ ID")}</th>
@@ -202,6 +203,45 @@ export default function OrdersPage() {
                 ))}
               </tbody>
             </table>
+
+            {/* Mobile Card List */}
+            <div className="sm:hidden grid grid-cols-1 divide-y divide-gray-100">
+               {filteredOrders.map((order) => (
+                  <div 
+                    key={order.id}
+                    onClick={() => router.push(`/dashboard/orders/${order.id}`)}
+                    className="p-4 active:bg-gray-50 transition-colors space-y-3"
+                  >
+                     <div className="flex justify-between items-start">
+                        <div className="flex flex-col">
+                           <span className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-tight">#{order.friendly_id || order.id.slice(0, 8)}</span>
+                           <span className="text-base font-bold text-gray-900">{order.customers?.name || "Unknown"}</span>
+                        </div>
+                        <span className={cn(
+                          "px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                          getStatusColor(order.status)
+                        )}>
+                          {order.status}
+                        </span>
+                     </div>
+                     
+                     <div className="flex justify-between items-end">
+                        <div className="space-y-1">
+                           <p className="text-xs text-gray-500 font-medium">{order.job_type} • {order.quantity} pcs</p>
+                           <p className="text-xs text-gray-400 flex items-center gap-1"><Phone className="w-3 h-3" /> {order.customers?.phone || "N/A"}</p>
+                        </div>
+                        <div className="text-right">
+                           <p className="text-sm font-bold text-gray-900">{formatCurrency(order.total_with_gst || order.total_amount)}</p>
+                           {((order.total_with_gst || order.total_amount) - order.advance_paid) > 0 && (
+                             <p className="text-[10px] text-red-500 font-bold uppercase">
+                               Due: {formatCurrency((order.total_with_gst || order.total_amount) - order.advance_paid)}
+                             </p>
+                           )}
+                        </div>
+                     </div>
+                  </div>
+               ))}
+            </div>
           </div>
         )}
       </div>

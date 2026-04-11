@@ -37,6 +37,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const [actualDeliveryDate, setActualDeliveryDate] = useState(new Date().toISOString().split('T')[0]);
 
+  const STATUS_STEPS = ["RECEIVED", "DESIGNING", "PRINTING", "READY", "DELIVERED"];
   const statuses = [
     t("RECEIVED", "వచ్చింది"),
     t("DESIGNING", "డిజైనింగ్"),
@@ -195,16 +196,16 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
               <div className="absolute left-8 right-8 top-1/2 -translate-y-1/2 h-1 bg-gray-100 -z-0" />
               <div 
                 className="absolute left-8 top-1/2 -translate-y-1/2 h-1 bg-primary transition-all duration-500 -z-0" 
-                style={{ width: `${(statuses.indexOf(t(order.status, "")) / (statuses.length - 1)) * 92}%` }}
+                style={{ width: `${(STATUS_STEPS.indexOf(order.status) / (STATUS_STEPS.length - 1)) * 92}%` }}
               />
 
               {statuses.map((s, i) => {
-                const isCompleted = statuses.indexOf(t(order.status, "")) >= i;
+                const isCompleted = STATUS_STEPS.indexOf(order.status) >= i;
                 return (
                   <button
                     key={s}
                     disabled={updating}
-                    onClick={() => handleStatusUpdate(s)}
+                    onClick={() => handleStatusUpdate(STATUS_STEPS[i])}
                     className="relative z-10 flex flex-col items-center gap-2 group"
                   >
                     <div className={cn(

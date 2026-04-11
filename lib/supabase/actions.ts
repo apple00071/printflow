@@ -744,3 +744,33 @@ export async function updateOrderProof(orderId: string, data: { proof_image_url?
   if (error) throw error;
   return updatedOrder;
 }
+
+export async function updateTenantDetails(data: { name?: string, city?: string, phone?: string, gst_number?: string, logo_url?: string }) {
+  const supabase = createClient();
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant) throw new Error("Unauthorized");
+
+  const { data: updatedTenant, error } = await supabase
+    .from("tenants")
+    .update(data)
+    .eq("id", tenant.id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return updatedTenant;
+}
+
+export async function markOnboardingComplete() {
+  const supabase = createClient();
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("tenants")
+    .update({ onboarding_complete: true })
+    .eq("id", tenant.id);
+
+  if (error) throw error;
+  return { success: true };
+}

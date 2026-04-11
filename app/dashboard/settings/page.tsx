@@ -15,9 +15,12 @@ import {
   QrCode,
   Download,
   ExternalLink,
-  Store
+  Store,
+  Upload,
+  Image as ImageIcon,
+  X
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
@@ -25,10 +28,12 @@ import { getCurrentTenant } from "@/lib/tenant";
 import ProfileSettings from "@/components/dashboard/ProfileSettings";
 import { formatDate } from "@/lib/utils/format";
 import Script from "next/script";
+import { updateTenantDetails } from "@/lib/supabase/actions";
 
 export default function SettingsPage() {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("business");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const tabs = [
     { id: "business", label: t("Business Details", "బిజినెస్ వివరాలు"), icon: Settings },
@@ -38,6 +43,9 @@ export default function SettingsPage() {
   ];
 
   const [loading, setLoading] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
+
   interface Tenant {
     id: string;
     name: string;
@@ -45,6 +53,7 @@ export default function SettingsPage() {
     city?: string;
     phone?: string;
     gst_number?: string;
+    logo_url?: string;
     subscription_tier?: string;
     orders_this_month?: number;
     subscription_end_date?: string;
@@ -59,6 +68,57 @@ export default function SettingsPage() {
     }
     fetchSettings();
   }, []);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLogoUploading(true);
+    try {
+      const supabase = createClient();
+      if (!tenant) return;
+
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${tenant.id}/branding/logo-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('printflow-files')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('printflow-files')
+        .getPublicUrl(filePath);
+
+      setTenant(prev => prev ? { ...prev, logo_url: publicUrl } : null);
+    } catch (err) {
+      console.error("Logo upload error:", err);
+      alert("Failed to upload logo");
+    } finally {
+      setLogoUploading(false);
+    }
+  };
+
+  const handleSaveBusinessDetails = async () => {
+    if (!tenant) return;
+    setSaveLoading(true);
+    try {
+      await updateTenantDetails({
+        name: tenant.name,
+        city: tenant.city,
+        phone: tenant.phone,
+        gst_number: tenant.gst_number,
+        logo_url: tenant.logo_url
+      });
+      alert(t("Settings saved successfully!", "సెట్టింగ్‌లు విజయవంతంగా సేవ్ చేయబడ్డాయి!"));
+    } catch (err) {
+      console.error("Save error:", err);
+      alert("Failed to save settings");
+    } finally {
+      setSaveLoading(false);
+    }
+  };
 
   const handleUpgrade = async () => {
     setLoading(true);
@@ -215,36 +275,118 @@ export default function SettingsPage() {
             )}
 
             {activeTab === "business" && (
-              <div className="p-8 space-y-8">
+              <div className="p-8 space-y-10">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-6">
-                  <h2 className="text-xl  text-gray-900">{t("Business Details", "బిజినెస్ వివరాలు")}</h2>
-                  <button className="bg-primary text-white px-4 py-2 rounded-lg flex items-center gap-2  hover:opacity-90 transition-all">
-                     <Save className="w-4 h-4" /> {t("Save Changes", "మారపులను సేవ్ చేయండి")}
+                  <div>
+                    <h2 className="text-xl text-gray-900">{t("Business Details", "బిజినెస్ వివరాలు")}</h2>
+                    <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">Manage your shop&apos;s core identity</p>
+                  </div>
+                  <button 
+                    onClick={handleSaveBusinessDetails}
+                    disabled={saveLoading}
+                    className="bg-primary text-white px-6 py-2.5 rounded-xl flex items-center gap-2 hover:opacity-90 transition-all font-bold text-xs uppercase tracking-widest disabled:opacity-50"
+                  >
+                     {saveLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                     {t("Save Changes", "మారపులను సేవ్ చేయండి")}
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                   <div className="space-y-2">
-                      <label className="text-xs  text-gray-500 uppercase flex items-center gap-1"><Printer className="w-3 h-3" /> {t("Business Name", "వ్యాపారం పేరు")}</label>
-                      <input type="text" defaultValue={tenant?.name} className="w-full p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                   {/* Logo Upload Section */}
+                   <div className="space-y-4">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Shop Logo</label>
+                      <div className="relative group">
+                        <div className="aspect-square w-full max-w-[200px] bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center overflow-hidden transition-all group-hover:border-primary/50 group-hover:bg-primary/5">
+                           {tenant?.logo_url ? (
+                             <img src={tenant.logo_url} alt="Shop Logo" className="w-full h-full object-contain p-4" />
+                           ) : (
+                             <div className="text-center p-6">
+                                <ImageIcon className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                                <p className="text-[10px] text-gray-400 font-medium">No logo uploaded</p>
+                             </div>
+                           )}
+                           
+                           {logoUploading && (
+                             <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center">
+                                <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                             </div>
+                           )}
+                        </div>
+                        
+                        <input 
+                          type="file" 
+                          ref={fileInputRef}
+                          onChange={handleLogoUpload}
+                          className="hidden"
+                          accept="image/*"
+                        />
+                        
+                        <button 
+                          onClick={() => fileInputRef.current?.click()}
+                          className="absolute bottom-2 right-2 bg-white shadow-lg border border-gray-100 p-2.5 rounded-2xl text-primary hover:scale-110 active:scale-95 transition-all"
+                        >
+                           <Upload className="w-4 h-4" />
+                        </button>
+                        
+                        {tenant?.logo_url && (
+                           <button 
+                            onClick={() => setTenant(prev => prev ? { ...prev, logo_url: "" } : null)}
+                            className="absolute top-2 right-2 bg-white shadow-lg border border-gray-100 p-2 rounded-xl text-red-500 hover:scale-110 active:scale-95 transition-all"
+                           >
+                            <X className="w-3 h-3" />
+                           </button>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-gray-400 leading-relaxed px-1 italic">
+                        Recommended: Square PNG/JPG, min 400x400px. This logo will appear on your invoices and portal.
+                      </p>
                    </div>
-                   <div className="space-y-2">
-                      <label className="text-xs  text-gray-500 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> {t("Address", "చిరునామా")}</label>
-                      <input type="text" defaultValue={tenant?.city} className="w-full p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" />
-                   </div>
-                   <div className="space-y-2">
-                      <label className="text-xs  text-gray-500 uppercase flex items-center gap-1"><Phone className="w-3 h-3" /> {t("Contact Phone", "ఫోన్ నంబర్")}</label>
-                      <input type="text" defaultValue={tenant?.phone} className="w-full p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" />
-                   </div>
-                   <div className="space-y-2">
-                      <label className="text-xs  text-gray-500 uppercase flex items-center gap-1"><Hash className="w-3 h-3" /> {t("GST Number", "GST నంబర్")}</label>
-                      <input type="text" defaultValue={tenant?.gst_number || "Not Provided"} className="w-full p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" />
-                   </div>
-                </div>
 
-                <div className="bg-gray-50 p-6 rounded-2xl border border-dashed border-gray-200">
-                    <h3 className="text-sm  text-gray-900 mb-2">{t("Advance Options", "అడ్వాన్స్డ్ ఎంపికలు")}</h3>
-                    <p className="text-xs text-gray-500 leading-relaxed mb-4">{t("Warning: Any changes made to these business details will be reflected on all new invoices and estimates generated by the system.", "హెచ్చరిక: ఈ వ్యాపార వివరాలలో చేసే ఏవైనా మార్పులు సిస్టమ్ ద్వారా రూపొందించబడిన అన్ని కొత్త ఇన్వాయిస్ మరియు ఎస్టిమేట్స్ పై కనిపిస్తాయి.")}</p>
+                   {/* Form Fields Section */}
+                   <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1 flex items-center gap-1"><Printer className="w-3 h-3" /> {t("Business Name", "వ్యాపారం పేరు")}</label>
+                          <input 
+                            type="text" 
+                            value={tenant?.name || ""} 
+                            onChange={(e) => setTenant(prev => prev ? { ...prev, name: e.target.value } : null)}
+                            className="w-full p-3.5 rounded-xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-300" 
+                          />
+                      </div>
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1 flex items-center gap-1"><MapPin className="w-3 h-3" /> {t("Address", "చిరునామా")}</label>
+                          <input 
+                            type="text" 
+                            value={tenant?.city || ""} 
+                            onChange={(e) => setTenant(prev => prev ? { ...prev, city: e.target.value } : null)}
+                            className="w-full p-3.5 rounded-xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-300" 
+                          />
+                      </div>
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1 flex items-center gap-1"><Phone className="w-3 h-3" /> {t("Contact Phone", "ఫోన్ నంబర్")}</label>
+                          <input 
+                            type="text" 
+                            value={tenant?.phone || ""} 
+                            onChange={(e) => setTenant(prev => prev ? { ...prev, phone: e.target.value } : null)}
+                            className="w-full p-3.5 rounded-xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-300" 
+                          />
+                      </div>
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1 flex items-center gap-1"><Hash className="w-3 h-3" /> {t("GST Number", "GST నంబర్")}</label>
+                          <input 
+                            type="text" 
+                            value={tenant?.gst_number || ""} 
+                            placeholder="Not Provided"
+                            onChange={(e) => setTenant(prev => prev ? { ...prev, gst_number: e.target.value } : null)}
+                            className="w-full p-3.5 rounded-xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-300" 
+                          />
+                      </div>
+                      
+                      <div className="md:col-span-2 bg-blue-50/50 p-6 rounded-2xl border border-blue-100/50 mt-4">
+                        <h3 className="text-[10px] font-bold text-blue-900 mb-2 uppercase tracking-widest">{t("Advance Options", "అడ్వాన్స్డ్ ఎంపికలు")}</h3>
+                        <p className="text-[11px] text-blue-700/70 leading-relaxed italic">{t("Warning: Any changes made to these business details will be reflected on all new invoices and estimates generated by the system.", "హెచ్చరిక: ఈ వ్యాపార వివరాలలో చేసే ఏవైనా మార్పులు సిస్టమ్ ద్వారా రూపొందించబడిన అన్ని కొత్త ఇన్వాయిస్ మరియు ఎస్టిమేట్స్ పై కనిపిస్తాయి.")}</p>
+                      </div>
+                   </div>
                 </div>
               </div>
             )}
