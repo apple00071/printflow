@@ -101,6 +101,9 @@ export default function CommandPalette({
         e.preventDefault();
         setIsOpen(!isOpen);
       }
+      if (e.key === "Escape" && isOpen) {
+        setIsOpen(false);
+      }
     };
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
