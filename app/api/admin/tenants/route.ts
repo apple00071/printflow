@@ -33,9 +33,9 @@ export async function GET() {
       
       return {
         ...tenant,
-        plan: tenant.subscription_tier?.toUpperCase() || 'FREE',
-        plan_status: tenant.subscription_status || 'ACTIVE',
-        orders_this_month: 0, // Default to 0 since column doesn't exist yet
+        plan: tenant.plan?.toUpperCase() || 'FREE',
+        plan_status: tenant.plan_status || 'ACTIVE',
+        orders_this_month: tenant.orders_this_month || 0,
         // Manually join profile data
         profiles: adminProfile ? {
           id: adminProfile.id,

@@ -37,9 +37,9 @@ export async function GET(
 
     const mappedTenant = {
       ...tenant,
-      plan: tenant.subscription_tier?.toUpperCase() || 'FREE',
-      plan_status: tenant.subscription_status || 'ACTIVE',
-      orders_this_month: 0, // Placeholder
+      plan: tenant.plan?.toUpperCase() || 'FREE',
+      plan_status: tenant.plan_status || 'ACTIVE',
+      orders_this_month: tenant.orders_this_month || 0,
       profiles: profile ? {
         id: profile.id,
         username: profile.username || 'N/A',
@@ -79,8 +79,8 @@ export async function PATCH(
 
     // Mapping payload logic to the database columns
     const updateData: Record<string, string> = {};
-    if (body.plan) updateData.subscription_tier = body.plan.toLowerCase();
-    if (body.plan_status) updateData.subscription_status = body.plan_status;
+    if (body.plan) updateData.plan = body.plan.toLowerCase();
+    if (body.plan_status) updateData.plan_status = body.plan_status;
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: "No fields to update" }, { status: 400 });

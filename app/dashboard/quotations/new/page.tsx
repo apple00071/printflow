@@ -25,6 +25,8 @@ import { cn } from "@/lib/utils";
 import CustomSelect from "@/components/ui/CustomSelect";
 import CustomDatePicker from "@/components/ui/CustomDatePicker";
 import { useLanguage } from "@/lib/context/LanguageContext";
+import { parseOrderText, ParsedJobDetails } from "@/lib/parser";
+import { Sparkles, Settings2, FileText } from "lucide-react";
 
 interface Customer {
   id: string;
@@ -43,7 +45,7 @@ const jobCategories = [
 export default function NewQuotationPage() {
   const router = useRouter();
   const { t } = useLanguage();
-  const [selectedJob, setSelectedJob] = useState(jobCategories[0]);
+  const [selectedJob, setSelectedJob] = useState(jobCategories[4]); // Defaults to 'Other'
   const [customJobName, setCustomJobName] = useState("");
   const [quantity, setQuantity] = useState(jobCategories[0].minQty);
   const [saveLoading, setSaveLoading] = useState(false);
@@ -54,6 +56,8 @@ export default function NewQuotationPage() {
   const [lamination, setLamination] = useState("None");
   const [printingDate, setPrintingDate] = useState("");
   const [instructions, setInstructions] = useState("");
+  const [isDetailed, setIsDetailed] = useState(false);
+  const [detectedSpecs, setDetectedSpecs] = useState<ParsedJobDetails>({});
   
   // Custom Pricing
   const baseTotal = selectedJob.basePrice * quantity;
@@ -122,17 +126,33 @@ export default function NewQuotationPage() {
       return;
     }
 
-    setSaveLoading(true);
+    let finalJobType = selectedJob.id === 'other' ? customJobName : t(selectedJob.name, selectedJob.telugu);
+    let finalQty = String(quantity);
+    let finalSize = size;
+    let finalPaper = paperType;
+    let finalSide = printingSide;
+    let finalLam = lamination;
+
+    if (!isDetailed && instructions) {
+      const parsed = parseOrderText(instructions);
+      if (parsed.jobType) finalJobType = parsed.jobType;
+      if (parsed.quantity) finalQty = parsed.quantity;
+      if (parsed.size) finalSize = parsed.size;
+      if (parsed.paperType) finalPaper = parsed.paperType;
+      if (parsed.printingSide) finalSide = parsed.printingSide;
+      if (parsed.lamination) finalLam = parsed.lamination;
+    }
+
     try {
       await createQuotation({
         customerName: name,
         phone: phone,
-        jobType: selectedJob.id === 'other' ? customJobName : t(selectedJob.name, selectedJob.telugu),
-        quantity: String(quantity),
-        size: size,
-        paperType: paperType,
-        printingSide: printingSide,
-        lamination: lamination,
+        jobType: finalJobType,
+        quantity: finalQty,
+        size: finalSize,
+        paperType: finalPaper,
+        printingSide: finalSide,
+        lamination: finalLam,
         printingDate: printingDate,
         instructions: instructions,
         taxableAmount: customPrice,
@@ -155,6 +175,16 @@ export default function NewQuotationPage() {
       setSaveLoading(false);
     }
   };
+
+  // Live parsing
+  useEffect(() => {
+    if (!isDetailed && instructions) {
+      const parsed = parseOrderText(instructions);
+      setDetectedSpecs(parsed);
+    } else {
+      setDetectedSpecs({});
+    }
+  }, [instructions, isDetailed]);
 
   if (saveSuccess) {
     return (
@@ -310,14 +340,71 @@ export default function NewQuotationPage() {
           {/* Section: Job Details */}
           <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm space-y-6">
             <div className="flex items-center justify-between border-b border-gray-50 pb-4">
-              <h2 className="font-medium text-gray-900 flex items-center gap-2 text-sm">
+              <div className="flex items-center gap-2">
                 <Calculator className="w-4 h-4 text-primary" />
-                {t("Job Specifications", "పని వివరాలు")}
-              </h2>
-              <p className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">{t("Step 2: Configuration", "దశ 2: కాన్ఫిగరేషన్")}</p>
+                <h2 className="font-medium text-gray-900 text-sm">{t("Job Specifications", "పని వివరాలు")}</h2>
+              </div>
+              
+              <button
+                type="button"
+                onClick={() => setIsDetailed(!isDetailed)}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/5 rounded-full transition-colors border border-primary/20"
+              >
+                {isDetailed ? (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {t("Switch to Quick Note", "క్విక్ నోట్ కు మారండి")}
+                  </>
+                ) : (
+                  <>
+                    <Settings2 className="w-3.5 h-3.5" />
+                    {t("Add Detailed Specs", "వివరాలు జోడించండి")}
+                  </>
+                )}
+              </button>
             </div>
 
-            <div className="space-y-4">
+            {!isDetailed ? (
+              <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs text-gray-500 uppercase">{t("Category", "పని రకం")}</label>
+                    <div className="relative">
+                      <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        readOnly
+                        value={detectedSpecs.jobType || (selectedJob.id === 'other' ? customJobName : t(selectedJob.name, selectedJob.telugu))}
+                        className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-xs text-gray-500 uppercase">{t("Job Details (Type here)", "పని వివరాలు (ఇక్కడ రాయండి)")}</label>
+                    <div className="flex flex-wrap gap-2">
+                       {detectedSpecs.quantity && <span className="px-2 py-0.5 bg-purple-50 text-purple-600 text-[10px] font-bold rounded uppercase">Qty: {detectedSpecs.quantity}</span>}
+                       {detectedSpecs.size && <span className="px-2 py-0.5 bg-orange/10 text-orange text-[10px] font-bold rounded uppercase">{detectedSpecs.size}</span>}
+                       {detectedSpecs.paperType && <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded uppercase">{detectedSpecs.paperType}</span>}
+                       {detectedSpecs.printingSide && <span className="px-2 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold rounded uppercase">{detectedSpecs.printingSide}</span>}
+                    </div>
+                  </div>
+                  <textarea
+                    rows={2}
+                    required
+                    value={instructions}
+                    onChange={(e) => setInstructions(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 border border-primary/20 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none resize-none font-medium min-h-[80px]"
+                    placeholder={t("e.g. 500 Visiting cards, A4, 300GSM Matte, Double side...", "ఉదా: 500 విజిటింగ్ కార్డ్స్, A4, 300GSM మ్యాట్, రెండు వైపులా...")}
+                  />
+                  <p className="text-[10px] text-gray-400 italic mt-1">{t("Type details naturally, we will extract them automatically.", "వివరాలను సహజంగా టైప్ చేయండి, మేము వాటిని స్వయంచాలకంతిగా గుర్తిస్తాము.")}</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-4">
                <label className="text-[11px] text-gray-500 uppercase tracking-wider font-semibold">{t("Select Category", "పని రకాన్ని ఎంచుకోండి")}</label>
                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                   {jobCategories.map((job) => (
@@ -439,17 +526,16 @@ export default function NewQuotationPage() {
                 />
               </div>
               
-              <div className="xl:col-span-4 space-y-1">
-                <label className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">{t("Special Instructions", "సూచనలు")}</label>
-                <textarea
-                  rows={1}
-                  placeholder="Special instructions..."
-                  value={instructions}
-                  onChange={(e) => setInstructions(e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary outline-none text-sm resize-none"
-                />
-              </div>
-            </div>
+                  <textarea
+                    rows={1}
+                    placeholder="Special instructions..."
+                    value={instructions}
+                    onChange={(e) => setInstructions(e.target.value)}
+                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary outline-none text-sm resize-none"
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
 
