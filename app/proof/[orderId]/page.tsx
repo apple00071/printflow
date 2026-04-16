@@ -32,6 +32,10 @@ interface OrderProofData {
     lamination?: string;
     paper_type?: string;
     size?: string;
+    tenants?: {
+        name: string;
+        city: string | null;
+    };
 }
 
 export default function ProofingPage({ params }: { params: { orderId: string } }) {
@@ -57,7 +61,8 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
         .from("orders")
         .select(`
             *,
-            customers(name, phone)
+            customers(name, phone),
+            tenants(name, city)
         `)
         .eq("id", params.orderId)
         .eq("proofing_token", token)
@@ -126,7 +131,9 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
             <div className="flex items-center gap-2">
                <Logo size="sm" />
                <div className="h-4 w-[1px] bg-gray-200 mx-1 hidden md:block" />
-               <span className="text-[10px] font-bold text-gray-400 tracking-[0.2em] hidden md:block">APPROVAL PORTAL</span>
+               <span className="text-[10px] font-bold text-gray-400 tracking-[0.2em] hidden md:block uppercase">
+                  {order.tenants?.name || "APPROVAL PORTAL"}
+               </span>
             </div>
             <div className="flex flex-col items-end">
                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">ORDER ID</span>
@@ -149,7 +156,7 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
                   <h1 className="text-2xl font-black text-gray-900 tracking-tight">Design Approval</h1>
                </div>
                <p className="text-gray-500 text-sm leading-relaxed">
-                  Hi <span className="font-bold text-gray-900">{order.customers?.name}</span>, please review the final design for your <span className="text-primary font-semibold">{order.job_type}</span>. Changes can be requested or approval granted below.
+                  Hi <span className="font-bold text-gray-900">{order.customers?.name}</span>, please review the final design from <span className="font-bold text-gray-900">{order.tenants?.name || "our shop"}</span> for your <span className="text-primary font-semibold">{order.job_type}</span>. Changes can be requested or approval granted below.
                </p>
                
                <div className="pt-2 flex flex-wrap gap-4">

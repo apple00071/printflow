@@ -91,6 +91,10 @@ export interface Order extends OrderInsertData {
     phone: string | null;
     gstin?: string | null;
   };
+  tenants?: {
+    name: string;
+    city: string | null;
+  };
 }
 
 interface PaymentData {
@@ -332,7 +336,8 @@ export async function getOrder(id: string): Promise<Order> {
     .from("orders")
     .select(`
       *,
-      customers (*)
+      customers (*),
+      tenants (name, city)
     `)
     .eq("id", id);
 
@@ -399,7 +404,8 @@ export async function assignChallanNumber(orderId: string) {
     .eq("tenant_id", tenant.id)
     .select(`
       *,
-      customers (*)
+      customers (*),
+      tenants (name, city)
     `)
     .single();
 

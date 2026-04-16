@@ -123,11 +123,14 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
     const total = Math.round(rawTotal * 100) / 100;
     const balance = Math.round((total - order.advance_paid) * 100) / 100;
     
+    const shopName = order.tenants?.name || PRESS_CONFIG.name;
+    const shopCity = order.tenants?.city || "Chirala";
+
     let message = "";
     if (language === "te") {
-      message = `నమస్కారం ${order.customers?.name} గారు, మీ ${order.job_type} ఆర్డర్ సిద్ధంగా ఉంది. మొత్తం: ₹${total}. అడ్వాన్స్: ₹${order.advance_paid}. బకాయి: ₹${balance}. - ${PRESS_CONFIG.name}, చీరాల.`;
+      message = `నమస్కారం ${order.customers?.name} గారు, మీ ${order.job_type} ఆర్డర్ సిద్ధంగా ఉంది. మొత్తం: ₹${total}. అడ్వాన్స్: ₹${order.advance_paid}. బకాయి: ₹${balance}. - ${shopName}, ${shopCity}.`;
     } else {
-      message = `Hi ${order.customers?.name}, your order of ${order.job_type} is ready for pickup. Total: ₹${total}. Advance: ₹${order.advance_paid}. Balance: ₹${balance}. - ${PRESS_CONFIG.name}, Chirala`;
+      message = `Hi ${order.customers?.name}, your order of ${order.job_type} is ready for pickup. Total: ₹${total}. Advance: ₹${order.advance_paid}. Balance: ₹${balance}. - ${shopName}, ${shopCity}`;
     }
     return `https://wa.me/${order.customers?.phone}?text=${encodeURIComponent(message)}`;
   };
@@ -510,7 +513,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                     {t("Copy Link", "లింక్ కాపీ చేయండి", "लिंक कॉपी करें")}
                  </button>
                  <a 
-                    href={`https://wa.me/${order.customers?.phone}?text=${encodeURIComponent(`Hi ${order.customers?.name}, please approve your design proof here: ${window.location.origin}/proof/${order.id}?token=${order.proofing_token}`)}`}
+                    href={`https://wa.me/${order.customers?.phone}?text=${encodeURIComponent(`Hi ${order.customers?.name}, please approve your design proof from ${order.tenants?.name || PRESS_CONFIG.name} here: ${window.location.origin}/proof/${order.id}?token=${order.proofing_token}`)}`}
                     target="_blank"
                     className="py-2.5 bg-green-500 text-white text-[10px] font-bold rounded-lg hover:bg-green-600 transition-all uppercase tracking-wider flex items-center justify-center gap-1.5"
                  >

@@ -208,8 +208,8 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
                  <div className="p-4 print:p-1 bg-gray-50 print:bg-white rounded-2xl border border-gray-100">
                     <h4 className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">{t("Terms", "షరతులు")}</h4>
                     <p className="text-[9px] text-gray-400 leading-tight italic">
-                      {t("1. Goods once sold will not be taken back.", "1. అమ్మిన వస్తువులు తిరిగి తీసుకోబడవు.")}<br/>
-                      {t("2. All disputes subject to Chirala jurisdiction.", "2. వివాదాలు చీరాల కోర్టు పరిధిలోకి వస్తాయి.")}
+                      {t(`1. Goods once sold will not be taken back.`, `1. అమ్మిన వస్తువులు తిరిగి తీసుకోబడవు.`)}<br/>
+                      {t(`2. All disputes subject to ${tenant.city || "local"} jurisdiction.`, `2. వివాదాలు ${tenant.city || "స్థానిక"} కోర్టు పరిధిలోకి వస్తాయి.`)}
                     </p>
                  </div>
                </div>
