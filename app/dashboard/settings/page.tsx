@@ -54,6 +54,7 @@ export default function SettingsPage() {
     phone?: string;
     gst_number?: string;
     logo_url?: string;
+    id_prefix?: string;
     subscription_tier?: string;
     orders_this_month?: number;
     subscription_end_date?: string;
@@ -109,7 +110,8 @@ export default function SettingsPage() {
         city: tenant.city,
         phone: tenant.phone,
         gst_number: tenant.gst_number,
-        logo_url: tenant.logo_url
+        logo_url: tenant.logo_url,
+        id_prefix: tenant.id_prefix
       });
       alert(t("Settings saved successfully!", "సెట్టింగ్‌లు విజయవంతంగా సేవ్ చేయబడ్డాయి!"));
     } catch (err) {
@@ -380,6 +382,17 @@ export default function SettingsPage() {
                             onChange={(e) => setTenant(prev => prev ? { ...prev, gst_number: e.target.value } : null)}
                             className="w-full p-3.5 rounded-xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-300" 
                           />
+                      </div>
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1 flex items-center gap-1"><Hash className="w-3 h-3" /> {t("Order ID Prefix", "ఆర్డర్ ID ప్రిఫిక్స్")}</label>
+                          <input 
+                            type="text" 
+                            value={tenant?.id_prefix || ""} 
+                            placeholder="e.g. AG"
+                            onChange={(e) => setTenant(prev => prev ? { ...prev, id_prefix: e.target.value.toUpperCase() } : null)}
+                            className="w-full p-3.5 rounded-xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-300" 
+                          />
+                          <p className="text-[9px] text-gray-400 px-1 italic">{t("Used for simple order numbering (e.g. AG-001)", "సాధారణ ఆర్డర్ నంబరింగ్ కోసం ఉపయోగించబడుతుంది (ఉదా: AG-001)")}</p>
                       </div>
                       
                       <div className="md:col-span-2 bg-blue-50/50 p-6 rounded-2xl border border-blue-100/50 mt-4">

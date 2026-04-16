@@ -71,6 +71,7 @@ interface OrderInsertData {
   proofing_token?: string;
   inventory_id?: string | null;
   material_units_per_order?: number;
+  friendly_id?: string | null;
 }
 
 export interface Order extends OrderInsertData {
@@ -226,6 +227,16 @@ export async function createOrder(data: OrderData) {
     invoice_number = invoiceData;
   }
 
+  // 4b. Generate Friendly Order ID
+  let friendly_id = null;
+  if (!superAdmin && tenant) {
+    const { data: generatedId } = await supabase.rpc('generate_simple_order_id', {
+      p_tenant_id: tenant.id,
+      p_prefix: tenant.id_prefix || 'ORD'
+    });
+    friendly_id = generatedId;
+  }
+
   // 5. Create Order
   const orderData: OrderInsertData = {
     customer_id: customerId,
@@ -255,6 +266,7 @@ export async function createOrder(data: OrderData) {
     file_url: data.file_url || null,
     inventory_id: data.inventory_id || null,
     material_units_per_order: data.material_units_per_order || 1,
+    friendly_id: friendly_id,
   };
   
   // Only add tenant_id if not super admin
@@ -751,7 +763,7 @@ export async function updateOrderProof(orderId: string, data: { proof_image_url?
   return updatedOrder;
 }
 
-export async function updateTenantDetails(data: { name?: string, city?: string, phone?: string, gst_number?: string, logo_url?: string }) {
+export async function updateTenantDetails(data: { name?: string, city?: string, phone?: string, gst_number?: string, logo_url?: string, id_prefix?: string }) {
   const supabase = createClient();
   const tenant = await getCurrentTenant(supabase);
   if (!tenant) throw new Error("Unauthorized");
