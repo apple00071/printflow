@@ -104,7 +104,8 @@ export default function DashboardLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const quickActionRef = useRef<HTMLDivElement>(null);
+  const desktopQuickActionRef = useRef<HTMLDivElement>(null);
+  const mobileQuickActionRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
   const { language, setLanguage, t } = useLanguage();
@@ -112,7 +113,10 @@ export default function DashboardLayout({
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (quickActionRef.current && !quickActionRef.current.contains(event.target as Node)) {
+      const isOutsideDesktop = desktopQuickActionRef.current && !desktopQuickActionRef.current.contains(event.target as Node);
+      const isOutsideMobile = mobileQuickActionRef.current && !mobileQuickActionRef.current.contains(event.target as Node);
+      
+      if (isOutsideDesktop && isOutsideMobile) {
         setIsQuickActionOpen(false);
       }
     }
@@ -156,8 +160,6 @@ export default function DashboardLayout({
   const quickActions = [
     { label: t("New Order", "కొత్త ఆర్డర్", "नया ऑर्डर"), href: "/dashboard/orders/new", icon: ClipboardList },
     { label: t("New Quotation", "కొత్త కొటేషన్", "नया कोटेशन"), href: "/dashboard/quotations/new", icon: FileText },
-    { label: t("Add Customer", "కస్టమర్ ను చేర్చు", "ग्राहक जोड़ें"), href: "/dashboard/customers", icon: Users },
-    { label: t("Add Expense", "ఖర్చును చేర్చు", "खर्च जोड़ें"), href: "/dashboard/expenses", icon: Wallet },
   ];
 
   return (
@@ -258,7 +260,7 @@ export default function DashboardLayout({
 
           <div className="flex items-center gap-4">
             {/* Quick Actions (Desktop) */}
-            <div className="relative hidden sm:block" ref={quickActionRef}>
+            <div className="relative hidden sm:block" ref={desktopQuickActionRef}>
               <button 
                 onClick={() => setIsQuickActionOpen(!isQuickActionOpen)}
                 className="flex items-center gap-2 px-3 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all shadow-sm"
@@ -274,22 +276,24 @@ export default function DashboardLayout({
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t("Create New", "కొత్తది సృష్టించు", "नया बनाएँ")}</p>
                   </div>
                   {quickActions.map((action, i) => (
-                    <Link
+                    <button
                       key={i}
-                      href={action.href}
-                      onClick={() => setIsQuickActionOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-primary transition-colors"
+                      onClick={() => {
+                        setIsQuickActionOpen(false);
+                        router.push(action.href);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-primary transition-colors"
                     >
                       <action.icon className="w-4 h-4" />
                       {action.label}
-                    </Link>
+                    </button>
                   ))}
                 </div>
               )}
             </div>
 
             {/* Quick Actions (Mobile FAB) */}
-            <div className="fixed bottom-6 right-6 z-[60] sm:hidden" ref={quickActionRef}>
+            <div className="fixed bottom-6 right-6 z-[60] sm:hidden" ref={mobileQuickActionRef}>
                <button 
                   onClick={() => setIsQuickActionOpen(!isQuickActionOpen)}
                   className="w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all outline-none"
@@ -297,21 +301,23 @@ export default function DashboardLayout({
                   <Plus className={cn("w-7 h-7 transition-transform duration-300", isQuickActionOpen && "rotate-45")} />
                </button>
 
-               {isQuickActionOpen && (
+                {isQuickActionOpen && (
                  <div className="absolute bottom-16 right-0 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 mb-2 animate-in slide-in-from-bottom-5 fade-in">
                     <div className="px-4 py-2 border-b border-gray-50 mb-1">
                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t("Create New", "కొత్తది సృష్టించు", "नया बनाएँ")}</p>
                     </div>
                     {quickActions.map((action, i) => (
-                      <Link
+                      <button
                         key={i}
-                        href={action.href}
-                        onClick={() => setIsQuickActionOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-600 active:bg-gray-100 transition-colors"
+                        onClick={() => {
+                          setIsQuickActionOpen(false);
+                          router.push(action.href);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-600 active:bg-gray-100 transition-colors"
                       >
                         <action.icon className="w-5 h-5 text-primary" />
                         {action.label}
-                      </Link>
+                      </button>
                     ))}
                  </div>
                )}

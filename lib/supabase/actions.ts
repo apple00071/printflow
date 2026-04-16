@@ -230,10 +230,16 @@ export async function createOrder(data: OrderData) {
   // 4b. Generate Friendly Order ID
   let friendly_id = null;
   if (!superAdmin && tenant) {
-    const { data: generatedId } = await supabase.rpc('generate_simple_order_id', {
+    const { data: generatedId, error: rpcError } = await supabase.rpc('generate_simple_order_id', {
       p_tenant_id: tenant.id,
       p_prefix: tenant.id_prefix || 'ORD'
     });
+    
+    if (rpcError) {
+      console.error('Error generating friendly ID:', rpcError);
+      // Fallback or throw a more descriptive error
+      throw new Error(`Failed to generate Order ID: ${rpcError.message}. Please ensure the database migrations have been applied.`);
+    }
     friendly_id = generatedId;
   }
 

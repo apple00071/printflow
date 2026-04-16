@@ -1,22 +1,44 @@
 -- Migration: Add tenant ID prefix for custom order identifiers
--- This allows each tenant to have a unique prefix (e.g., AG, PF) for their orders.
+-- This consolidated script ensures all necessary tables and columns exist.
 
--- 1. Add prefix column to tenants table
+-- 1. Create document_counters table if it doesn't exist
+CREATE TABLE IF NOT EXISTS document_counters (
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  prefix TEXT NOT NULL,
+  period TEXT NOT NULL,
+  last_number INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (tenant_id, prefix, period)
+);
+
+-- 2. Enable RLS and setup policy
+ALTER TABLE document_counters ENABLE ROW LEVEL SECURITY;
+
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_document_counters' AND tablename = 'document_counters') THEN
+        CREATE POLICY "tenant_isolation_document_counters" ON document_counters
+          FOR ALL USING (tenant_id = get_tenant_id())
+          WITH CHECK (tenant_id = get_tenant_id());
+    END IF;
+END $$;
+
+-- 3. Add prefix column to tenants table
 ALTER TABLE tenants ADD COLUMN IF NOT EXISTS id_prefix TEXT;
 
--- 2. Set default prefixes for existing tenants based on their name
+-- 4. Set default prefixes for existing tenants based on their name
 UPDATE tenants 
 SET id_prefix = UPPER(SUBSTRING(name FROM 1 FOR 3))
 WHERE id_prefix IS NULL;
 
--- 3. Ensure friendly_id exists on orders table
--- (Research indicates it exists, but adding IF NOT EXISTS for safety)
+-- 5. Ensure friendly_id exists on orders table
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS friendly_id TEXT;
 
--- 4. Create an index for faster lookups by friendly_id
+-- 6. Create an index for faster lookups by friendly_id
 CREATE INDEX IF NOT EXISTS idx_orders_friendly_id ON orders(friendly_id);
 
--- 5. Add simple, continuous order ID generation function
+-- 7. Add simple, continuous order ID generation function
 CREATE OR REPLACE FUNCTION generate_simple_order_id(p_tenant_id UUID, p_prefix TEXT)
 RETURNS TEXT AS $$
 DECLARE
