@@ -141,6 +141,7 @@ export default function DashboardLayout({
     router.push("/login");
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getPageTitle = () => {
     if (pathname === "/admin") return "Super Admin";
     
@@ -152,7 +153,7 @@ export default function DashboardLayout({
     if (pathname.includes("/expenses")) return t("Expenses", "ఖర్చులు", "खर्चे");
     if (pathname.includes("/orders/new")) return t("New Order", "కొత్త ఆర్డర్", "नया ऑर्डर");
     if (pathname.includes("/orders/")) return t("Order Details", "ఆర్డర్ వివరాలు", "ऑर्डर विवरण");
-    if (pathname.includes("/customers/")) return t("Customer Profile", "కస్టమర్ ప్రొఫైల్", "ग्राहक प्रोफाइल");
+    if (pathname.includes("/customers/")) return t("Customer Profile", "కస్టమర్ ప్రొఫైల్", "ग्राहक प्रोफाईल");
     
     return t("Dashboard", "డాష్బోర్డ్", "डैशबोर्ड");
   };
@@ -239,7 +240,7 @@ export default function DashboardLayout({
               <button onClick={() => setIsSidebarOpen(true)} className="p-2 lg:hidden text-gray-600 hover:bg-gray-100 rounded-md">
                 <Menu className="w-6 h-6" />
               </button>
-              <h1 className="text-lg font-bold text-gray-900 uppercase tracking-tight hidden md:block">{getPageTitle()}</h1>
+              {/* Page heading removed as requested - page title is handled inside the page component for more control */}
             </div>
 
             {/* Global Search Interface */}
@@ -263,7 +264,7 @@ export default function DashboardLayout({
             <div className="relative hidden sm:block" ref={desktopQuickActionRef}>
               <button 
                 onClick={() => setIsQuickActionOpen(!isQuickActionOpen)}
-                className="flex items-center gap-2 px-3 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all shadow-sm"
+                className="flex items-center gap-2 px-3 py-2 bg-primary text-white rounded-xl text-xs font-semibold hover:bg-primary/90 transition-all shadow-sm"
               >
                 <Plus className="w-4 h-4" />
                 <span>{t("Quick Action", "త్వరిత చర్య", "त्वरित कार्रवाई")}</span>
@@ -304,7 +305,7 @@ export default function DashboardLayout({
                 {isQuickActionOpen && (
                  <div className="absolute bottom-16 right-0 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 mb-2 animate-in slide-in-from-bottom-5 fade-in">
                     <div className="px-4 py-2 border-b border-gray-50 mb-1">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t("Create New", "కొత్తది సృష్టించు", "नया बनाएँ")}</p>
+                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{t("Create New", "కొత్తది సృష్టించు", "नया बनाएँ")}</p>
                     </div>
                     {quickActions.map((action, i) => (
                       <button
@@ -331,9 +332,9 @@ export default function DashboardLayout({
             <div className="h-8 w-px bg-gray-200 mx-1 hidden sm:block"></div>
 
             <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100">
-               <button onClick={() => setLanguage("en")} className={cn("px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all", language === "en" ? "bg-white text-primary shadow-sm" : "text-gray-400 hover:text-gray-600")}>EN</button>
-               <button onClick={() => setLanguage("te")} className={cn("px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all", language === "te" ? "bg-primary text-white shadow-sm" : "text-gray-400 hover:text-gray-600")}>తె</button>
-               <button onClick={() => setLanguage("hi")} className={cn("px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all", language === "hi" ? "bg-orange text-white shadow-sm" : "text-gray-400 hover:text-gray-600")}>हि</button>
+               <button onClick={() => setLanguage("en")} className={cn("px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all", language === "en" ? "bg-white text-primary shadow-sm" : "text-gray-400 hover:text-gray-600")}>EN</button>
+               <button onClick={() => setLanguage("te")} className={cn("px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all", language === "te" ? "bg-primary text-white shadow-sm" : "text-gray-400 hover:text-gray-600")}>తె</button>
+               <button onClick={() => setLanguage("hi")} className={cn("px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all", language === "hi" ? "bg-orange text-white shadow-sm" : "text-gray-400 hover:text-gray-600")}>हि</button>
             </div>
           </div>
         </header>

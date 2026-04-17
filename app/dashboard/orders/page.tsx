@@ -140,7 +140,7 @@ export default function OrdersPage() {
                 <tr>
                   <th className="px-6 py-4 text-xs  text-gray-500 uppercase tracking-wider">{t("Order ID", "ఆర్డర్ ID")}</th>
                   <th className="px-6 py-4 text-xs  text-gray-500 uppercase tracking-wider">{t("Customer", "కస్టమర్")}</th>
-                  <th className="px-6 py-4 text-xs  text-gray-500 uppercase tracking-wider">{t("Job Details", "ఆర్డర్ వివరాలు")}</th>
+                  <th className="px-6 py-4 text-xs  text-gray-500 uppercase tracking-wider">{t("Order Details", "ఆర్డర్ వివరాలు")}</th>
                   <th className="px-6 py-4 text-xs  text-gray-500 uppercase tracking-wider">{t("Status", "స్థితి")}</th>
                   <th className="px-6 py-4 text-xs  text-gray-500 uppercase tracking-wider text-right">{t("Amount", "మొత్తం")}</th>
                   <th className="px-6 py-4 text-xs  text-gray-500 uppercase tracking-wider text-right">{t("Actions", "చర్యలు")}</th>

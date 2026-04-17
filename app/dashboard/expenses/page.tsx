@@ -17,6 +17,7 @@ import { getCurrentTenant } from "@/lib/tenant";
 import { formatCurrency } from "@/lib/utils/format";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import CustomSelect from "@/components/ui/CustomSelect";
+import Portal from "@/components/ui/Portal";
 
 interface Expense {
   id: string;
@@ -250,17 +251,19 @@ export default function ExpensesPage() {
 
       {/* Add Expense Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-6 bg-primary text-white">
-              <h2 className="text-xl font-bold">{t("Add New Expense", "కొత్త ఖర్చును జోడించండి", "नया खर्चा जोड़ें")}</h2>
-              <p className="text-white/60 text-xs">{t("Enter transaction details below", "వివరాలను నమోదు చేయండి", "नीचे विवरण दर्ज करें")}</p>
-            </div>
+        <Portal>
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+            <div className="absolute inset-0" onClick={() => setIsModalOpen(false)} />
+            <div className="relative bg-white rounded-3xl w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
+              <div className="p-6 border-b border-gray-100">
+                <h2 className="text-xl font-semibold text-gray-900">{t("Add New Expense", "కొత్త ఖర్చును జోడించండి", "नया खर्चा जोड़ें")}</h2>
+                <p className="text-gray-400 text-xs">{t("Enter transaction details below", "వివరాలను నమోదు చేయండి", "नीचे विवरण दर्ज करें")}</p>
+              </div>
             
             <form onSubmit={handleAddExpense} className="p-6 space-y-4">
                <div className="grid grid-cols-2 gap-4">
                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t("Amount", "మొత్తం", "राशि")}</label>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-1">{t("Amount", "మొత్తం", "राशि")}</label>
                     <div className="relative">
                         <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input 
@@ -268,13 +271,13 @@ export default function ExpensesPage() {
                             required
                             value={form.amount}
                             onChange={e => setForm({...form, amount: e.target.value})}
-                            className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:border-primary transition-all font-bold"
+                            className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:border-primary transition-all"
                             placeholder="0.00"
                         />
                     </div>
                  </div>
                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t("Date", "తేదీ", "तारीख")}</label>
+                    <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{t("Date", "తేదీ", "तारीख")}</label>
                     <input 
                         type="date" 
                         required
@@ -293,14 +296,14 @@ export default function ExpensesPage() {
                />
 
                <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t("Payment Method", "పద్ధతి", "भुगतान का तरीका")}</label>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-1">{t("Payment Method", "పద్ధతి", "भुगतान का तरीका")}</label>
                     <div className="flex gap-2">
                         {["CASH", "UPI", "BANK"].map(m => (
                             <button
                                 key={m}
                                 type="button"
                                 onClick={() => setForm({...form, payment_method: m})}
-                                className={`flex-1 py-2 rounded-xl text-[10px] font-bold transition-all ${form.payment_method === m ? 'bg-primary text-white' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
+                                className={`flex-1 py-2 rounded-xl text-[10px] font-medium transition-all ${form.payment_method === m ? 'bg-primary text-white shadow-md' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
                             >
                                 {m}
                             </button>
@@ -309,7 +312,7 @@ export default function ExpensesPage() {
                </div>
 
                <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t("Description", "వివరాలు", "विवरण")}</label>
+                    <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{t("Description", "వివరాలు", "विवरण")}</label>
                     <textarea 
                         value={form.description}
                         onChange={e => setForm({...form, description: e.target.value})}
@@ -322,14 +325,14 @@ export default function ExpensesPage() {
                   <button 
                     type="button" 
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-all"
+                    className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-semibold hover:bg-gray-200 transition-all"
                   >
                     {t("Cancel", "రద్దు", "रद्द करें")}
                   </button>
                   <button 
                     type="submit" 
                     disabled={saving}
-                    className="flex-2 bg-primary text-white px-8 py-3 rounded-xl font-bold hover:bg-primary/90 transition-all shadow-md disabled:bg-primary/60 flex items-center justify-center min-w-[120px]"
+                    className="flex-2 bg-primary text-white px-8 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:bg-primary/60 flex items-center justify-center min-w-[120px]"
                   >
                     {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : t("Save Expense", "సేవ్ చేయండి", "सेव करें")}
                   </button>
@@ -337,6 +340,7 @@ export default function ExpensesPage() {
             </form>
           </div>
         </div>
+        </Portal>
       )}
     </div>
   );

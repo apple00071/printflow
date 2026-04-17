@@ -20,6 +20,7 @@ interface CustomSelectProps {
 
 export default function CustomSelect({ options, value, onChange, label, placeholder, className }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [openUp, setOpenUp] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const normalizedOptions = options.map(opt => 
@@ -38,21 +39,31 @@ export default function CustomSelect({ options, value, onChange, label, placehol
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const toggleOpen = () => {
+    if (!isOpen && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      // If less than 250px space below, open up
+      setOpenUp(spaceBelow < 250);
+    }
+    setIsOpen(!isOpen);
+  };
+
   return (
     <div className={cn("space-y-1 relative", className)} ref={containerRef}>
       {label && (
-        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">
+        <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-1">
           {label}
         </label>
       )}
       
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggleOpen}
         className={cn(
           "w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm text-left flex items-center justify-between transition-all outline-none",
           isOpen ? "border-primary ring-2 ring-primary/5 bg-white shadow-sm" : "hover:bg-gray-100",
-          "font-bold text-gray-900"
+          "font-semibold text-gray-900"
         )}
       >
         <span>{selectedOption ? selectedOption.label : (placeholder || "Select...")}</span>
@@ -60,7 +71,10 @@ export default function CustomSelect({ options, value, onChange, label, placehol
       </button>
 
       {isOpen && (
-        <div className="absolute z-[100] w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className={cn(
+          "absolute z-[100] w-full bg-white border border-gray-100 rounded-xl shadow-2xl overflow-hidden animate-in fade-in duration-200",
+          openUp ? "bottom-full mb-2 slide-in-from-bottom-2" : "top-full mt-2 slide-in-from-top-2"
+        )}>
           <div className="max-h-60 overflow-y-auto py-1">
             {normalizedOptions.map((option) => (
               <button
@@ -71,8 +85,8 @@ export default function CustomSelect({ options, value, onChange, label, placehol
                   setIsOpen(false);
                 }}
                 className={cn(
-                  "w-full px-4 py-2.5 text-sm text-left flex items-center justify-between transition-colors",
-                  value === option.value ? "bg-primary/5 text-primary font-bold" : "text-gray-600 hover:bg-gray-50"
+                  "w-full px-4 py-3 text-sm text-left flex items-center justify-between transition-colors",
+                  value === option.value ? "bg-primary/5 text-primary font-semibold" : "text-gray-600 hover:bg-gray-50"
                 )}
               >
                 {option.label}

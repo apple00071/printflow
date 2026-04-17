@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   Printer, 
   Send, 
@@ -19,14 +19,17 @@ import { createClient } from "@/lib/supabase/client";
 import { getTenantBySlug } from "@/lib/tenant";
 
 const jobTypes = [
-  "Business Cards / విజిటింగ్ కార్డ్స్",
-  "Banners / బ్యానర్లు",
-  "Letterheads / లెటర్ హెడ్స్",
-  "Wedding Cards / పెళ్లి శుభలేఖలు",
-  "Pamphlets / పాంప్లెట్స్",
-  "Stickers / స్టిక్కర్లు",
-  "Flex Prints / ఫ్లెక్స్ ప్రింట్స్",
-  "Other / ఇతరమైనవి",
+  "Business Cards",
+  "Banners",
+  "Letterheads",
+  "Wedding Cards",
+  "Pamphlets",
+  "Stickers",
+  "Flex Prints",
+  "ID Cards",
+  "Calendars",
+  "Brochures",
+  "Other",
 ];
 
 interface Tenant {
@@ -47,7 +50,7 @@ export default function TenantPublicOrderPage({ params }: { params: { slug: stri
   const [formData, setFormData] = useState({
     customerName: "",
     phone: "",
-    jobType: "Business Cards / విజిటింగ్ కార్డ్స్",
+    jobType: "",
     quantity: "1",
     size: "",
     paperType: "",
@@ -56,6 +59,25 @@ export default function TenantPublicOrderPage({ params }: { params: { slug: stri
     instructions: "",
     designFile: null as File | null,
   });
+
+  const [productQuery, setProductQuery] = useState("");
+  const [showProductSuggestions, setShowProductSuggestions] = useState(false);
+  const [highlightedProduct, setHighlightedProduct] = useState(-1);
+  const productContainerRef = useRef<HTMLDivElement>(null);
+
+  const filteredProducts = productQuery.length < 3
+    ? jobTypes
+    : jobTypes.filter(j => j.toLowerCase().includes(productQuery.toLowerCase()));
+
+  useEffect(() => {
+    function handleOutsideClick(e: MouseEvent) {
+      if (productContainerRef.current && !productContainerRef.current.contains(e.target as Node)) {
+        setShowProductSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
 
   useEffect(() => {
     async function loadTenant() {
@@ -226,20 +248,74 @@ export default function TenantPublicOrderPage({ params }: { params: { slug: stri
             <div className="space-y-4">
               <div className="flex items-center gap-2 border-b border-gray-50 pb-3">
                 <Layout className="w-4 h-4 text-blue-600" />
-                <h3 className="text-[10px] font-normal text-gray-400 uppercase tracking-widest leading-none">Job Details / పని వివరాలు</h3>
+                <h3 className="text-[10px] font-normal text-gray-400 uppercase tracking-widest leading-none">Order Details / ఆర్డర్ వివరాలు</h3>
               </div>
               <div className="space-y-5">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-normal text-gray-400 uppercase tracking-widest ml-1">Job Type / పని రకం</label>
-                  <select
-                    value={formData.jobType}
-                    onChange={(e) => setFormData({...formData, jobType: e.target.value})}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:bg-white outline-none appearance-none font-normal text-sm"
-                  >
-                    {jobTypes.map((type) => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
+                <div className="space-y-2" ref={productContainerRef}>
+                  <label className="text-[10px] font-normal text-gray-400 uppercase tracking-widest ml-1">Product / ఉత్పత్తి పేరు</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      autoComplete="off"
+                      value={productQuery || formData.jobType}
+                      placeholder="e.g. Business Cards, Banners..."
+                      onChange={(e) => {
+                        setProductQuery(e.target.value);
+                        setFormData({...formData, jobType: e.target.value});
+                        setShowProductSuggestions(true);
+                        setHighlightedProduct(-1);
+                      }}
+                      onFocus={() => setShowProductSuggestions(true)}
+                      onKeyDown={(e) => {
+                        if (!showProductSuggestions) return;
+                        if (e.key === "ArrowDown") { e.preventDefault(); setHighlightedProduct(i => Math.min(i + 1, filteredProducts.length - 1)); }
+                        else if (e.key === "ArrowUp") { e.preventDefault(); setHighlightedProduct(i => Math.max(i - 1, 0)); }
+                        else if (e.key === "Enter" && highlightedProduct >= 0) { e.preventDefault(); const p = filteredProducts[highlightedProduct]; setFormData({...formData, jobType: p}); setProductQuery(p); setShowProductSuggestions(false); }
+                        else if (e.key === "Escape") setShowProductSuggestions(false);
+                      }}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:bg-white focus:border-blue-500 outline-none transition-all font-normal text-sm pr-8"
+                    />
+                    {showProductSuggestions && filteredProducts.length > 0 && (
+                      <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden">
+                        <div className="max-h-52 overflow-y-auto py-1">
+                          {filteredProducts.map((product, idx) => {
+                            const query = productQuery;
+                            const matchIdx = product.toLowerCase().indexOf(query.toLowerCase());
+                            return (
+                              <button
+                                key={product}
+                                type="button"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  setFormData({...formData, jobType: product});
+                                  setProductQuery(product);
+                                  setShowProductSuggestions(false);
+                                }}
+                                onMouseEnter={() => setHighlightedProduct(idx)}
+                                className={`w-full px-4 py-3 text-sm text-left transition-colors ${
+                                  idx === highlightedProduct ? "bg-blue-50 text-blue-700 font-medium" : "text-gray-700 hover:bg-gray-50"
+                                }`}
+                              >
+                                {query.length >= 3 && matchIdx !== -1 ? (
+                                  <span>
+                                    {product.slice(0, matchIdx)}
+                                    <strong className="text-blue-600">{product.slice(matchIdx, matchIdx + query.length)}</strong>
+                                    {product.slice(matchIdx + query.length)}
+                                  </span>
+                                ) : product}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    {showProductSuggestions && productQuery.length >= 3 && filteredProducts.length === 0 && (
+                      <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-100 rounded-2xl shadow-xl px-4 py-3">
+                        <p className="text-xs text-gray-500">&quot;{productQuery}&quot; will be noted as the product.</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                    <div className="space-y-2">

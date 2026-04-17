@@ -254,7 +254,7 @@ export default function DashboardPage() {
 
             {/* Job Types */}
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 min-h-[350px]">
-              <h2 className="text-lg font-bold text-gray-900 mb-8">{t("Revenue by Job Type", "ఆర్డర్ రకాలు", "काम के प्रकार आय")}</h2>
+              <h2 className="text-lg font-bold text-gray-900 mb-8">{t("Revenue by Product", "ఆర్డర్ రకాలు", "उत्पाद के अनुसार आय")}</h2>
               {loading ? (
                   <div className="flex flex-col items-center justify-center p-10 text-gray-400">
                       <Loader2 className="w-8 h-8 animate-spin mb-2" />
@@ -282,7 +282,7 @@ export default function DashboardPage() {
               <thead>
                  <tr className="border-b border-gray-50">
                     <th className="pb-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("Customer", "కస్టమర్", "ग्राहक")}</th>
-                    <th className="pb-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("Job Type", "పని రకం", "काम का प्रकार")}</th>
+                    <th className="pb-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("Product", "ఉత్పత్తి", "उत्पाद")}</th>
                     <th className="pb-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("Status", "స్థితి", "स्थिति")}</th>
                     <th className="pb-4 text-right text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("Amount", "మొత్తం", "मात्रा")}</th>
                  </tr>

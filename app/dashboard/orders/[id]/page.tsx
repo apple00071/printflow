@@ -119,20 +119,38 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
   );
 
   const getWhatsAppLink = () => {
-    const rawTotal = order.total_with_gst || order.total_amount;
-    const total = Math.round(rawTotal * 100) / 100;
-    const balance = Math.round((total - order.advance_paid) * 100) / 100;
+    if (!order) return "#";
     
+    const rawTotal = order.total_with_gst || order.total_amount || 0;
+    const advance = Number(order.advance_paid || 0);
+    const balance = Math.round((rawTotal - advance) * 100) / 100;
+    
+    const customerName = order.customers?.name || "Customer";
+    const jobType = order.job_type || "order";
     const shopName = order.tenants?.name || PRESS_CONFIG.name;
-    const shopCity = order.tenants?.city || "Chirala";
+    const shopCity = order.tenants?.city || "";
 
+    // Clean phone number: remove any non-digit characters
+    let phone = order.customers?.phone?.replace(/\D/g, '') || "";
+    
+    // Auto-prepend 91 (India) if it's a 10-digit number
+    if (phone.length === 10) {
+      phone = `91${phone}`;
+    }
+    
+    // Use professional currency formatting for the message
+    const formattedTotal = formatCurrency(rawTotal).replace('₹', 'Rs.');
+    const formattedAdvance = formatCurrency(advance).replace('₹', 'Rs.');
+    const formattedBalance = formatCurrency(balance).replace('₹', 'Rs.');
+    
     let message = "";
     if (language === "te") {
-      message = `నమస్కారం ${order.customers?.name} గారు, మీ ${order.job_type} ఆర్డర్ సిద్ధంగా ఉంది. మొత్తం: ₹${total}. అడ్వాన్స్: ₹${order.advance_paid}. బకాయి: ₹${balance}. - ${shopName}, ${shopCity}.`;
+      message = `నమస్కారం ${customerName} గారు, మీ ${jobType} ఆర్డర్ సిద్ధంగా ఉంది. మొత్తం: ${formattedTotal}. అడ్వాన్స్: ${formattedAdvance}. బకాయి: ${formattedBalance}. - ${shopName}${shopCity ? `, ${shopCity}` : ''}.`;
     } else {
-      message = `Hi ${order.customers?.name}, your order of ${order.job_type} is ready for pickup. Total: ₹${total}. Advance: ₹${order.advance_paid}. Balance: ₹${balance}. - ${shopName}, ${shopCity}`;
+      message = `Hi ${customerName}, your order of ${jobType} is ready for pickup. Total: ${formattedTotal}. Advance: ${formattedAdvance}. Balance: ${formattedBalance}. - ${shopName}${shopCity ? `, ${shopCity}` : ''}`;
     }
-    return `https://wa.me/${order.customers?.phone}?text=${encodeURIComponent(message)}`;
+    
+    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
   };
 
   return (

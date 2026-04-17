@@ -13,6 +13,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getCurrentTenant } from "@/lib/tenant";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import CustomSelect from "@/components/ui/CustomSelect";
+import Portal from "@/components/ui/Portal";
 
 interface InventoryItem {
   id: string;
@@ -246,44 +247,46 @@ export default function InventoryPage() {
 
       {/* Add New Item Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in duration-200">
-             <div className="p-6 bg-primary text-white">
-                <h2 className="text-xl font-bold">{t("New Stock Item", "కొత్త స్టాక్ ఐటమ్", "नया स्टॉक आइटम")}</h2>
+        <Portal>
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+            <div className="absolute inset-0" onClick={() => setIsModalOpen(false)} />
+            <div className="relative bg-white rounded-3xl w-full max-w-md shadow-2xl animate-in zoom-in duration-200">
+             <div className="p-6 border-b border-gray-100">
+                <h2 className="text-xl font-semibold text-gray-900">{t("New Stock Item", "కొత్త స్టాక్ ఐటమ్", "नया स्टॉक आइटम")}</h2>
              </div>
              
              <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("Item Name", "పేరు", "नाम")}</label>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-1">{t("Item Name", "పేరు", "नाम")}</label>
                     <input 
                         type="text" 
                         required
                         placeholder="e.g. 12x18 Glossy Paper"
                         value={form.name}
                         onChange={e => setForm({...form, name: e.target.value})}
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:border-primary transition-all font-bold"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:border-primary transition-all font-medium"
                     />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("Initial Quantity", "మొత్తం సంఖ్య", "प्रारंभिक मात्रा")}</label>
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-1">{t("Initial Quantity", "మొత్తం సంఖ్య", "प्रारंभिक मात्रा")}</label>
                         <input 
                             type="number" 
                             required
                             value={form.quantity}
                             onChange={e => setForm({...form, quantity: e.target.value})}
-                            className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:border-primary transition-all font-bold"
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:border-primary transition-all font-medium"
                         />
                     </div>
                     <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("Low Stock Limit", "కనీస పరిమితి", "कम स्टॉक सीमा")}</label>
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-1">{t("Low Stock Limit", "కనీస పరిమితి", "कम स्टॉक सीमा")}</label>
                         <input 
                             type="number" 
                             required
                             value={form.low_stock_limit}
                             onChange={e => setForm({...form, low_stock_limit: e.target.value})}
-                            className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:border-primary transition-all font-bold"
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:border-primary transition-all font-medium"
                         />
                     </div>
                 </div>
@@ -296,14 +299,15 @@ export default function InventoryPage() {
                 />
 
                 <div className="flex gap-3 pt-4">
-                    <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-3 bg-gray-100 text-gray-400 rounded-xl font-bold hover:bg-gray-200 transition-all">Cancel</button>
-                    <button type="submit" disabled={saving} className="flex-1 bg-primary text-white py-3 rounded-xl font-bold hover:bg-primary/90 transition-all flex items-center justify-center">
+                    <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-3 bg-gray-100 text-gray-400 rounded-xl font-semibold hover:bg-gray-200 transition-all">Cancel</button>
+                    <button type="submit" disabled={saving} className="flex-1 bg-primary text-white py-3 rounded-xl font-semibold hover:bg-primary/90 transition-all flex items-center justify-center shadow-lg shadow-primary/20">
                         {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Save Item"}
                     </button>
                 </div>
              </form>
           </div>
         </div>
+        </Portal>
       )}
     </div>
   );

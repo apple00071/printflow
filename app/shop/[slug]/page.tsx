@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   FileUp, 
   CheckCircle2, 
@@ -37,7 +37,7 @@ export default function ShopIntakePage({ params }: { params: { slug: string } })
   // Form State
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [jobType, setJobType] = useState("Visiting Cards");
+  const [jobType, setJobType] = useState("");
   const [quantity, setQuantity] = useState("1000");
   const [paperType, setPaperType] = useState("");
   const [size, setSize] = useState("");
@@ -47,7 +47,31 @@ export default function ShopIntakePage({ params }: { params: { slug: string } })
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Product autocomplete state
+  const productOptions = [
+    "Business Cards", "Visiting Cards", "Banners", "Flex Prints",
+    "Letterheads", "Wedding Cards", "Pamphlets", "Flyers",
+    "Bill Books", "Stickers", "ID Cards", "Calendars", "Brochures", "Other"
+  ];
+  const [productQuery, setProductQuery] = useState("");
+  const [showProductSuggestions, setShowProductSuggestions] = useState(false);
+  const [highlightedProduct, setHighlightedProduct] = useState(-1);
+  const productContainerRef = useRef<HTMLDivElement>(null);
+  const filteredProducts = productQuery.length < 3
+    ? productOptions
+    : productOptions.filter(p => p.toLowerCase().includes(productQuery.toLowerCase()));
+
   const supabase = createClient();
+
+  useEffect(() => {
+    function handleOutsideClick(e: MouseEvent) {
+      if (productContainerRef.current && !productContainerRef.current.contains(e.target as Node)) {
+        setShowProductSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
 
   useEffect(() => {
     async function fetchShopInfo() {
@@ -218,14 +242,74 @@ export default function ShopIntakePage({ params }: { params: { slug: string } })
                      <div className="p-8 space-y-10">
                         {/* Row 1: Category & Quantity */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                           <div className="space-y-2">
-                              <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-tight ml-0.5">Service Category</label>
-                              <select value={jobType} onChange={(e) => setJobType(e.target.value)} className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 outline-none focus:border-gray-900 transition-all cursor-pointer">
-                                 {["Visiting Cards", "Flyers / Art", "Banners / Flex", "Wedding Cards", "Bill Books", "Letterheads", "Other"].map(opt => (
-                                    <option key={opt}>{opt}</option>
-                                 ))}
-                              </select>
-                           </div>
+                            <div className="space-y-2" ref={productContainerRef}>
+                               <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-tight ml-0.5">Product</label>
+                               <div className="relative">
+                                 <input
+                                   type="text"
+                                   required
+                                   autoComplete="off"
+                                   value={productQuery || jobType}
+                                   placeholder="e.g. Business Cards, Banners..."
+                                   onChange={(e) => {
+                                     setProductQuery(e.target.value);
+                                     setJobType(e.target.value);
+                                     setShowProductSuggestions(true);
+                                     setHighlightedProduct(-1);
+                                   }}
+                                   onFocus={() => setShowProductSuggestions(true)}
+                                   onKeyDown={(e) => {
+                                     if (!showProductSuggestions) return;
+                                     if (e.key === "ArrowDown") { e.preventDefault(); setHighlightedProduct(i => Math.min(i + 1, filteredProducts.length - 1)); }
+                                     else if (e.key === "ArrowUp") { e.preventDefault(); setHighlightedProduct(i => Math.max(i - 1, 0)); }
+                                     else if (e.key === "Enter" && highlightedProduct >= 0) {
+                                       e.preventDefault();
+                                       const p = filteredProducts[highlightedProduct];
+                                       setJobType(p); setProductQuery(p); setShowProductSuggestions(false);
+                                     }
+                                     else if (e.key === "Escape") setShowProductSuggestions(false);
+                                   }}
+                                   className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 outline-none focus:border-gray-900 transition-all"
+                                 />
+                                 {showProductSuggestions && filteredProducts.length > 0 && (
+                                   <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden">
+                                     <div className="max-h-52 overflow-y-auto py-1">
+                                       {filteredProducts.map((product, idx) => {
+                                         const matchIdx = product.toLowerCase().indexOf(productQuery.toLowerCase());
+                                         return (
+                                           <button
+                                             key={product}
+                                             type="button"
+                                             onMouseDown={(e) => {
+                                               e.preventDefault();
+                                               setJobType(product); setProductQuery(product); setShowProductSuggestions(false);
+                                             }}
+                                             onMouseEnter={() => setHighlightedProduct(idx)}
+                                             className={cn(
+                                               "w-full px-4 py-2.5 text-sm text-left transition-colors font-medium",
+                                               idx === highlightedProduct ? "bg-gray-900 text-white" : "text-gray-700 hover:bg-gray-50"
+                                             )}
+                                           >
+                                             {productQuery.length >= 3 && matchIdx !== -1 ? (
+                                               <span>
+                                                 {product.slice(0, matchIdx)}
+                                                 <strong className={idx === highlightedProduct ? "text-white" : "text-gray-900"}>{product.slice(matchIdx, matchIdx + productQuery.length)}</strong>
+                                                 {product.slice(matchIdx + productQuery.length)}
+                                               </span>
+                                             ) : product}
+                                           </button>
+                                         );
+                                       })}
+                                     </div>
+                                   </div>
+                                 )}
+                                 {showProductSuggestions && productQuery.length >= 3 && filteredProducts.length === 0 && (
+                                   <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl px-4 py-3">
+                                     <p className="text-xs text-gray-500">&quot;{productQuery}&quot; will be saved as the product name.</p>
+                                   </div>
+                                 )}
+                               </div>
+                            </div>
                            <div className="space-y-2">
                               <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-tight ml-0.5 flex items-center gap-1.5"><Hash className="w-3 h-3" /> Quantity</label>
                               <input type="number" required value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="E.g. 1000" className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg outline-none focus:border-gray-900 transition-all text-sm font-medium" />

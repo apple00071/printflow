@@ -131,7 +131,7 @@ export default function CustomDatePicker({
                     h-8 w-8 flex items-center justify-center rounded-lg text-xs transition-all relative
                     ${!isCurrentMonth ? "text-gray-200" : "text-gray-600 hover:bg-primary/5 hover:text-primary"}
                     ${isSelected ? "bg-primary text-white hover:bg-primary hover:text-white font-medium" : ""}
-                    ${isTodayDay && !isSelected ? "text-primary font-bold after:absolute after:bottom-1 after:w-1 after:h-1 after:bg-primary after:rounded-full" : ""}
+                    ${isTodayDay && !isSelected ? "text-primary font-semibold after:absolute after:bottom-1 after:w-1 after:h-1 after:bg-primary after:rounded-full" : ""}
                   `}
                 >
                   {format(day, "d")}

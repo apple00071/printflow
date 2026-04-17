@@ -25,6 +25,7 @@ import { useLanguage } from "@/lib/context/LanguageContext";
 import { JOB_TYPE_DEFAULTS, DEFAULT_GST_RATES } from "@/lib/config";
 import CustomSelect from "@/components/ui/CustomSelect";
 import CustomDatePicker from "@/components/ui/CustomDatePicker";
+import ProductAutocomplete from "@/components/ui/ProductAutocomplete";
 import { parseOrderText, ParsedJobDetails } from "@/lib/parser";
 import { Sparkles, Settings2 } from "lucide-react";
 
@@ -273,7 +274,7 @@ export default function NewOrderPage() {
           <div className="flex items-center justify-between border-b border-gray-50 pb-3 mb-4">
             <div className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-primary" />
-              <h2 className="font-normal text-gray-900 uppercase tracking-wide text-sm">{t("Job Details", "ఆర్డర్ వివరాలు")}</h2>
+              <h2 className="font-normal text-gray-900 uppercase tracking-wide text-sm">{t("Order Details", "ఆర్డర్ వివరాలు")}</h2>
             </div>
             
             <button
@@ -299,18 +300,14 @@ export default function NewOrderPage() {
             <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs text-gray-500 uppercase">{t("Job Type", "పని రకం")}</label>
-                  <div className="relative">
-                    <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      list="job-types"
-                      type="text"
-                      required
-                      value={detectedSpecs.jobType || formData.jobType}
-                      onChange={(e) => setFormData({...formData, jobType: e.target.value})}
-                      className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
-                    />
-                  </div>
+                  <label className="text-xs text-gray-500 uppercase">{t("Product", "ఉత్పత్తి పేరు")}</label>
+                  <ProductAutocomplete
+                    value={detectedSpecs.jobType || formData.jobType}
+                    onChange={(val) => setFormData({...formData, jobType: val})}
+                    options={jobTypes.map(j => j.id)}
+                    placeholder={t("e.g. Business Cards, Banners...", "ఉదా: విజిటింగ్ కార్డ్స్, బ్యానర్లు...")}
+                    required
+                  />
                 </div>
               </div>
 
@@ -363,36 +360,21 @@ export default function NewOrderPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 {/* Previous Detailed Fields */}
                 <div className="space-y-1">
-                  <label className="text-xs  text-gray-500 uppercase">{t("Job Type", "పని రకం")}</label>
-                  <div className="relative">
-                    <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      list="job-types"
-                      type="text"
-                      required
-                      value={formData.jobType}
-                      onChange={(e) => {
-                        const newJobType = e.target.value;
-                        const defaults = JOB_TYPE_DEFAULTS[newJobType];
-                        setFormData(prev => ({
-                          ...prev,
-                          jobType: newJobType,
-                          ...(defaults ? {
-                            hsnCode: defaults.hsn,
-                            applyGST: true,
-                            gstRate: defaults.gst
-                          } : {})
-                        }));
-                      }}
-                      className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
-                      placeholder={t("e.g. Business Cards, Banners...", "ఉదా: విజిటింగ్ కార్డ్స్, బ్యానర్లు...")}
-                    />
-                    <datalist id="job-types">
-                      {jobTypes.map(t => (
-                        <option key={t.id} value={t.id}>{t.label}</option>
-                      ))}
-                    </datalist>
-                  </div>
+                  <label className="text-xs  text-gray-500 uppercase">{t("Product", "ఉత్పత్తి పేరు")}</label>
+                  <ProductAutocomplete
+                    value={formData.jobType}
+                    onChange={(val) => {
+                      const defaults = JOB_TYPE_DEFAULTS[val];
+                      setFormData(prev => ({
+                        ...prev,
+                        jobType: val,
+                        ...(defaults ? { hsnCode: defaults.hsn, applyGST: true, gstRate: defaults.gst } : {})
+                      }));
+                    }}
+                    options={jobTypes.map(j => j.id)}
+                    placeholder={t("e.g. Business Cards, Banners...", "ఉదా: విజిటింగ్ కార్డ్స్, బ్యానర్లు...")}
+                    required
+                  />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs  text-gray-500 uppercase">{t("Quantity", "పరిమాణం")}</label>
