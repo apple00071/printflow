@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  ArrowLeft, 
-  Printer, 
-  MessageSquare, 
-  CheckCircle2, 
+import {
+  ArrowLeft,
+  Printer,
+  MessageSquare,
+  CheckCircle2,
   Edit3,
   FileText,
   Loader2,
@@ -13,7 +13,9 @@ import {
   File as FileIcon,
   X,
   Upload,
-  Download
+  Download,
+  AlertCircle,
+  Copy
 } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
@@ -21,6 +23,8 @@ import { PRESS_CONFIG } from "@/lib/config";
 import { getOrder, updateOrderStatus, assignChallanNumber, Order } from "@/lib/supabase/actions";
 import AddPaymentModal from "@/components/dashboard/AddPaymentModal";
 import CustomDatePicker from "@/components/ui/CustomDatePicker";
+import Toast from "@/components/ui/Toast";
+import { useToast } from "@/hooks/useToast";
 
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -31,11 +35,14 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
   const { t, language } = useLanguage();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const [actualDeliveryDate, setActualDeliveryDate] = useState(new Date().toISOString().split('T')[0]);
+  const [confirmChallan, setConfirmChallan] = useState(false);
+  const { toast, showToast, dismissToast } = useToast();
 
   const STATUS_STEPS = ["RECEIVED", "DESIGNING", "PRINTING", "READY", "DELIVERED"];
   const statuses = [
@@ -48,11 +55,12 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
 
   const fetchOrder = async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const data = await getOrder(params.id);
       setOrder(data);
     } catch {
-      console.error("Error fetching order");
+      setFetchError(t("Failed to load order. Please check your connection and try again.", "ఆర్డర్ లోడ్ చేయడం విఫలమైంది. మీ కనెక్షన్ తనిఖీ చేసి మళ్ళీ ప్రయత్నించండి."));
     } finally {
       setLoading(false);
     }
@@ -65,8 +73,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
 
   const handleStatusUpdate = async (newStatus: string) => {
     if (!order) return;
-    
-    // If status is DELIVERED, and we don't have a date yet, show the modal
+
     if (newStatus === "DELIVERED" && !order.actual_delivery_date) {
       setShowDeliveryModal(true);
       return;
@@ -75,13 +82,14 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
     setUpdating(true);
     try {
       await updateOrderStatus(order.id, newStatus, newStatus === "DELIVERED" ? actualDeliveryDate : undefined);
-      setOrder({ 
-        ...order, 
-        status: newStatus, 
-        actual_delivery_date: newStatus === "DELIVERED" ? (actualDeliveryDate || order.actual_delivery_date) : null 
+      setOrder({
+        ...order,
+        status: newStatus,
+        actual_delivery_date: newStatus === "DELIVERED" ? (actualDeliveryDate || order.actual_delivery_date) : null
       } as Order);
+      showToast(t("Status updated", "స్థితి నవీకరించబడింది"), "success");
     } catch {
-      console.error("Error updating status");
+      showToast(t("Failed to update status. Please try again.", "స్థితి నవీకరించడం విఫలమైంది."), "error");
     } finally {
       setUpdating(false);
     }
@@ -89,13 +97,14 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
 
   const handleGenerateChallan = async () => {
     if (!order) return;
+    setConfirmChallan(false);
     setUpdating(true);
     try {
       const updatedOrder = await assignChallanNumber(order.id);
       setOrder(updatedOrder as Order);
-    } catch (error) {
-      console.error("Error generating challan:", error);
-      alert("Failed to generate challan");
+      showToast(t("Challan generated successfully", "చలాన్ విజయవంతంగా రూపొందించబడింది"), "success");
+    } catch {
+      showToast(t("Failed to generate challan. Please try again.", "చలాన్ రూపొందించడం విఫలమైంది."), "error");
     } finally {
       setUpdating(false);
     }
@@ -105,6 +114,19 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
     <div className="flex flex-col items-center justify-center p-20 text-gray-400">
        <Loader2 className="w-10 h-10 animate-spin mb-4 text-primary" />
        <p className="text-sm font-normal text-gray-400">{t("Loading Order Details...", "ఆర్డర్ వివరాలు లోడ్ అవుతున్నాయి...")}</p>
+    </div>
+  );
+
+  if (fetchError) return (
+    <div className="flex flex-col items-center justify-center p-20 text-center">
+      <div className="bg-red-50 p-6 rounded-full mb-4">
+        <AlertCircle className="w-10 h-10 text-red-300" />
+      </div>
+      <p className="text-gray-900 mb-1">{t("Could not load order", "ఆర్డర్ లోడ్ చేయడం సాధ్యం కాలేదు")}</p>
+      <p className="text-xs text-gray-500 mb-4">{fetchError}</p>
+      <button onClick={fetchOrder} className="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary/90 transition-colors">
+        {t("Retry", "మళ్ళీ ప్రయత్నించండి")}
+      </button>
     </div>
   );
 
@@ -155,19 +177,27 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
 
   return (
     <div className="max-w-full mx-auto space-y-6 pb-20">
+      {toast && <Toast toast={toast} onDismiss={dismissToast} />}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard/orders" className="p-2 hover:bg-white rounded-lg transition-colors border border-gray-100">
+          <Link href="/dashboard/orders" className="p-2 hover:bg-white rounded-lg transition-colors border border-gray-100 min-w-[40px] min-h-[40px] flex items-center justify-center">
             <ArrowLeft className="w-5 h-5 text-gray-500" />
           </Link>
           <div>
+            {/* Breadcrumb */}
+            <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-xs text-gray-400 mb-0.5">
+              <Link href="/dashboard/orders" className="hover:text-primary transition-colors">{t("Orders", "ఆర్డర్లు")}</Link>
+              <span>/</span>
+              <span className="text-gray-600">{order.friendly_id || `#${order.id.split('-')[0]}`}</span>
+            </nav>
             <h1 className="text-2xl text-gray-900">{t("Order", "ఆర్డర్")} {order.friendly_id || `#${order.id.split('-')[0]}`}</h1>
             <p className="text-gray-500 text-sm">{order.job_type} {t("for", "కస్టమర్:")} {order.customers?.name}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Link 
+          <Link
             href={`/dashboard/billing/invoice/${order.id}`}
             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
           >
@@ -175,16 +205,33 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
             {t("Print Invoice", "ఇన్వాయిస్ ప్రింట్ చేయండి")}
           </Link>
           {order.challan_number ? (
-            <Link 
+            <Link
               href={`/dashboard/billing/challan/${order.id}`}
               className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
             >
               <Printer className="w-4 h-4 text-orange" />
               {t("Print Challan", "చలాన్ ప్రింట్ చేయండి")}
             </Link>
+          ) : confirmChallan ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">{t("Confirm?", "నిర్ధారించాలా?")}</span>
+              <button
+                onClick={handleGenerateChallan}
+                disabled={updating}
+                className="px-3 py-1.5 bg-orange text-white text-xs rounded-lg hover:bg-orange/90 transition-colors disabled:opacity-50"
+              >
+                {t("Yes, Generate", "అవును")}
+              </button>
+              <button
+                onClick={() => setConfirmChallan(false)}
+                className="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                {t("Cancel", "రద్దు")}
+              </button>
+            </div>
           ) : (
-            <button 
-              onClick={handleGenerateChallan}
+            <button
+              onClick={() => setConfirmChallan(true)}
               disabled={updating}
               className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50"
             >
@@ -192,9 +239,10 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
               {t("Generate Challan", "చలాన్ జెనరేట్ చేయండి")}
             </button>
           )}
-          <Link 
+          <Link
             href={`/dashboard/orders/edit/${order.id}`}
-            className="p-2 bg-white border border-gray-200 rounded-lg text-gray-500 hover:text-primary transition-colors shadow-sm"
+            aria-label={t("Edit order", "ఆర్డర్ సవరించు")}
+            className="p-2 bg-white border border-gray-200 rounded-lg text-gray-500 hover:text-primary transition-colors shadow-sm min-w-[40px] min-h-[40px] flex items-center justify-center"
           >
             <Edit3 className="w-5 h-5" />
           </Link>
@@ -497,7 +545,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                           fetchOrder();
                         } catch (err) {
                           console.error("Upload failed", err);
-                          alert("Upload failed. Please try again.");
+                          showToast(t("Upload failed. Please try again.", "అప్‌లోడ్ విఫలమైంది. మళ్ళీ ప్రయత్నించండి."), "error");
                           clearInterval(progressInterval);
                           setUploadProgress(0);
                         } finally {
@@ -520,19 +568,21 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
               </div>
 
               <div className="pt-2 grid grid-cols-2 gap-2">
-                 <button 
+                 <button
                     onClick={() => {
                        const link = `${window.location.origin}/proof/${order.id}?token=${order.proofing_token}`;
-                       navigator.clipboard.writeText(link);
-                       alert(t("Link copied to clipboard!", "లింక్ కాపీ చేయబడింది!", "लिंक कॉपी हो गया!"));
+                       navigator.clipboard.writeText(link).then(() => {
+                         showToast(t("Link copied to clipboard!", "లింక్ కాపీ చేయబడింది!", "लिंक कॉपी हो गया!"), "success");
+                       });
                     }}
-                    className="py-2.5 bg-gray-50 text-gray-700 text-[10px] font-bold rounded-lg border border-gray-100 hover:bg-gray-100 transition-all uppercase tracking-wider"
+                    className="py-2.5 bg-gray-50 text-gray-700 text-[10px] font-bold rounded-lg border border-gray-100 hover:bg-gray-100 transition-all uppercase tracking-wider flex items-center justify-center gap-1.5"
                  >
-                    {t("Copy Link", "లింక్ కాపీ చేయండి", "लिंक कॉपी करें")}
+                    <Copy className="w-3 h-3" /> {t("Copy Link", "లింక్ కాపీ చేయండి", "लिंक कॉपी करें")}
                  </button>
-                 <a 
+                 <a
                     href={`https://wa.me/${order.customers?.phone}?text=${encodeURIComponent(`Hi ${order.customers?.name}, please approve your design proof from ${order.tenants?.name || PRESS_CONFIG.name} here: ${window.location.origin}/proof/${order.id}?token=${order.proofing_token}`)}`}
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="py-2.5 bg-green-500 text-white text-[10px] font-bold rounded-lg hover:bg-green-600 transition-all uppercase tracking-wider flex items-center justify-center gap-1.5"
                  >
                     <MessageSquare className="w-3 h-3" /> WHATSAPP
@@ -566,15 +616,31 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
               <p className="text-xs text-green-600 leading-relaxed">
                 {t("The order is READY. Send a WhatsApp notification to the customer about pickup and balance.", "ఆర్డర్ సిద్ధంగా ఉంది. పికప్ మరియు బకాయి గురించి వాట్సాప్ ద్వారా కస్టమర్‌కు తెలియజేయండి.", "ऑर्डर तैयार है। ग्राहक को व्हाट्सएप पर सूचित करें।")}
               </p>
-              <a 
-                href={getWhatsAppLink()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-all shadow-lg shadow-green-200 active:scale-95 font-bold"
-              >
-                <MessageSquare className="w-4 h-4" />
-                {t("Send WhatsApp", "వాట్సాప్ పంపండి", "व्हाट्सएप भेजें")}
-              </a>
+              <div className="flex gap-2">
+                <a
+                  href={getWhatsAppLink()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-all shadow-lg shadow-green-200 active:scale-95 font-bold"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  {t("Send WhatsApp", "వాట్సాప్ పంపండి", "व्हाट्सएप भेजें")}
+                </a>
+                <button
+                  onClick={() => {
+                    const link = getWhatsAppLink();
+                    const msg = decodeURIComponent(link.split("text=")[1] || "");
+                    navigator.clipboard.writeText(msg).then(() => {
+                      showToast(t("Message copied to clipboard", "మెసేజ్ కాపీ చేయబడింది"), "success");
+                    });
+                  }}
+                  title={t("Copy message text", "మెసేజ్ కాపీ చేయండి")}
+                  aria-label={t("Copy WhatsApp message text", "వాట్సాప్ మెసేజ్ కాపీ చేయండి")}
+                  className="px-3 py-3 bg-white border border-green-200 text-green-700 rounded-lg hover:bg-green-50 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -627,8 +693,9 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                   try {
                     await updateOrderStatus(order.id, "DELIVERED", actualDeliveryDate);
                     setOrder({ ...order, status: "DELIVERED", actual_delivery_date: actualDeliveryDate } as Order);
+                    showToast(t("Order marked as delivered", "ఆర్డర్ డెలివరీ అయినట్లు గుర్తించబడింది"), "success");
                   } catch {
-                    console.error("Error updating delivery date");
+                    showToast(t("Failed to update delivery date. Please try again.", "డెలివరీ తేదీ నవీకరించడం విఫలమైంది."), "error");
                   } finally {
                     setUpdating(false);
                   }

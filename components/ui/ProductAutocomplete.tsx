@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, KeyboardEvent } from "react";
+import { useState, useEffect, useRef, useId, KeyboardEvent } from "react";
 import { FileText, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +31,7 @@ export default function ProductAutocomplete({
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const listboxId = useId();
 
   // Keep input in sync with external value changes (e.g. from parser)
   useEffect(() => {
@@ -105,6 +106,11 @@ export default function ProductAutocomplete({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           autoComplete="off"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={showSuggestions && filteredOptions.length > 0}
+          aria-controls={listboxId}
+          aria-activedescendant={highlightedIndex >= 0 ? `${listboxId}-${highlightedIndex}` : undefined}
           className="w-full pl-10 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all"
         />
         <ChevronDown
@@ -117,8 +123,12 @@ export default function ProductAutocomplete({
 
       {/* Suggestions Dropdown */}
       {showSuggestions && filteredOptions.length > 0 && (
-        <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
-          {/* Hint message when showing all options */}
+        <div
+          id={listboxId}
+          role="listbox"
+          aria-label="Product suggestions"
+          className="absolute z-dropdown w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
+        >
           {inputValue.length < 3 && inputValue.length > 0 && (
             <p className="px-3 pt-2 pb-1 text-[10px] text-gray-400">
               Type 3+ letters to filter suggestions
@@ -128,9 +138,12 @@ export default function ProductAutocomplete({
             {filteredOptions.map((option, index) => (
               <button
                 key={option}
+                id={`${listboxId}-${index}`}
                 type="button"
+                role="option"
+                aria-selected={inputValue === option}
                 onMouseDown={(e) => {
-                  e.preventDefault(); // prevent blur before click fires
+                  e.preventDefault();
                   handleSelect(option);
                 }}
                 onMouseEnter={() => setHighlightedIndex(index)}
@@ -142,7 +155,6 @@ export default function ProductAutocomplete({
                 )}
               >
                 <FileText className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" />
-                {/* Highlight matching portion */}
                 {inputValue.length >= 3 ? (
                   <HighlightedText text={option} query={inputValue} />
                 ) : (

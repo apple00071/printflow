@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Filter, MoreVertical, Calendar, Phone, Loader2 } from "lucide-react";
+import { Plus, Search, Filter, MoreVertical, Calendar, Phone, Loader2, AlertCircle } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/format";
 import { getOrders } from "@/lib/supabase/actions";
 
@@ -32,6 +32,7 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const orderStatuses = [
     { label: t("All", "అన్నీ"), value: "ALL" },
@@ -42,24 +43,26 @@ export default function OrdersPage() {
     { label: t("Delivered", "డెలివరీ"), value: "DELIVERED" },
   ];
 
-  useEffect(() => {
-    async function fetchOrders() {
-      setLoading(true);
-      try {
-        const data = await getOrders({ 
-          status: statusFilter, 
-          search: searchQuery 
-        });
-        setOrders(data || []);
-      } catch {
-        console.error("Error fetching orders");
-      } finally {
-        setLoading(false);
-      }
+  const fetchOrders = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getOrders({
+        status: statusFilter,
+        search: searchQuery
+      });
+      setOrders(data || []);
+    } catch {
+      setError(t("Failed to load orders. Please check your connection and try again.", "ఆర్డర్లు లోడ్ చేయడం విఫలమైంది. మీ కనెక్షన్ తనిఖీ చేసి మళ్ళీ ప్రయత్నించండి."));
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, searchQuery]); // Re-fetch on status change or search change
+  }, [statusFilter, searchQuery]);
 
   // Client-side search filtering
   const filteredOrders = orders.filter(o => 
@@ -124,13 +127,36 @@ export default function OrdersPage() {
              <Loader2 className="w-10 h-10 animate-spin mb-4" />
              <p className="text-sm">{t("Fetching orders...", "ఆర్డర్లు వస్తున్నాయి...")}</p>
           </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center p-20 text-center">
+            <div className="bg-red-50 p-6 rounded-full mb-4">
+              <AlertCircle className="w-10 h-10 text-red-300" />
+            </div>
+            <p className="text-gray-900 mb-1">{t("Something went wrong", "ఏదో తప్పు జరిగింది")}</p>
+            <p className="text-xs text-gray-500 mb-4">{error}</p>
+            <button
+              onClick={fetchOrders}
+              className="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              {t("Retry", "మళ్ళీ ప్రయత్నించండి")}
+            </button>
+          </div>
         ) : filteredOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-20 text-gray-400 text-center">
              <div className="bg-gray-50 p-6 rounded-full mb-4">
                 <Calendar className="w-10 h-10 text-gray-200" />
              </div>
-             <p className=" text-gray-900">{t("No Orders Found", "ఆర్డర్లు లేవు")}</p>
-             <p className="text-xs">{t("Adjust your filters or create a new order", "మీ ఫిల్టర్లను మార్చండి లేదా కొత్త ఆర్డర్ సృష్టించండి")}</p>
+             <p className="text-gray-900 mb-1">{t("No Orders Found", "ఆర్డర్లు లేవు")}</p>
+             <p className="text-xs mb-4">{t("Adjust your filters or create a new order to get started.", "మీ ఫిల్టర్లను మార్చండి లేదా కొత్త ఆర్డర్ సృష్టించండి.")}</p>
+             {statusFilter === "ALL" && !searchQuery && (
+               <Link
+                 href="/dashboard/orders/new"
+                 className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+               >
+                 <Plus className="w-4 h-4" />
+                 {t("Create your first order", "మొదటి ఆర్డర్ సృష్టించండి")}
+               </Link>
+             )}
           </div>
         ) : (
           <div className="overflow-x-auto">

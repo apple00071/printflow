@@ -27,6 +27,8 @@ import CustomDatePicker from "@/components/ui/CustomDatePicker";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { parseOrderText, ParsedJobDetails } from "@/lib/parser";
 import { Sparkles, Settings2, FileText } from "lucide-react";
+import Toast from "@/components/ui/Toast";
+import { useToast } from "@/hooks/useToast";
 
 interface Customer {
   id: string;
@@ -78,12 +80,13 @@ export default function NewQuotationPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isAddingNewCustomer, setIsAddingNewCustomer] = useState(true);
   const [newCustomer, setNewCustomer] = useState({ name: "", phone: "" });
-  const [isSearchDrowdownOpen, setIsSearchDropdownOpen] = useState(false);
+  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
+  const { toast, showToast, dismissToast } = useToast();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchCustomers() {
-      if (!searchQuery && !isSearchDrowdownOpen) return;
+      if (!searchQuery && !isSearchDropdownOpen) return;
       
       const supabase = createClient();
       const tenant = await getCurrentTenant(supabase);
@@ -104,7 +107,7 @@ export default function NewQuotationPage() {
     
     const timeoutId = setTimeout(fetchCustomers, 300);
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, isSearchDrowdownOpen]);
+  }, [searchQuery, isSearchDropdownOpen]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -122,7 +125,7 @@ export default function NewQuotationPage() {
     const phone = isAddingNewCustomer ? newCustomer.phone : selectedCustomer?.phone;
 
     if (!name || !phone) {
-      alert(t("Please provide customer details.", "దయచేసి కస్టమర్ వివరాలను అందించండి."));
+      showToast(t("Please provide customer name and phone number.", "దయచేసి కస్టమర్ పేరు మరియు ఫోన్ నంబర్ అందించండి."), "error");
       return;
     }
 
@@ -170,7 +173,7 @@ export default function NewQuotationPage() {
       }, 1500);
     } catch (error) {
       console.error("Error saving quotation:", error);
-      alert(t("Failed to save quotation.", "కొటేషన్‌ను సేవ్ చేయడం విఫలమైంది."));
+      showToast(t("Failed to save quotation. Please try again.", "కొటేషన్‌ను సేవ్ చేయడం విఫలమైంది. మళ్ళీ ప్రయత్నించండి."), "error");
     } finally {
       setSaveLoading(false);
     }
@@ -202,6 +205,7 @@ export default function NewQuotationPage() {
 
   return (
     <div className="max-w-full mx-auto space-y-6 pb-20 px-4">
+      {toast && <Toast toast={toast} onDismiss={dismissToast} />}
       {/* Simple Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -291,7 +295,7 @@ export default function NewQuotationPage() {
                   />
                 </div>
                 
-                {isSearchDrowdownOpen && (
+                {isSearchDropdownOpen && (
                   <div className="absolute left-0 right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-100 p-1 z-50">
                      {customers.length > 0 ? (
                        <div className="max-h-60 overflow-auto">

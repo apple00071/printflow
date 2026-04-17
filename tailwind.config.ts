@@ -20,6 +20,12 @@ const config: Config = {
           foreground: "#ffffff",
         },
       },
+      zIndex: {
+        dropdown: "100",
+        datepicker: "110",
+        modal: "200",
+        toast: "300",
+      },
     },
   },
   plugins: [],

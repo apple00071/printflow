@@ -27,12 +27,15 @@ import { JOB_TYPE_DEFAULTS, DEFAULT_GST_RATES } from "@/lib/config";
 import CustomSelect from "@/components/ui/CustomSelect";
 import CustomDatePicker from "@/components/ui/CustomDatePicker";
 import ProductAutocomplete from "@/components/ui/ProductAutocomplete";
+import Toast from "@/components/ui/Toast";
+import { useToast } from "@/hooks/useToast";
 
 export default function EditOrderPage({ params }: { params: { id: string } }) {
   const { t } = useLanguage();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { toast, showToast, dismissToast } = useToast();
 
   const jobTypes = [
     { id: "Business Cards", label: t("Business Cards", "విజిటింగ్ కార్డ్స్") },
@@ -170,7 +173,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
       setFormData(prev => ({ ...prev, file_url: publicUrl }));
     } catch (error) {
       console.error("Upload error:", error);
-      alert(t("Failed to upload file", "ఫైల్ అప్‌లోడ్ విఫలమైంది"));
+      showToast(t("Failed to upload file. Please try again.", "ఫైల్ అప్‌లోడ్ విఫలమైంది. మళ్ళీ ప్రయత్నించండి."), "error");
       setFileName("");
     } finally {
       setUploading(false);
@@ -186,7 +189,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
       router.push(`/dashboard/orders/${params.id}`);
     } catch (error) {
       console.error("Error updating order:", error);
-      alert(t("Failed to update order. Please try again.", "ఆర్డర్ అప్‌డేట్ చేయడం విఫలమైంది. దయచేసి మళ్ళీ ప్రయత్నించండి."));
+      showToast(t("Failed to update order. Please try again.", "ఆర్డర్ అప్‌డేట్ చేయడం విఫలమైంది. దయచేసి మళ్ళీ ప్రయత్నించండి."), "error");
     } finally {
       setSaving(false);
     }
@@ -201,6 +204,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="max-w-full mx-auto space-y-6">
+      {toast && <Toast toast={toast} onDismiss={dismissToast} />}
       <div className="flex items-center gap-4">
         <Link href={`/dashboard/orders/${params.id}`} className="p-2 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200 group">
           <ArrowLeft className="w-5 h-5 text-gray-500 group-hover:text-primary" />
