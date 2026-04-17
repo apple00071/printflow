@@ -8,6 +8,8 @@ import { addPayment } from "@/lib/supabase/actions";
 import { formatCurrency } from "@/lib/utils/format";
 import { createClient } from "@/lib/supabase/client";
 import { getCurrentTenant } from "@/lib/tenant";
+import Toast from "@/components/ui/Toast";
+import { useToast } from "@/hooks/useToast";
 import CustomSelect from "@/components/ui/CustomSelect";
 
 interface AddPaymentModalProps {
@@ -25,6 +27,7 @@ export default function AddPaymentModal({ orderId, balanceDue, onSuccess, onClos
   const [amount, setAmount] = useState<number>(initialBalance);
   const [method, setMethod] = useState("cash");
   const [loading, setLoading] = useState(false);
+  const { toast, showToast, dismissToast } = useToast();
   const [fetchingOrders, setFetchingOrders] = useState(!orderId);
   const [mounted, setMounted] = useState(false);
 
@@ -97,8 +100,7 @@ export default function AddPaymentModal({ orderId, balanceDue, onSuccess, onClos
       onSuccess();
       onClose();
     } catch {
-      console.error("Error adding payment");
-      alert(t("Failed to add payment. Please try again.", "పేమెంట్ జోడించడం విఫలమైంది. దయచేసి మళ్ళీ ప్రయత్నించండి."));
+      showToast(t("Failed to add payment. Please try again.", "పేమెంట్ జోడించడం విఫలమైంది. దయచేసి మళ్ళీ ప్రయత్నించండి."), "error");
     } finally {
       setLoading(false);
     }
@@ -113,7 +115,8 @@ export default function AddPaymentModal({ orderId, balanceDue, onSuccess, onClos
   if (!mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-300">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-modal flex items-center justify-center p-4 animate-in fade-in duration-300">
+      {toast && <Toast toast={toast} onDismiss={dismissToast} />}
       <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
         <div className="px-5 py-4 sm:px-6 sm:py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
           <div>

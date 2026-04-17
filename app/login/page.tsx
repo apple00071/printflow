@@ -162,7 +162,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div>
+          <div className="space-y-3">
             <button
               type="submit"
               disabled={loading}
@@ -170,6 +170,15 @@ export default function LoginPage() {
             >
               {loading ? (t("Signing in...", "లాగిన్ అవుతోంది...")) : t("Login", "లాగిన్")}
             </button>
+            <p className="text-center text-xs text-gray-400">
+              {t("Forgot your password?", "పాస్‌వర్డ్ మర్చిపోయారా?")}{" "}
+              <a
+                href="mailto:support@printflow.app"
+                className="text-primary hover:underline"
+              >
+                {t("Contact support", "సపోర్ట్‌ని సంప్రదించండి")}
+              </a>
+            </p>
           </div>
         </form>
       </div>

@@ -73,6 +73,9 @@ export default function CustomDatePicker({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
+        aria-label={selectedDate ? `Selected date: ${format(selectedDate, "PPP")}` : placeholder}
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
         className="w-full flex items-center gap-3 px-3 py-2 bg-gray-50/50 rounded-lg text-sm text-left hover:bg-gray-100/50 transition-all outline-none focus:ring-1 focus:ring-primary/10 shadow-sm"
       >
         <CalendarIcon className="w-4 h-4 text-gray-400" />
@@ -107,16 +110,16 @@ export default function CustomDatePicker({
           </div>
 
           {/* Weekdays */}
-          <div className="grid grid-cols-7 mb-1">
+          <div role="row" className="grid grid-cols-7 mb-1">
             {weekDays.map((day) => (
-              <div key={day} className="text-[9px] text-center font-medium text-gray-400 uppercase tracking-widest py-1">
+              <div key={day} role="columnheader" aria-label={day} className="text-[9px] text-center font-medium text-gray-400 uppercase tracking-widest py-1">
                 {day}
               </div>
             ))}
           </div>
 
           {/* Days Grid */}
-          <div className="grid grid-cols-7 gap-0.5">
+          <div role="grid" aria-label={`Calendar for ${format(currentMonth, "MMMM yyyy")}`} className="grid grid-cols-7 gap-0.5">
             {calendarDays.map((day, idx) => {
               const isSelected = selectedDate && isSameDay(day, selectedDate);
               const isCurrentMonth = isSameMonth(day, monthStart);
@@ -126,6 +129,11 @@ export default function CustomDatePicker({
                 <button
                   key={idx}
                   type="button"
+                  role="gridcell"
+                  aria-label={format(day, "PPP")}
+                  aria-selected={!!isSelected}
+                  aria-current={isTodayDay ? "date" : undefined}
+                  aria-disabled={!isCurrentMonth}
                   onClick={() => handleDateSelect(day)}
                   className={`
                     h-8 w-8 flex items-center justify-center rounded-lg text-xs transition-all relative
@@ -142,15 +150,17 @@ export default function CustomDatePicker({
 
           {/* Footer */}
           <div className="mt-3 pt-3 border-t border-gray-50 flex justify-between items-center px-1">
-             <button 
+             <button
                type="button"
+               aria-label="Go to today"
                onClick={() => handleDateSelect(new Date())}
                className="text-[9px] text-primary hover:underline uppercase tracking-widest font-medium"
              >
                Today
              </button>
-             <button 
+             <button
                type="button"
+               aria-label="Clear date"
                onClick={() => {
                  onChange("");
                  setIsOpen(false);

@@ -26,6 +26,8 @@ import { JOB_TYPE_DEFAULTS, DEFAULT_GST_RATES } from "@/lib/config";
 import CustomSelect from "@/components/ui/CustomSelect";
 import CustomDatePicker from "@/components/ui/CustomDatePicker";
 import ProductAutocomplete from "@/components/ui/ProductAutocomplete";
+import Toast from "@/components/ui/Toast";
+import { useToast } from "@/hooks/useToast";
 import { parseOrderText, ParsedJobDetails } from "@/lib/parser";
 import { Sparkles, Settings2 } from "lucide-react";
 
@@ -74,6 +76,8 @@ export default function NewOrderPage() {
 
   const [isDetailed, setIsDetailed] = useState(false);
   const [detectedSpecs, setDetectedSpecs] = useState<ParsedJobDetails>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const { toast, showToast, dismissToast } = useToast();
 
   const [inventoryItems, setInventoryItems] = useState<{ id: string; name: string; unit: string; quantity: number }[]>([]);
 
@@ -152,24 +156,24 @@ export default function NewOrderPage() {
       const supabase = createClient();
       const tenant = await getCurrentTenant(supabase);
       if (!tenant) throw new Error("Tenant not found");
-      
+
       const fileExt = file.name.split('.').pop();
       const filePath = `${tenant.id}/orders/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      
+
       const { error: uploadError } = await supabase.storage
         .from('printflow-files')
         .upload(filePath, file);
-        
+
       if (uploadError) throw uploadError;
-      
+
       const { data: { publicUrl } } = supabase.storage
         .from('printflow-files')
         .getPublicUrl(filePath);
-        
+
       setFormData(prev => ({ ...prev, file_url: publicUrl }));
+      showToast(t("File uploaded successfully", "ఫైల్ విజయవంతంగా అప్‌లోడ్ చేయబడింది"), "success");
     } catch {
-      console.error("Upload error");
-      alert(t("Failed to upload file", "ఫైల్ అప్‌లోడ్ విఫలమైంది"));
+      showToast(t("Failed to upload file. Please try again.", "ఫైల్ అప్‌లోడ్ విఫలమైంది. మళ్ళీ ప్రయత్నించండి."), "error");
       setFileName("");
     } finally {
       setUploading(false);
@@ -178,11 +182,21 @@ export default function NewOrderPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+
+    if (!formData.customerName.trim()) {
+      setFormError(t("Customer name is required.", "కస్టమర్ పేరు అవసరం."));
+      return;
+    }
+    if (!formData.jobType && !formData.instructions) {
+      setFormError(t("Please enter a product or job description.", "దయచేసి ఒక ఉత్పత్తి లేదా పని వివరణ నమోదు చేయండి."));
+      return;
+    }
+
     setLoading(true);
-    
+
     let submitData = { ...formData };
-    
-    // In Quick Mode, apply parsed details to the submission
+
     if (!isDetailed && formData.instructions) {
       const parsed = parseOrderText(formData.instructions);
       submitData = {
@@ -195,13 +209,12 @@ export default function NewOrderPage() {
         lamination: parsed.lamination || submitData.lamination,
       };
     }
-    
+
     try {
       await createOrder(submitData);
       router.push("/dashboard/orders");
     } catch {
-      console.error("Error creating order");
-      alert(t("Failed to create order. Please try again.", "ఆర్డర్ సృష్టించడం విఫలమైంది. దయచేసి మళ్ళీ ప్రయత్నించండి."));
+      setFormError(t("Failed to create order. Please try again.", "ఆర్డర్ సృష్టించడం విఫలమైంది. దయచేసి మళ్ళీ ప్రయత్నించండి."));
     } finally {
       setLoading(false);
     }
@@ -221,8 +234,10 @@ export default function NewOrderPage() {
 
   return (
     <div className="max-w-full mx-auto space-y-6">
+      {toast && <Toast toast={toast} onDismiss={dismissToast} />}
+
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/orders" className="p-2 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200 group">
+        <Link href="/dashboard/orders" className="p-2 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200 group min-w-[40px] min-h-[40px] flex items-center justify-center">
           <ArrowLeft className="w-5 h-5 text-gray-500 group-hover:text-primary" />
         </Link>
         <div>
@@ -231,7 +246,13 @@ export default function NewOrderPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 pb-20">
+      <form onSubmit={handleSubmit} className="space-y-6 pb-24">
+        {formError && (
+          <div role="alert" className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+            <X className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span>{formError}</span>
+          </div>
+        )}
         {/* Customer Information Section */}
         <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
           <div className="flex items-center gap-2 border-b border-gray-50 pb-3 mb-4">
@@ -240,7 +261,7 @@ export default function NewOrderPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs  text-gray-500 uppercase">{t("Customer Name", "పేరు")}</label>
+              <label className="text-xs text-gray-500 uppercase">{t("Customer Name", "పేరు")} <span className="text-red-500" aria-hidden="true">*</span></label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -254,7 +275,7 @@ export default function NewOrderPage() {
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-xs  text-gray-500 uppercase">{t("Phone Number", "ఫోన్ నంబర్")}</label>
+              <label className="text-xs text-gray-500 uppercase">{t("Phone Number", "ఫోన్ నంబర్")} <span className="text-gray-400 normal-case text-[10px]">({t("Optional", "ఐచ్ఛికం")})</span></label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input

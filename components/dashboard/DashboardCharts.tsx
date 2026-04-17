@@ -1,12 +1,13 @@
 "use client";
 
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import Link from "next/link";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   Cell,
   LineChart,
@@ -27,8 +28,15 @@ interface ChartProps {
 export default function DashboardCharts({ data, type = "bar" }: ChartProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="h-64 flex flex-col items-center justify-center text-gray-400">
-         <p className="text-sm">No data yet</p>
+      <div className="h-64 flex flex-col items-center justify-center text-gray-400 text-center px-4">
+        <p className="text-sm text-gray-500 mb-1">No data yet</p>
+        <p className="text-xs text-gray-400 mb-3">Create your first order to see revenue analytics.</p>
+        <Link
+          href="/dashboard/orders/new"
+          className="text-xs text-primary hover:underline font-medium"
+        >
+          Create an order →
+        </Link>
       </div>
     );
   }
