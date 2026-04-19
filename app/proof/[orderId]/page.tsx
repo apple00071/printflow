@@ -13,6 +13,7 @@ import {
   FileText
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { submitProofResponse } from "@/lib/supabase/actions";
 import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
  
@@ -82,20 +83,16 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
   const handleApproval = async (approve: boolean) => {
     setStatus("SAVING");
     try {
-      const updateData: Partial<OrderProofData> = {
-        proof_status: approve ? 'APPROVED' : 'REVISION_REQUESTED',
-        proof_feedback: feedback
-      };
+      const { success, updatedOrder } = await submitProofResponse(
+        params.orderId,
+        token!,
+        approve ? 'APPROVED' : 'REVISION_REQUESTED',
+        feedback
+      );
 
-      const { error } = await supabase
-        .from("orders")
-        .update(updateData)
-        .eq("id", params.orderId)
-        .eq("proofing_token", token);
-
-      if (error) throw error;
+      if (!success) throw new Error("Failed to submit response");
       
-      setOrder({...order, ...updateData});
+      setOrder({...order, ...updatedOrder} as OrderProofData);
       setStatus("SUCCESS");
     } catch (err) {
       console.error(err);

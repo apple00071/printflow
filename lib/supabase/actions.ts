@@ -5,6 +5,7 @@ import { createClient as createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentTenant, checkOrderLimit } from "@/lib/tenant";
 import { isSuperAdmin } from "@/lib/superadmin";
 import { calculateGST } from "@/lib/gst";
+import { sendWhatsAppMessage, formatStatusMessage } from "@/lib/whatsapp";
 
 interface OrderData {
   customerName?: string;
@@ -311,6 +312,23 @@ export async function createOrder(data: OrderData) {
     await supabase.from("payments").insert(paymentData);
   }
 
+  // 8. Send WhatsApp Notification (Async - don't block return)
+  if (data.phone) {
+    const message = formatStatusMessage(
+      "RECEIVED",
+      data.customerName || "Customer",
+      data.jobType,
+      order.friendly_id || order.id,
+      tenant?.name || "PrintFlow",
+      0 // No balance in RECEIVED message per requirements
+    );
+    
+    // We fire and forget here to keep the UI snappy
+    sendWhatsAppMessage({ phone: data.phone, message }).catch(err => 
+      console.error("Async WhatsApp error:", err)
+    );
+  }
+
   return order;
 }
 
@@ -395,8 +413,34 @@ export async function updateOrderStatus(orderId: string, status: string, actualD
     query = query.eq("tenant_id", tenant.id);
   }
 
-  const { data, error } = await query.select().single();
+  const { data, error } = await query.select(`
+    *,
+    customers (*),
+    tenants (name, city)
+  `).single();
+
   if (error) throw error;
+
+  // Send WhatsApp Notification for Status Change
+  if (data && data.customers?.phone) {
+    const balance = Number(data.total_with_gst || data.total_amount) - Number(data.advance_paid);
+    const message = formatStatusMessage(
+      status,
+      data.customers.name,
+      data.job_type,
+      data.friendly_id || data.id,
+      data.tenants?.name || "PrintFlow",
+      balance
+    );
+
+    if (message) {
+      // Fire and forget
+      sendWhatsAppMessage({ phone: data.customers.phone, message }).catch(err => 
+        console.error("Async WhatsApp error during status update:", err)
+      );
+    }
+  }
+
   return data;
 }
 
@@ -762,11 +806,89 @@ export async function updateOrderProof(orderId: string, data: { proof_image_url?
     .update(data)
     .eq("id", orderId)
     .eq("tenant_id", tenant.id)
-    .select()
+    .select(`
+      *,
+      customers (*),
+      tenants (name)
+    `)
     .single();
 
   if (error) throw error;
+
+  // Send WhatsApp Notification if proof is uploaded
+  if (data.proof_image_url && updatedOrder && updatedOrder.customers?.phone) {
+    const message = formatStatusMessage(
+      "PROOF_READY",
+      updatedOrder.customers.name,
+      updatedOrder.job_type,
+      updatedOrder.id, // Must be UUID for the link to work
+      updatedOrder.tenants?.name || tenant.name,
+      0, // No balance for proofing
+      updatedOrder.proofing_token
+    );
+
+    if (message) {
+      sendWhatsAppMessage({ 
+        phone: updatedOrder.customers.phone, 
+        message 
+      }).catch(err => console.error("Async WhatsApp error during proof update:", err));
+    }
+  }
+
   return updatedOrder;
+}
+
+/**
+ * Handles customer response to a design proof (Approve/Revision)
+ * Called from the public proofing page.
+ */
+export async function submitProofResponse(
+  orderId: string, 
+  token: string, 
+  proofStatus: 'APPROVED' | 'REVISION_REQUESTED', 
+  feedback: string
+) {
+  const supabase = createAdminClient();
+  
+  // 1. Update the order only if ID and Token match
+  const { data: updatedOrder, error } = await supabase
+    .from("orders")
+    .update({ 
+      proof_status: proofStatus,
+      proof_feedback: feedback
+    })
+    .eq("id", orderId)
+    .eq("proofing_token", token)
+    .select(`
+      *,
+      customers (name),
+      tenants (name, phone)
+    `)
+    .single();
+
+  if (error) throw error;
+
+  // 2. Notify the SHOP via WhatsApp
+  if (updatedOrder && updatedOrder.tenants?.phone) {
+    const message = formatStatusMessage(
+      "SHOP_NOTIFY_PROOF",
+      updatedOrder.customers?.name || "Customer",
+      updatedOrder.job_type,
+      updatedOrder.friendly_id || updatedOrder.id,
+      updatedOrder.tenants.name,
+      proofStatus === 'APPROVED' ? 1 : 0, // Abuse 'balance' for status
+      feedback // Abuse 'proofingToken' for feedback string
+    );
+
+    if (message) {
+      sendWhatsAppMessage({ 
+        phone: updatedOrder.tenants.phone, 
+        message 
+      }).catch(err => console.error("Async WhatsApp error during shop notification:", err));
+    }
+  }
+
+  return { success: true, updatedOrder };
 }
 
 export async function updateTenantDetails(data: { name?: string, city?: string, phone?: string, gst_number?: string, logo_url?: string, id_prefix?: string }) {
