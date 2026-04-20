@@ -89,6 +89,9 @@ export function formatStatusMessage(
       const action = balance === 1 ? "*APPROVED*" : "*REVISION REQUESTED*";
       return `Design Update: Order ${safeID} (${safeJob}) has been ${action} by ${safeCustomer}.${proofingToken ? ` Feedback: "${proofingToken}"` : ""}`;
 
+    case "SHOP_NOTIFY_NEW_ORDER":
+      return `🔔 New Storefront Order! ${safeCustomer} has placed an order for *${safeJob}*. View it in your dashboard. Order ID: ${safeID}.`;
+
     case "DELIVERED":
       return `Thank you for choosing *${tenantName}*! Your order for ${safeJob} has been delivered. We hope to see you again soon!`;
     

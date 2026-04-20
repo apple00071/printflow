@@ -920,3 +920,105 @@ export async function markOnboardingComplete() {
   if (error) throw error;
   return { success: true };
 }
+
+/**
+ * Specialized order creation for the public QR storefront.
+ * Handles customer creation, order saving, and notifying both Shop & Customer.
+ */
+export async function createStorefrontOrder(data: OrderData & { slug: string }) {
+  const supabase = createAdminClient(); // Use admin client for public submissions
+  
+  // 1. Get Tenant info
+  const { data: tenant, error: tError } = await supabase
+    .from('tenants')
+    .select('*')
+    .eq('slug', data.slug)
+    .single();
+
+  if (tError || !tenant) throw new Error("Shop not found");
+
+  // 2. Identify/Create Customer
+  let customerId = null;
+  const { data: existingCustomer } = await supabase
+    .from("customers")
+    .select("id")
+    .eq("phone", data.phone || "")
+    .eq("tenant_id", tenant.id)
+    .maybeSingle();
+
+  if (existingCustomer) {
+    customerId = existingCustomer.id;
+  } else {
+    const { data: newCustomer, error: cError } = await supabase
+      .from("customers")
+      .insert({
+        name: data.customerName || "Storefront Customer",
+        phone: data.phone || null,
+        tenant_id: tenant.id
+      })
+      .select("id")
+      .single();
+    if (cError) throw cError;
+    customerId = newCustomer.id;
+  }
+
+  // 3. Generate Friendly ID
+  const { data: friendly_id } = await supabase.rpc('generate_simple_order_id', {
+    p_tenant_id: tenant.id,
+    p_prefix: tenant.id_prefix || 'ORD'
+  });
+
+  // 4. Create Order
+  const { data: order, error: oError } = await supabase
+    .from("orders")
+    .insert({
+      tenant_id: tenant.id,
+      customer_id: customerId,
+      job_type: data.jobType,
+      quantity: data.quantity,
+      paper_type: data.paperType,
+      size: data.size,
+      printing_side: data.printingSide,
+      lamination: data.lamination,
+      instructions: data.instructions,
+      file_url: data.file_url,
+      status: 'RECEIVED',
+      friendly_id: friendly_id,
+      total_amount: 0,
+      advance_paid: 0
+    })
+    .select("*")
+    .single();
+
+  if (oError) throw oError;
+
+  // 5. WhatsApp Notifications
+  
+  // A. Notify Customer
+  if (data.phone) {
+    const customerMsg = formatStatusMessage(
+      "RECEIVED",
+      data.customerName || "Customer",
+      data.jobType,
+      friendly_id || order.id,
+      tenant.name,
+      0
+    );
+    sendWhatsAppMessage({ phone: data.phone, message: customerMsg }).catch(console.error);
+  }
+
+  // B. Notify Tenant (Shop)
+  if (tenant.phone) {
+    const shopMsg = formatStatusMessage(
+      "SHOP_NOTIFY_NEW_ORDER",
+      data.customerName || "Storefront Customer",
+      data.jobType,
+      friendly_id || order.id,
+      tenant.name,
+      0
+    );
+    sendWhatsAppMessage({ phone: tenant.phone, message: shopMsg }).catch(console.error);
+  }
+
+  return { success: true, order };
+}

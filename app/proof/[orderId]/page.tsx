@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { 
@@ -10,7 +10,13 @@ import {
   Loader2,
   FileImage,
   ExternalLink,
-  FileText
+  FileText,
+  X,
+  ChevronRight,
+  Maximize2,
+  Zap,
+  Clock,
+  Layers
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { submitProofResponse } from "@/lib/supabase/actions";
@@ -36,6 +42,7 @@ interface OrderProofData {
     tenants?: {
         name: string;
         city: string | null;
+        logo_url?: string;
     };
 }
 
@@ -48,6 +55,7 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
   const [status, setStatus] = useState<string>("IDLE"); // IDLE, SAVING, SUCCESS, ERROR
   const [feedback, setFeedback] = useState("");
   const [showFeedback, setShowFeedback] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   const supabase = createClient();
 
@@ -63,7 +71,7 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
         .select(`
             *,
             customers(name, phone),
-            tenants(name, city)
+            tenants(name, city, logo_url)
         `)
         .eq("id", params.orderId)
         .eq("proofing_token", token)
@@ -77,8 +85,7 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
       setLoading(false);
     }
     fetchOrder();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.orderId, token]);
+  }, [params.orderId, token, supabase]);
 
   const handleApproval = async (approve: boolean) => {
     setStatus("SAVING");
@@ -94,6 +101,7 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
       
       setOrder({...order, ...updatedOrder} as OrderProofData);
       setStatus("SUCCESS");
+      setShowFeedback(false);
     } catch (err) {
       console.error(err);
       setStatus("ERROR");
@@ -102,18 +110,27 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
+         <div className="relative">
+            <div className="w-12 h-12 border-4 border-primary/10 border-t-primary rounded-full animate-spin" />
+            <div className="absolute inset-0 flex items-center justify-center">
+               <Zap className="w-4 h-4 text-primary animate-pulse" />
+            </div>
+         </div>
+         <p className="text-[10px] font-black tracking-[0.2em] text-gray-400 uppercase">Securing Portal...</p>
       </div>
     );
   }
 
   if (!order) {
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
-           <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
-           <h1 className="text-2xl font-bold text-gray-900 mb-2">Invalid or Expired Link</h1>
-           <p className="text-gray-500 max-w-sm">This proof link is no longer valid or has expired. Please contact the print shop for a new link.</p>
+        <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center">
+           <div className="w-20 h-20 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-red-500/5 border border-red-100">
+              <AlertCircle className="w-10 h-10" />
+           </div>
+           <h1 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">Access Denied</h1>
+           <p className="text-gray-500 max-w-sm text-sm leading-relaxed mb-8">This proof link is invalid or has expired. Please contact the print shop for a fresh approval link.</p>
+           <button onClick={() => window.location.reload()} className="px-6 py-2 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-black transition-all">TRY AGAIN</button>
         </div>
     );
   }
@@ -121,255 +138,282 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
   const isApproved = order.proof_status === 'APPROVED';
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans selection:bg-primary/10">
-      {/* Premium Glass Header */}
-      <header className="bg-white/70 backdrop-blur-xl border-b border-gray-200/50 p-4 sticky top-0 z-50 transition-all">
-         <div className="max-w-screen-md mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-2">
-               <Logo size="sm" />
-               <div className="h-4 w-[1px] bg-gray-200 mx-1 hidden md:block" />
-               <span className="text-[10px] font-bold text-gray-400 tracking-[0.2em] hidden md:block uppercase">
-                  {order.tenants?.name || "APPROVAL PORTAL"}
-               </span>
+    <div className="min-h-screen bg-[#FDFDFD] font-sans selection:bg-primary/10 pb-32">
+      {/* Lightbox / Modal */}
+      {isLightboxOpen && order.proof_image_url && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md animate-in fade-in duration-300">
+           <button 
+             onClick={() => setIsLightboxOpen(false)}
+             className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-all active:scale-95"
+           >
+             <X className="w-6 h-6" />
+           </button>
+           <div className="w-full h-full p-4 flex items-center justify-center relative">
+              <Image 
+                src={order.proof_image_url} 
+                alt="Fullscreen Preview"
+                fill
+                className="object-contain p-4 md:p-12"
+                unoptimized
+              />
+           </div>
+        </div>
+      )}
+
+      {/* Boutique Header */}
+      <header className="bg-white/80 backdrop-blur-2xl border-b border-gray-100 p-5 sticky top-0 z-[60]">
+         <div className="max-w-screen-lg mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-4">
+               {order.tenants?.logo_url ? (
+                  <div className="relative w-10 h-10 rounded-xl overflow-hidden border border-gray-100 shadow-sm">
+                     <Image src={order.tenants.logo_url} alt="Logo" fill className="object-cover" />
+                  </div>
+               ) : (
+                  <Logo size="sm" />
+               )}
+               <div>
+                  <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] leading-none mb-1">
+                     {order.tenants?.name || "Approval Portal"}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                     <span className="text-xs font-bold text-gray-900">Design Approval</span>
+                     <div className="w-1 h-1 rounded-full bg-gray-300" />
+                     <span className="text-[10px] font-bold text-primary tabular-nums">
+                        {order.friendly_id || `#${order?.id?.split('-')[0]}`}
+                     </span>
+                  </div>
+               </div>
             </div>
-            <div className="flex flex-col items-end">
-               <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">ORDER ID</span>
-               <span className="text-xs font-bold text-gray-900 mt-1 tabular-nums px-2 py-0.5 bg-gray-100 rounded-md border border-gray-200/50">
-                  {order.friendly_id || `#${order?.id?.split('-')[0]}`}
-               </span>
+            
+            <div className="hidden md:flex items-center gap-6">
+               <div className="text-right">
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1 text-right">CLIENT</p>
+                  <p className="text-[11px] font-bold text-gray-900 tracking-tight">{order.customers?.name}</p>
+               </div>
             </div>
          </div>
       </header>
 
-      <main className="max-w-screen-md mx-auto py-10 px-4 space-y-8">
-         {/* Welcome & Info */}
-         <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-primary/5 to-orange/5 rounded-3xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-            <div className="relative bg-white rounded-3xl border border-gray-100/80 p-8 shadow-sm space-y-3">
-               <div className="flex items-center gap-3 mb-1">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                     <FileImage className="w-4 h-4 text-primary" />
+      <main className="max-w-screen-lg mx-auto py-12 px-6">
+         {/* Layout Grid */}
+         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            
+            {/* Left: Design Canvas */}
+            <div className="lg:col-span-8 space-y-8">
+               <div className="relative group">
+                  <div className="absolute -inset-2 bg-gradient-to-r from-primary/5 to-primary/0 rounded-[40px] blur-2xl opacity-50 transition-opacity group-hover:opacity-100" />
+                  <div className="relative bg-white rounded-[32px] border border-gray-100 shadow-2xl shadow-gray-200/50 overflow-hidden group/canvas">
+                     
+                     <div className="p-4 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
+                        <div className="flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-gray-100 shadow-sm">
+                           <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                           <span className="text-[10px] font-bold text-gray-600 uppercase tracking-tight">Final Artwork Proof</span>
+                        </div>
+                        {order.proof_image_url && (
+                           <button 
+                             onClick={() => setIsLightboxOpen(true)}
+                             className="p-2 hover:bg-primary/5 text-primary rounded-xl transition-all active:scale-90"
+                           >
+                              <Maximize2 className="w-4 h-4" />
+                           </button>
+                        )}
+                     </div>
+
+                     <div className="min-h-[500px] flex items-center justify-center bg-gray-50/50 p-6 relative">
+                        {order.proof_image_url ? (
+                           order.proof_image_url.toLowerCase().endsWith('.pdf') ? (
+                              <div className="text-center p-12 flex flex-col items-center max-w-sm">
+                                 <div className="w-24 h-24 bg-red-50 text-red-500 rounded-[32px] flex items-center justify-center mb-6 shadow-xl shadow-red-500/10 border border-red-100">
+                                    <FileText className="w-12 h-12" />
+                                 </div>
+                                 <h4 className="text-xl font-black text-gray-900 mb-2 tracking-tight">Vector Document</h4>
+                                 <p className="text-sm text-gray-500 leading-relaxed mb-8 font-medium">This design is a high-resolution PDF. Please review it in its native viewer before approving.</p>
+                                 <a 
+                                    href={order.proof_image_url} 
+                                    target="_blank" 
+                                    className="w-full py-4 bg-gray-900 text-white rounded-2xl text-[11px] font-black tracking-widest shadow-2xl shadow-gray-900/30 hover:bg-black transition-all flex items-center justify-center gap-2 active:scale-[0.98] uppercase"
+                                 >
+                                    Inspect Full PDF <ExternalLink className="w-4 h-4" />
+                                 </a>
+                              </div>
+                           ) : (
+                              <div 
+                                onClick={() => setIsLightboxOpen(true)}
+                                className="relative cursor-zoom-in transition-all duration-700 hover:scale-[1.01]"
+                              >
+                                 <Image 
+                                     src={order.proof_image_url} 
+                                     alt="Design Proof" 
+                                     width={1200}
+                                     height={900}
+                                     className="max-w-full h-auto object-contain rounded-lg shadow-2xl shadow-black/5 border border-white"
+                                     unoptimized
+                                 />
+                                 <div className="absolute inset-0 bg-black/0 group-hover/canvas:bg-black/5 transition-all flex items-center justify-center opacity-0 group-hover/canvas:opacity-100 pointer-events-none">
+                                     <div className="bg-white/90 backdrop-blur-md px-6 py-2.5 rounded-full text-[11px] font-black tracking-widest text-gray-900 shadow-2xl border border-white/20 uppercase">
+                                         Click to Pan & Zoom
+                                     </div>
+                                 </div>
+                              </div>
+                           )
+                        ) : (
+                           <div className="text-center p-12">
+                               <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-200">
+                                  <FileImage className="w-10 h-10 text-gray-300" />
+                               </div>
+                               <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Awaiting Upload</p>
+                           </div>
+                        )}
+                     </div>
                   </div>
-                  <h1 className="text-2xl font-black text-gray-900 tracking-tight">Design Approval</h1>
                </div>
-               <p className="text-gray-500 text-sm leading-relaxed">
-                  Hi <span className="font-bold text-gray-900">{order.customers?.name}</span>, please review the final design from <span className="font-bold text-gray-900">{order.tenants?.name || "our shop"}</span> for your <span className="text-primary font-semibold">{order.job_type}</span>. Changes can be requested or approval granted below.
-               </p>
+            </div>
+
+            {/* Right: Specifications Card */}
+            <div className="lg:col-span-4 space-y-6">
+               <div className="bg-white rounded-[32px] border border-gray-100 p-8 shadow-xl shadow-gray-200/50 space-y-8">
+                  <div className="flex items-center gap-3">
+                     <div className="w-10 h-10 rounded-2xl bg-primary/5 flex items-center justify-center">
+                        <Zap className="w-5 h-5 text-primary" />
+                     </div>
+                     <div>
+                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Specifications</h4>
+                        <p className="text-base font-black text-gray-900 tracking-tight">{order.job_type}</p>
+                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4">
+                     {[
+                        { label: "Quantity", value: order.friendly_id?.includes("ORD") ? "Custom" : "1000 Units", icon: Hash },
+                        { label: "Material", value: order.paper_type || "N/A", icon: Layers },
+                        { label: "Dimensions", value: order.size || "N/A", icon: Maximize2 },
+                        { label: "Finishing", value: order.lamination || "No Lamination", icon: Clock },
+                     ].map((item, i) => (
+                        <div key={i} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl border border-gray-50 group hover:border-primary/20 transition-all">
+                           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">{item.label}</span>
+                           <span className="text-xs font-black text-gray-900 tracking-tight">{item.value}</span>
+                        </div>
+                     ))}
+                  </div>
+
+                  <div className="pt-4 border-t border-gray-50">
+                     <div className="flex items-center justify-between px-1">
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">ID TOKEN</span>
+                        <span className="text-[10px] font-mono font-bold text-primary bg-primary/5 px-2 py-1 rounded">PF-{order.proofing_token?.split('-')[0].toUpperCase()}</span>
+                     </div>
+                  </div>
+               </div>
                
-               <div className="pt-2 flex flex-wrap gap-4">
-                  <div className="bg-gray-50/80 px-3 py-1.5 rounded-full border border-gray-100 flex items-center gap-2">
-                      <div className={cn(
-                        "w-1.5 h-1.5 rounded-full animate-pulse",
-                        order.proof_status === 'APPROVED' ? "bg-green-500" : "bg-orange"
-                      )} />
-                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                        Current Status: <span className={cn(
-                           "font-black",
-                           order.proof_status === 'APPROVED' ? "text-green-600" : "text-orange"
-                        )}>{order.proof_status}</span>
-                      </span>
+               {/* Success State integrated into specifications on mobile/main area on success */}
+               {status === 'SUCCESS' && (
+                  <div className="bg-green-50 rounded-[32px] border border-green-100 p-8 text-center space-y-4 animate-in zoom-in-95 duration-500">
+                     <div className="w-16 h-16 bg-white text-green-500 rounded-full flex items-center justify-center mx-auto shadow-xl shadow-green-500/20">
+                        {order.proof_status === 'APPROVED' ? <CheckCircle2 className="w-8 h-8" /> : <MessageSquare className="w-8 h-8" />}
+                     </div>
+                     <div>
+                        <h2 className="text-xl font-black text-green-900">{isApproved ? "Confirmed!" : "Revised!"}</h2>
+                        <p className="text-sm text-green-700/70 font-medium leading-relaxed">
+                           {isApproved 
+                             ? "Our production team will begin printing immediately." 
+                             : "Designer notified. We'll send a fresh proof shortly."}
+                        </p>
+                     </div>
                   </div>
-               </div>
+               )}
             </div>
          </div>
-
-         {/* Design Image Container */}
-         <div className="bg-white rounded-3xl border border-gray-100/80 p-5 shadow-sm space-y-5">
-            <div className="flex items-center justify-between px-1">
-                <h2 className="text-xs font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-                    Design Preview
-                </h2>
-                {order.proof_image_url && (
-                    <a href={order.proof_image_url} target="_blank" className="text-[10px] font-bold text-primary hover:text-primary/80 flex items-center gap-1.5 transition-colors group">
-                        VIEW FULL SIZE <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                    </a>
-                )}
-            </div>
-
-            <div className="bg-[#F8FAFC] rounded-2xl overflow-hidden min-h-[400px] flex items-center justify-center border border-gray-100 relative group/preview shadow-inner">
-                {order.proof_image_url ? (
-                    order.proof_image_url.toLowerCase().endsWith('.pdf') ? (
-                      <div className="text-center p-12 flex flex-col items-center">
-                          <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-red-500/5 border border-red-50/50">
-                            <FileText className="w-12 h-12 text-red-500" />
-                          </div>
-                          <h3 className="text-xl font-black text-gray-900 mb-3">PDF Document Ready</h3>
-                          <p className="text-sm text-gray-500 mb-8 max-w-[280px] leading-relaxed">This design is a high-resolution PDF. Please review it in its native viewer before approving.</p>
-                          <a 
-                             href={order.proof_image_url} 
-                             target="_blank" 
-                             className="bg-gray-900 text-white px-8 py-3.5 rounded-2xl text-sm font-bold shadow-2xl shadow-gray-900/20 hover:bg-gray-800 transition-all flex items-center gap-2 active:scale-95"
-                          >
-                             OPEN PDF IN NEW TAB <ExternalLink className="w-4 h-4" />
-                          </a>
-                      </div>
-                    ) : (
-                      <div className="relative cursor-zoom-in transition-transform duration-500 group-hover/preview:scale-[1.02]">
-                         <Image 
-                             src={order.proof_image_url} 
-                             alt="Design Proof" 
-                             width={1200}
-                             height={900}
-                             className="max-w-full h-auto object-contain"
-                             unoptimized
-                         />
-                         <div className="absolute inset-0 bg-black/0 group-hover/preview:bg-black/5 transition-colors flex items-center justify-center opacity-0 group-hover/preview:opacity-100">
-                             <div className="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-[10px] font-black tracking-widest text-gray-900 shadow-xl border border-white">
-                                 CLICK TO ENLARGE
-                             </div>
-                         </div>
-                      </div>
-                    )
-                ) : (
-                    <div className="text-center p-12">
-                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 grayscale">
-                           <FileImage className="w-10 h-10 text-gray-300" />
-                        </div>
-                        <p className="text-sm text-gray-400 font-medium italic">No preview image uploaded yet</p>
-                    </div>
-                )}
-            </div>
-         </div>
-
-         {/* Approval Actions */}
-         {!isApproved && status !== 'SUCCESS' ? (
-            <div className="bg-white rounded-3xl border border-gray-100/80 p-8 shadow-sm space-y-6">
-                {showFeedback && (
-                    <div className="space-y-3 animate-in slide-in-from-bottom-4 duration-500">
-                        <div className="flex items-center justify-between">
-                           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Share Revision Details</label>
-                           <span className="text-[10px] font-bold text-orange px-2 py-0.5 bg-orange/10 rounded">Changes Required</span>
-                        </div>
-                        <textarea 
-                            value={feedback}
-                            onChange={(e) => setFeedback(e.target.value)}
-                            placeholder="Example: Please increase the logo size by 20% and change the font color to Navy Blue..."
-                            className="w-full p-6 bg-gray-50/50 border border-gray-100 rounded-2xl text-sm outline-none focus:bg-white focus:border-orange/30 focus:ring-4 focus:ring-orange/5 transition-all min-h-[140px] resize-none leading-relaxed"
-                        />
-                    </div>
-                )}
-
-                <div className="flex flex-col md:flex-row gap-4">
-                    {!showFeedback ? (
-                        <>
-                            <button 
-                                onClick={() => handleApproval(true)}
-                                disabled={status === 'SAVING'}
-                                className="flex-[1.5] bg-gradient-to-r from-green-500 to-green-600 text-white font-black h-16 rounded-2xl shadow-xl shadow-green-500/25 flex items-center justify-center gap-3 hover:shadow-green-500/40 translate-y-0 hover:-translate-y-0.5 transition-all active:scale-[0.98] active:translate-y-0"
-                            >
-                                {status === 'SAVING' ? <Loader2 className="w-6 h-6 animate-spin" /> : <><CheckCircle2 className="w-6 h-6" /> YES, APPROVE & PRINT</>}
-                            </button>
-                            <button 
-                                onClick={() => setShowFeedback(true)}
-                                className="flex-1 bg-white border border-gray-200 text-gray-600 font-black h-16 rounded-2xl flex items-center justify-center gap-2 hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-[0.98]"
-                            >
-                                <MessageSquare className="w-5 h-5" /> REVISIONS
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <button 
-                                onClick={() => handleApproval(false)}
-                                disabled={status === 'SAVING' || !feedback.trim()}
-                                className="flex-[2] bg-orange text-white font-black h-16 rounded-2xl shadow-xl shadow-orange/25 flex items-center justify-center gap-3 hover:bg-orange/90 transition-all active:scale-[0.98] disabled:opacity-50 disabled:shadow-none"
-                            >
-                                {status === 'SAVING' ? <Loader2 className="w-6 h-6 animate-spin" /> : "SUBMIT REVISION REQUEST"}
-                            </button>
-                            <button 
-                                onClick={() => setShowFeedback(false)}
-                                className="flex-1 border-2 border-gray-100 text-gray-600 font-black h-16 rounded-2xl flex items-center justify-center hover:bg-gray-50 transition-all active:scale-[0.98]"
-                            >
-                                CANCEL
-                            </button>
-                        </>
-                    )}
-                </div>
-            </div>
-         ) : (
-             <div className={cn(
-                "rounded-[40px] p-12 border relative overflow-hidden text-center space-y-6 animate-in zoom-in-95 duration-700",
-                order.proof_status === 'APPROVED' ? "bg-green-50 border-green-100/50" : "bg-orange/5 border-orange/10"
-             )}>
-                {/* Decorative Elements */}
-                <div className="absolute top-0 right-0 p-8 opacity-10">
-                   {order.proof_status === 'APPROVED' ? <CheckCircle2 className="w-32 h-32" /> : <MessageSquare className="w-32 h-32" />}
-                </div>
-
-                <div className="relative space-y-4">
-                  <div className={cn(
-                     "w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl",
-                     order.proof_status === 'APPROVED' ? "bg-white text-green-500 shadow-green-500/20" : "bg-white text-orange shadow-orange/20"
-                  )}>
-                     {order.proof_status === 'APPROVED' ? (
-                        <CheckCircle2 className="w-12 h-12" />
-                     ) : (
-                        <MessageSquare className="w-12 h-12" />
-                     )}
-                  </div>
-                  
-                  <h2 className={cn(
-                     "text-4xl font-black tracking-tight",
-                     order.proof_status === 'APPROVED' ? "text-green-900" : "text-orange"
-                  )}>
-                     {order.proof_status === 'APPROVED' ? "Order Approved!" : "Changes Sent!"}
-                  </h2>
-                  
-                  <p className={cn(
-                     "text-base max-w-sm mx-auto leading-relaxed",
-                     order.proof_status === 'APPROVED' ? "text-green-700/80" : "text-gray-600"
-                  )}>
-                     {order.proof_status === 'APPROVED' 
-                        ? "Great choice! Our production team has been notified and will begin printing your order immediately." 
-                        : "Your revision requests have been received. Our designers will update the artwork and send you a new proof shortly."}
-                  </p>
-                </div>
-
-                <div className="pt-8 border-t border-black/5 inline-flex flex-col items-center">
-                    <span className={cn(
-                       "text-[10px] font-black uppercase tracking-[0.3em] mb-2",
-                       order.proof_status === 'APPROVED' ? "text-green-400" : "text-gray-400"
-                    )}>
-                       CONFIRMATION TOKEN
-                    </span>
-                    <div className={cn(
-                       "px-4 py-2 rounded-xl font-mono text-sm tracking-widest",
-                       order.proof_status === 'APPROVED' ? "bg-green-100/50 text-green-700" : "bg-gray-100 text-gray-500"
-                    )}>
-                       {order?.id?.split('-')[0].toUpperCase()}—{order.proofing_token?.split('-')[0].toUpperCase()}
-                    </div>
-                   <div className="bg-gray-50/80 px-3 py-1.5 rounded-full border border-gray-100 flex items-center gap-2">
-                       <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                         {order.printing_side || "Single Side"} • {order.lamination || "No Lamination"}
-                       </span>
-                   </div>
-                </div>
-             </div>
-         )}
       </main>
 
-      {/* Security Footer Badge */}
-      <footer className="max-w-screen-md mx-auto px-4 py-16 text-center space-y-6">
-         <div className="flex items-center justify-center gap-6 opacity-40 grayscale group-hover:grayscale-0 transition-all duration-500">
-            <div className="h-[1px] w-12 bg-gray-300" />
-            <div className="flex items-center gap-2">
-               <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200">
-                  <CheckCircle2 className="w-4 h-4 text-gray-400" />
+      {/* Floating Action Bar [FIX] */}
+      {!isApproved && status !== 'SUCCESS' && (
+         <div className="fixed bottom-0 left-0 right-0 z-50 p-6 md:p-8 animate-in slide-in-from-bottom-24 duration-1000">
+            <div className="max-w-screen-md mx-auto relative">
+               
+               {/* Feedback Drawer */}
+               {showFeedback && (
+                  <div className="absolute bottom-[calc(100%+16px)] left-0 right-0 p-8 bg-white/90 backdrop-blur-3xl rounded-[32px] border border-gray-100 shadow-2xl animate-in slide-in-from-bottom-8 duration-500 overflow-hidden">
+                     <div className="flex items-center justify-between mb-4">
+                        <span className="text-[10px] font-black text-gray-900 uppercase tracking-[0.2em] flex items-center gap-2">
+                           <MessageSquare className="w-3.5 h-3.5" /> REVISION DETAILS
+                        </span>
+                        <button onClick={() => setShowFeedback(false)} className="text-gray-400 hover:text-gray-900 transition-colors">
+                           <X className="w-4 h-4" />
+                        </button>
+                     </div>
+                     <textarea 
+                        autoFocus
+                        value={feedback}
+                        onChange={(e) => setFeedback(e.target.value)}
+                        placeholder="example: 'Change font to navy blue...', 'Increase logo size...'"
+                        className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl p-6 text-sm font-medium outline-none border-focus:border-primary/30 min-h-[120px] resize-none"
+                     />
+                     <div className="pt-4 flex justify-end">
+                        <button 
+                           onClick={() => handleApproval(false)}
+                           disabled={status === 'SAVING' || !feedback.trim()}
+                           className="px-8 h-12 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-gray-900/20 active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2"
+                        >
+                           {status === 'SAVING' ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Submit Feedback <ChevronRight className="w-4 h-4" /></>}
+                        </button>
+                     </div>
+                  </div>
+               )}
+
+               {/* The Main Bar */}
+               <div className="bg-white/90 backdrop-blur-2xl rounded-full p-2 border border-white shadow-2xl shadow-primary/10 flex items-center gap-2">
+                  <div className="flex-1 pl-6 flex flex-col justify-center">
+                     <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-0.5">STATUS</p>
+                     <p className="text-[11px] font-bold text-primary uppercase tracking-tight flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                        Pending Approval
+                     </p>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                     <button 
+                         onClick={() => setShowFeedback(true)}
+                         className={cn(
+                           "h-14 px-6 rounded-full text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap",
+                           showFeedback ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100"
+                         )}
+                     >
+                        <MessageSquare className="w-4 h-4" /> Revisions
+                     </button>
+                     <button 
+                        onClick={() => handleApproval(true)}
+                        disabled={status === 'SAVING'}
+                        className="h-14 px-10 bg-gradient-to-r from-primary to-primary/90 text-white rounded-full text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:shadow-primary/40 active:scale-95 transition-all flex items-center gap-3 whitespace-nowrap"
+                     >
+                        {status === 'SAVING' ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Approve & Print <ChevronRight className="w-4 h-4" /></>}
+                     </button>
+                  </div>
                </div>
-               <span className="text-[9px] font-black tracking-widest text-gray-400 uppercase">Secure Verification</span>
             </div>
-            <div className="h-[1px] w-12 bg-gray-300" />
          </div>
-         
-         <div className="space-y-1">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-loose">
-               SECURE DESIGN APPROVAL PORTAL POWERED BY PRINTFLOW SAAS
-            </p>
-            <p className="text-[9px] font-bold text-gray-300 tracking-widest">
-               ENCRYPTED END-TO-END • ALL RIGHTS RESERVED © 2026
-            </p>
+      )}
+
+      {/* Boutique Footer */}
+      <footer className="max-w-screen-lg mx-auto py-24 text-center">
+         <div className="flex items-center justify-center gap-4 mb-8 opacity-20 grayscale">
+            <div className="h-px w-12 bg-gray-400" />
+            <ShieldCheck className="w-4 h-4 text-gray-400" />
+            <div className="h-px w-12 bg-gray-400" />
          </div>
+         <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.3em] mb-2 leading-relaxed">
+            Encrypted Verification Portal Powered by PrintFlow SaaS
+         </p>
+         <p className="text-[9px] font-bold text-gray-200 tracking-widest">
+            ALL RIGHTS RESERVED © 2026 • BOUTIQUE PRINT SHOP UTILITY
+         </p>
       </footer>
     </div>
   );
+}
+
+function Hash(props: React.SVGProps<SVGSVGElement>) {
+  return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/></svg>;
+}
+
+function ShieldCheck(props: React.SVGProps<SVGSVGElement>) {
+  return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>;
 }

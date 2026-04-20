@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { createClient } from "@/lib/supabase/client";
+import { createStorefrontOrder } from "@/lib/supabase/actions";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
@@ -117,32 +118,23 @@ export default function ShopIntakePage({ params }: { params: { slug: string } })
         file_url = publicUrl;
       }
 
-      const { data: customerData } = await supabase.from("customers").select("id").eq("phone", phone).eq("tenant_id", tenant.id).single();
-      let customerId = customerData?.id;
-
-      if (!customerId) {
-        const { data: newCustomer, error: createError } = await supabase.from("customers").insert({ name, phone, tenant_id: tenant.id }).select("id").single();
-        if (createError) throw createError;
-        customerId = newCustomer.id;
-      }
-
-      const { error: orderError } = await supabase.from("orders").insert({
-        tenant_id: tenant.id,
-        customer_id: customerId,
-        job_type: jobType,
-        quantity: parseInt(quantity) || 1,
-        paper_type: paperType,
+      const { success: orderSuccess } = await createStorefrontOrder({
+        slug: params.slug,
+        customerName: name,
+        phone: phone,
+        jobType: jobType,
+        quantity: quantity,
+        paperType: paperType,
         size: size,
-        printing_side: printingSide,
+        printingSide: printingSide,
         lamination: lamination,
         instructions: instructions,
         file_url: file_url,
-        status: 'RECEIVED',
-        total_amount: 0,
-        advance_paid: 0
+        totalAmount: 0,
+        advancePaid: 0
       });
 
-      if (orderError) throw orderError;
+      if (!orderSuccess) throw new Error("Failed to create order");
       setSuccess(true);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to submit order.";
