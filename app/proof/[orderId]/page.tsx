@@ -141,14 +141,11 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
     <div className="min-h-screen bg-[#FDFDFD] font-sans selection:bg-primary/10 pb-32">
       {/* Lightbox / Modal */}
       {isLightboxOpen && order.proof_image_url && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md animate-in fade-in duration-300">
-           <button 
-             onClick={() => setIsLightboxOpen(false)}
-             className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-all active:scale-95"
-           >
-             <X className="w-6 h-6" />
-           </button>
-           <div className="w-full h-full p-4 flex items-center justify-center relative">
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md animate-in fade-in duration-300"
+          onClick={() => setIsLightboxOpen(false)}
+        >
+           <div className="w-full h-full p-4 flex items-center justify-center relative" onClick={(e) => e.stopPropagation()}>
               <Image 
                 src={order.proof_image_url} 
                 alt="Fullscreen Preview"
@@ -157,6 +154,12 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
                 unoptimized
               />
            </div>
+           <button 
+             onClick={() => setIsLightboxOpen(false)}
+             className="absolute top-6 right-6 z-[110] w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-all active:scale-95"
+           >
+             <X className="w-6 h-6" />
+           </button>
         </div>
       )}
 
