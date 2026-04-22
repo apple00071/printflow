@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo Render - Precision Version</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            font-family: 'Inter', sans-serif;
+        }
+        .logo-wrapper {
+            background: white;
+            padding: 60px;
+            border-radius: 20px;
+            /* No shadow/border as requested earlier */
+        }
+    </style>
+</head>
+<body>
+    <div class="logo-wrapper" id="logo">
+        <svg width="800" height="200" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+            <!-- Icon Section -->
+            <g transform="translate(0, 30)">
+                <!-- Brackets [ ] -->
+                <path d="M40 20 H10 V100 H40" stroke="#1e3a5f" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M80 20 H110 V100 H80" stroke="#1e3a5f" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                
+                <!-- Orange Dot -->
+                <circle cx="60" cy="5" r="10" fill="#f97316" />
+                
+                <!-- Orange Arrow -> -->
+                <path d="M40 60 H80 M65 45 L80 60 L65 75" stroke="#f97316" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+            </g>
+
+            <!-- Text Section -->
+            <g transform="translate(150, 100)">
+                <!-- Main Text: PRINT FLOW -->
+                <text x="0" y="0" font-family="'Inter', sans-serif" font-weight="800" font-size="110" fill="#1e3a5f" style="text-transform: uppercase; letter-spacing: -0.04em;">
+                    PRINT<tspan fill="#f97316" dx="15">FLOW</tspan>
+                </text>
+                
+                <!-- Subtext: PRINT SHOP SOFTWARE (Justified to match width) -->
+                <!-- We target a width slightly less than the title for a clean look, roughly 580px -->
+                <text x="0" y="55" font-family="'Inter', sans-serif" font-weight="400" font-size="32" fill="#4b5563" textLength="620" lengthAdjust="spacing" style="text-transform: uppercase;">
+                    PRINT SHOP SOFTWARE
+                </text>
+            </g>
+        </svg>
+    </div>
+</body>
+</html>
