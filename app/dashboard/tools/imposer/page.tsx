@@ -407,7 +407,7 @@ export default function PDFImposerPage() {
       link.download = `imposed_${file.name}`;
       link.click();
     } catch (err) {
-      console.error(error);
+      console.error(err);
       setError("Error processing PDF. Please try again.");
     } finally {
       setProcessing(false);
@@ -787,7 +787,7 @@ export default function PDFImposerPage() {
                                   <div className="flex-1 overflow-hidden" style={{display:"grid",gridTemplateColumns:`repeat(${_c},1fr)`,gridTemplateRows:`repeat(${_r},1fr)`,padding:`${padY}px ${padX}px`,gap:`${nupGapY}px ${nupGapX}px`}}>
                                     {Array.from({length:_c*_r}).map((_,i)=>(
                                       <div key={i} className="bg-gray-50 rounded overflow-hidden border border-gray-100 flex items-center justify-center min-h-0 min-w-0">
-                                        {thumbnails[nupSelectedPage]?<img src={thumbnails[nupSelectedPage]} className="w-full h-full object-contain"/>:<span className="text-[7px] text-gray-400/50 font-bold">P.{nupSelectedPage+1}</span>}
+                                        {thumbnails[nupSelectedPage]?<img src={thumbnails[nupSelectedPage]} className="w-full h-full object-contain transition-transform duration-300" style={{ transform: `rotate(${rotation}deg)` }}/>:<span className="text-[7px] text-gray-400/50 font-bold">P.{nupSelectedPage+1}</span>}
                                       </div>
                                     ))}
                                   </div>
@@ -803,22 +803,18 @@ export default function PDFImposerPage() {
                                 >
                                   {mode === "BOOKLET" && (() => {
                                     const total = Math.ceil((thumbnails.length || 8) / 4) * 4;
-                                    // Sheet N front: left=total-1-(sheet*2), right=sheet*2
-                                    // Sheet N back:  left=sheet*2+1,          right=total-2-(sheet*2)
-                                    const isBack = currentSheet % 2 === 1;
-                                    const physSheet = Math.floor(currentSheet / 2);
-                                    const leftIdx  = isBack ? physSheet * 2 + 1          : total - 1 - physSheet * 2;
-                                    const rightIdx = isBack ? total - 2 - physSheet * 2  : physSheet * 2;
+                                    const leftIdx  = total - 1 - currentSheet * 2;
+                                    const rightIdx = currentSheet * 2;
                                     return (
                                       <>
                                         <div className="flex-1 bg-white rounded flex items-center justify-center overflow-hidden relative border border-gray-100">
-                                          {thumbnails[leftIdx] ? <img src={thumbnails[leftIdx]} className="w-full h-full object-contain" /> : <span className="text-[10px] text-gray-400/50 font-bold tracking-widest">BLANK</span>}
+                                          {thumbnails[leftIdx] ? <img src={thumbnails[leftIdx]} className="w-full h-full object-contain transition-transform duration-300" style={{ transform: `rotate(${rotation}deg)` }} /> : <span className="text-[10px] text-gray-400/50 font-bold tracking-widest">BLANK</span>}
                                           <div className="absolute bottom-1 right-1 px-1 py-0.5 bg-gray-800/70 rounded text-[7px] font-bold text-white/90 z-10 leading-none">
                                             P. {leftIdx + 1}
                                           </div>
                                         </div>
                                         <div className="flex-1 bg-white rounded flex items-center justify-center overflow-hidden relative border border-gray-100">
-                                          {thumbnails[rightIdx] ? <img src={thumbnails[rightIdx]} className="w-full h-full object-contain" /> : <span className="text-[10px] text-gray-400/50 font-bold tracking-widest">BLANK</span>}
+                                          {thumbnails[rightIdx] ? <img src={thumbnails[rightIdx]} className="w-full h-full object-contain transition-transform duration-300" style={{ transform: `rotate(${rotation}deg)` }} /> : <span className="text-[10px] text-gray-400/50 font-bold tracking-widest">BLANK</span>}
                                           <div className="absolute bottom-1 right-1 px-1 py-0.5 bg-gray-800/70 rounded text-[7px] font-bold text-white/90 z-10 leading-none">
                                             P. {rightIdx + 1}
                                           </div>
@@ -830,8 +826,8 @@ export default function PDFImposerPage() {
                                     <>
                                       <div className="flex-1 bg-white rounded flex items-center justify-center overflow-hidden relative border border-gray-100">
                                          {(() => {
-                                            const idx = currentSheet * 2;
-                                           return thumbnails[idx] ? <img src={thumbnails[idx]} className="w-full h-full object-contain" /> : <span className="text-[10px] text-gray-400/50 font-bold tracking-widest">BLANK</span>;
+                                            const idx = currentSheet * 4;
+                                           return thumbnails[idx] ? <img src={thumbnails[idx]} className="w-full h-full object-contain transition-transform duration-300" style={{ transform: `rotate(${rotation}deg)` }} /> : <span className="text-[10px] text-gray-400/50 font-bold tracking-widest">BLANK</span>;
                                          })()}
                                          <div className="absolute bottom-1 right-1 px-1 py-0.5 bg-gray-800/70 rounded text-[7px] font-bold text-white/90 z-10 leading-none">
                                              P. {currentSheet * 2 + 1}
@@ -839,8 +835,8 @@ export default function PDFImposerPage() {
                                       </div>
                                       <div className="flex-1 bg-white rounded flex items-center justify-center overflow-hidden relative border border-gray-100">
                                          {(() => {
-                                            const idx = currentSheet * 2 + 1;
-                                           return thumbnails[idx] ? <img src={thumbnails[idx]} className="w-full h-full object-contain" /> : <span className="text-[10px] text-gray-400/50 font-bold tracking-widest">BLANK</span>;
+                                            const idx = currentSheet * 4 + 1;
+                                           return thumbnails[idx] ? <img src={thumbnails[idx]} className="w-full h-full object-contain transition-transform duration-300" style={{ transform: `rotate(${rotation}deg)` }} /> : <span className="text-[10px] text-gray-400/50 font-bold tracking-widest">BLANK</span>;
                                          })()}
                                          <div className="absolute bottom-1 right-1 px-1 py-0.5 bg-gray-800/70 rounded text-[7px] font-bold text-white/90 z-10 leading-none">
                                              P. {currentSheet * 2 + 2}
@@ -879,7 +875,7 @@ export default function PDFImposerPage() {
                                        <div className="flex-1 bg-white rounded flex items-center justify-center overflow-hidden relative border border-gray-100">
                                           {(() => {
                                             const idx = (currentSheet * 2) + 1;
-                                            return thumbnails[idx] ? <img src={thumbnails[idx]} className="w-full h-full object-contain" /> : <span className="text-[10px] text-gray-400/50 font-bold tracking-widest">BLANK</span>;
+                                            return thumbnails[idx] ? <img src={thumbnails[idx]} className="w-full h-full object-contain transition-transform duration-300" style={{ transform: `rotate(${rotation}deg)` }} /> : <span className="text-[10px] text-gray-400/50 font-bold tracking-widest">BLANK</span>;
                                           })()}
                                           <div className="absolute bottom-1 right-1 px-1 py-0.5 bg-gray-800/70 rounded text-[7px] font-bold text-white/90 z-10 leading-none">
                                             P. {(currentSheet * 2) + 2}
@@ -889,7 +885,7 @@ export default function PDFImposerPage() {
                                           {(() => {
                                             const virtualTotal = Math.ceil((thumbnails.length || 8) / 4) * 4;
                                             const idx = (virtualTotal - 2) - (currentSheet * 2);
-                                            return thumbnails[idx] ? <img src={thumbnails[idx]} className="w-full h-full object-contain" /> : <span className="text-[10px] text-gray-400/50 font-bold tracking-widest">BLANK</span>;
+                                            return thumbnails[idx] ? <img src={thumbnails[idx]} className="w-full h-full object-contain transition-transform duration-300" style={{ transform: `rotate(${rotation}deg)` }} /> : <span className="text-[10px] text-gray-400/50 font-bold tracking-widest">BLANK</span>;
                                           })()}
                                           <div className="absolute bottom-1 right-1 px-1 py-0.5 bg-gray-800/70 rounded text-[7px] font-bold text-white/90 z-10 leading-none">
                                             P. {(Math.ceil((thumbnails.length || 8) / 4) * 4 - 1) - (currentSheet * 2)}
@@ -901,8 +897,8 @@ export default function PDFImposerPage() {
                                      <>
                                        <div className="flex-1 bg-white rounded flex items-center justify-center overflow-hidden relative border border-gray-100">
                                           {(() => {
-                                            const idx = (currentSheet * 2) + 2;
-                                            return thumbnails[idx] ? <img src={thumbnails[idx]} className="w-full h-full object-contain" /> : <span className="text-[10px] text-gray-400/50 font-bold tracking-widest">BLANK</span>;
+                                            const idx = (currentSheet * 4) + 2;
+                                            return thumbnails[idx] ? <img src={thumbnails[idx]} className="w-full h-full object-contain transition-transform duration-300" style={{ transform: `rotate(${rotation}deg)` }} /> : <span className="text-[10px] text-gray-400/50 font-bold tracking-widest">BLANK</span>;
                                           })()}
                                           <div className="absolute bottom-1 right-1 px-1 py-0.5 bg-gray-800/70 rounded text-[7px] font-bold text-white/90 z-10 leading-none">
                                             P. {(currentSheet * 2) + 3}
@@ -910,8 +906,8 @@ export default function PDFImposerPage() {
                                        </div>
                                        <div className="flex-1 bg-white rounded flex items-center justify-center overflow-hidden relative border border-gray-100">
                                           {(() => {
-                                            const idx = (currentSheet * 2) + 3;
-                                            return thumbnails[idx] ? <img src={thumbnails[idx]} className="w-full h-full object-contain" /> : <span className="text-[10px] text-gray-400/50 font-bold tracking-widest">BLANK</span>;
+                                            const idx = (currentSheet * 4) + 3;
+                                            return thumbnails[idx] ? <img src={thumbnails[idx]} className="w-full h-full object-contain transition-transform duration-300" style={{ transform: `rotate(${rotation}deg)` }} /> : <span className="text-[10px] text-gray-400/50 font-bold tracking-widest">BLANK</span>;
                                           })()}
                                           <div className="absolute bottom-1 right-1 px-1 py-0.5 bg-gray-800/70 rounded text-[7px] font-bold text-white/90 z-10 leading-none">
                                             P. {(currentSheet * 2) + 4}

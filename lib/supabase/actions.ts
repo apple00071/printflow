@@ -938,13 +938,27 @@ export async function submitProofResponse(
 ) {
   const supabase = createAdminClient();
   
-  // 1. Update the order only if ID and Token match
+  // 1. Get current proof image to copy to file_url if approved
+  const { data: orderData } = await supabase
+    .from("orders")
+    .select("proof_image_url")
+    .eq("id", orderId)
+    .eq("proofing_token", token)
+    .single();
+
+  const updateFields: any = { 
+    proof_status: proofStatus,
+    proof_feedback: feedback
+  };
+
+  // If approved, the proof becomes the final downloadable file
+  if (proofStatus === 'APPROVED' && orderData?.proof_image_url) {
+    updateFields.file_url = orderData.proof_image_url;
+  }
+
   const { data: updatedOrder, error } = await supabase
     .from("orders")
-    .update({ 
-      proof_status: proofStatus,
-      proof_feedback: feedback
-    })
+    .update(updateFields)
     .eq("id", orderId)
     .eq("proofing_token", token)
     .select(`
