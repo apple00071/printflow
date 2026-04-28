@@ -38,6 +38,7 @@ export async function GET(
     const mappedTenant = {
       ...tenant,
       plan: tenant.plan?.toUpperCase() || 'FREE',
+      subscription_tier: tenant.subscription_tier?.toUpperCase() || tenant.plan?.toUpperCase() || 'FREE',
       plan_status: tenant.plan_status || 'ACTIVE',
       orders_this_month: tenant.orders_this_month || 0,
       profiles: profile ? {

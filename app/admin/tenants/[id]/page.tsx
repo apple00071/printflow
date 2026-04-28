@@ -149,7 +149,8 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
     }
   }
 
-  const isPaid = tenant?.plan === 'PRO' || tenant?.plan === 'BUSINESS';
+  const currentPlan = (tenant?.subscription_tier || tenant?.plan || 'FREE').toUpperCase();
+  const isPaid = ['PRO', 'BUSINESS', 'ENTERPRISE'].includes(currentPlan);
   const usagePercent = 100; // Orders are now unlimited for all plans
   const isNearLimit = false;
 
@@ -187,7 +188,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
                       ? 'bg-purple-100 text-purple-800 border-purple-200' 
                       : 'bg-blue-100 text-blue-800 border-blue-200'
                   }`}>
-                    {tenant.plan}
+                    {tenant.subscription_tier || tenant.plan}
                   </span>
                 </div>
                 <p className="text-[10px] text-gray-400 uppercase tracking-widest font-normal">Tenant Details & Governance</p>
@@ -207,11 +208,11 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
                 {tenant.plan_status === 'ACTIVE' ? 'Suspend Access' : 'Restore Access'}
               </button>
               <button 
-                onClick={() => handleUpdatePlan(tenant.plan === 'PRO' ? 'FREE' : 'PRO')}
+                onClick={() => handleUpdatePlan((tenant.subscription_tier || tenant.plan) === 'PRO' ? 'FREE' : 'PRO')}
                 disabled={updating}
                 className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-normal hover:bg-blue-700 transition-all border border-blue-500 shadow-sm active:scale-95 disabled:opacity-50"
               >
-                {tenant.plan === 'PRO' ? 'Downgrade to FREE' : 'Upgrade to PRO'}
+                {(tenant.subscription_tier || tenant.plan) === 'PRO' ? 'Downgrade to FREE' : 'Upgrade to PRO'}
               </button>
             </div>
           </div>
@@ -340,7 +341,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
                 </div>
               </div>
               <div className="space-y-1 mb-8">
-                <h3 className="text-3xl font-normal">{tenant.plan}</h3>
+                <h3 className="text-3xl font-normal">{tenant.subscription_tier || tenant.plan}</h3>
                 <p className={`text-xs font-normal ${isPaid ? 'opacity-60' : 'text-gray-400'}`}>
                   {tenant.plan === 'BUSINESS' ? 'Enterprise Scaling License' : tenant.plan === 'PRO' ? 'Professional Business License' : 'Standard Free Tier'}
                 </p>
