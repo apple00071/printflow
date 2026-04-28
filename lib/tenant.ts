@@ -22,21 +22,6 @@ export async function getCurrentTenant(supabase: SupabaseClient) {
   return tenant
 }
 
-export async function checkOrderLimit(tenant: { plan?: string; subscription_tier?: string; orders_this_month: number; trial_ends_at?: string }) {
-  const currentTier = (tenant.subscription_tier || tenant.plan || 'FREE').toUpperCase();
-  let effectivePlan = currentTier;
-  
-  // Dynamically downgrade to FREE if the 7-day PRO trial has expired
-  if (currentTier === 'PRO' && tenant.trial_ends_at && new Date(tenant.trial_ends_at) < new Date()) {
-    effectivePlan = 'FREE';
-  }
-
-  if (effectivePlan === 'FREE' && (tenant.orders_this_month || 0) >= 50) {
-    return { allowed: false, reason: 'limit_reached' }
-  }
-  return { allowed: true }
-}
-
 export async function getTenantBySlug(supabase: SupabaseClient, slug: string) {
   const { data, error } = await supabase
     .from('tenants')

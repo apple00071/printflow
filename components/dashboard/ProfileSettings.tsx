@@ -142,29 +142,27 @@ export default function ProfileSettings() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-normal text-gray-900">My Profile</h3>
-          <p className="text-gray-600">Manage your personal information and account settings</p>
-        </div>
+    <div className="space-y-8">
+      <div className="border-b border-gray-100 pb-6">
+        <h3 className="text-xl font-semibold text-gray-900 tracking-tighter">My Profile</h3>
+        <p className="text-xs text-gray-400 uppercase tracking-widest">Manage your personal information and account settings</p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <div className="bg-blue-100 p-4 rounded-full">
-              <User className="w-8 h-8 text-blue-600" />
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-10">
+          <div className="flex items-center gap-5">
+            <div className="bg-blue-500/5 p-5 rounded-full border border-blue-500/10">
+              <User className="w-10 h-10 text-blue-500" />
             </div>
             <div>
-              <h4 className="text-xl font-normal text-gray-900">{profile.name}</h4>
-              <p className="text-gray-600">@{profile.username}</p>
+              <h4 className="text-2xl font-semibold text-gray-900 tracking-tight">{profile.name}</h4>
+              <p className="text-sm font-medium text-gray-400">@{profile.username}</p>
             </div>
           </div>
           {!editing && (
             <button
               onClick={() => setEditing(true)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              className="flex items-center gap-2 bg-blue-500 text-white px-6 py-2.5 rounded-xl font-semibold uppercase tracking-widest text-[10px] shadow-lg shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all"
             >
               <Edit className="w-4 h-4" />
               Edit Profile
@@ -172,57 +170,57 @@ export default function ProfileSettings() {
           )}
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-10">
           {/* Personal Information */}
-          <div>
-            <h5 className="text-lg font-normal text-gray-900 mb-4">Personal Information</h5>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-normal text-gray-700 mb-1">Full Name</label>
+          <div className="space-y-6">
+            <h5 className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Personal Information</h5>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Full Name</label>
                 {editing ? (
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
                   />
                 ) : (
-                  <div className="flex items-center gap-2 text-gray-900">
-                    <User className="w-4 h-4 text-gray-400" />
+                  <div className="flex items-center gap-3 text-gray-900 font-semibold">
+                    <User className="w-4 h-4 text-blue-500/40" />
                     {profile.name}
                   </div>
                 )}
               </div>
               
-              <div>
-                <label className="block text-sm font-normal text-gray-700 mb-1">Username</label>
-                <div className="flex items-center gap-2 text-gray-900">
-                  <User className="w-4 h-4 text-gray-400" />
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Username</label>
+                <div className="flex items-center gap-3 text-gray-900 font-semibold">
+                  <User className="w-4 h-4 text-blue-500/40" />
                   @{profile.username}
                 </div>
               </div>
               
-              <div>
-                <label className="block text-sm font-normal text-gray-700 mb-1">Email Address</label>
-                <div className="flex items-center gap-2 text-gray-900">
-                  <Mail className="w-4 h-4 text-gray-400" />
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Email Address</label>
+                <div className="flex items-center gap-3 text-gray-900 font-semibold">
+                  <Mail className="w-4 h-4 text-blue-500/40" />
                   {profile.email}
                 </div>
               </div>
               
-              <div>
-                <label className="block text-sm font-normal text-gray-700 mb-1">Phone Number</label>
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Phone Number</label>
                 {editing ? (
                   <input
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
                     placeholder="Add phone number"
                   />
                 ) : (
-                  <div className="flex items-center gap-2 text-gray-900">
-                    <Phone className="w-4 h-4 text-gray-400" />
+                  <div className="flex items-center gap-3 text-gray-900 font-semibold">
+                    <Phone className="w-4 h-4 text-blue-500/40" />
                     {profile.phone || 'Not added'}
                   </div>
                 )}
@@ -231,35 +229,35 @@ export default function ProfileSettings() {
           </div>
 
           {/* Account Information */}
-          <div>
-            <h5 className="text-lg font-normal text-gray-900 mb-4">Account Information</h5>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-normal text-gray-700 mb-1">Role</label>
-                <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-gray-400" />
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-normal ${
+          <div className="space-y-6">
+            <h5 className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Account Information</h5>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Role</label>
+                <div className="flex items-center gap-3">
+                  <Shield className="w-4 h-4 text-blue-500/40" />
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
                     profile.role === 'ADMIN' 
-                      ? 'bg-purple-100 text-purple-800' 
-                      : 'bg-gray-100 text-gray-800'
+                      ? 'bg-purple-50 text-purple-600 border border-purple-100' 
+                      : 'bg-gray-50 text-gray-600 border border-gray-100'
                   }`}>
                     {profile.role}
                   </span>
                 </div>
               </div>
               
-              <div>
-                <label className="block text-sm font-normal text-gray-700 mb-1">Member Since</label>
-                <div className="flex items-center gap-2 text-gray-900">
-                  <Calendar className="w-4 h-4 text-gray-400" />
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Member Since</label>
+                <div className="flex items-center gap-3 text-gray-900 font-semibold">
+                  <Calendar className="w-4 h-4 text-blue-500/40" />
                   {formatDate(profile.created_at)}
                 </div>
               </div>
               
-              <div>
-                <label className="block text-sm font-normal text-gray-700 mb-1">Last Login</label>
-                <div className="flex items-center gap-2 text-gray-900">
-                  <Calendar className="w-4 h-4 text-gray-400" />
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Last Login</label>
+                <div className="flex items-center gap-3 text-gray-900 font-semibold">
+                  <Calendar className="w-4 h-4 text-blue-500/40" />
                   {profile.last_sign_in_at 
                     ? formatDate(profile.last_sign_in_at)
                     : 'Never'
@@ -271,20 +269,20 @@ export default function ProfileSettings() {
         </div>
 
         {editing && (
-          <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200">
+          <div className="flex gap-4 mt-10 pt-10 border-t border-gray-100">
             <button
               onClick={() => {
                 setEditing(false);
                 setFormData({ name: profile.name, phone: profile.phone || '' });
               }}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex-1 px-6 py-3 bg-gray-50 text-gray-900 rounded-xl font-semibold uppercase tracking-widest text-[10px] hover:bg-gray-100 transition-all active:scale-95"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="flex-1 px-6 py-3 bg-blue-500 text-white rounded-xl font-semibold uppercase tracking-widest text-[10px] shadow-lg shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Save Changes'}
             </button>
@@ -294,29 +292,33 @@ export default function ProfileSettings() {
 
       {/* Organization Info */}
       {tenant && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Building className="w-5 h-5 text-gray-400" />
-            <h4 className="text-lg font-normal text-gray-900">Organization</h4>
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="p-2 bg-blue-500/5 rounded-lg border border-blue-500/10">
+              <Building className="w-5 h-5 text-blue-500" />
+            </div>
+            <h4 className="text-lg font-semibold text-gray-900 tracking-tight uppercase tracking-widest">Organization</h4>
           </div>
-          <div className="space-y-3">
-            <div>
-              <p className="text-sm text-gray-600">Company Name</p>
-              <p className="font-normal text-gray-900">{tenant.name}</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="space-y-1">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Company Name</p>
+              <p className="text-sm font-semibold text-gray-900">{tenant.name}</p>
             </div>
-            <div>
-              <p className="text-sm text-gray-600">Business Email</p>
-              <p className="font-normal text-gray-900">{tenant.email}</p>
+            <div className="space-y-1">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Business Email</p>
+              <p className="text-sm font-semibold text-gray-900">{tenant.email}</p>
             </div>
-            <div>
-              <p className="text-sm text-gray-600">Subscription</p>
-              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-normal ${
-                tenant.subscription_tier === 'PRO' 
-                  ? 'bg-purple-100 text-purple-800' 
-                  : 'bg-gray-100 text-gray-800'
-              }`}>
-                {tenant.subscription_tier}
-              </span>
+            <div className="space-y-1">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Subscription</p>
+              <div>
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                  tenant.subscription_tier === 'PRO' 
+                    ? 'bg-purple-50 text-purple-600 border border-purple-100' 
+                    : 'bg-gray-50 text-gray-600 border border-gray-100'
+                }`}>
+                  {tenant.subscription_tier}
+                </span>
+              </div>
             </div>
           </div>
         </div>

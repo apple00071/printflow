@@ -94,7 +94,7 @@ export async function POST(request: Request) {
         state: state || '',
         phone: phone || '',
         email,
-        subscription_tier: plan.toLowerCase(), // Map plan to subscription_tier
+        subscription_tier: plan.toUpperCase(), // Map plan to subscription_tier
         subscription_status: 'ACTIVE' // Map plan_status to subscription_status
       })
       .select()

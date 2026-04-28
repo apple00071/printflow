@@ -7,10 +7,17 @@ import {
   Clock, 
   Plus,
   Loader2,
-  FileText
+  FileText,
+  FileSpreadsheet,
+  Download,
+  ShieldCheck,
+  CheckCircle2,
+  X,
+  Zap
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { getCurrentTenant } from "@/lib/tenant";
 import { useLanguage } from "@/lib/context/LanguageContext";
@@ -31,6 +38,7 @@ interface Order {
 
 export default function BillingPage() {
   const { t } = useLanguage();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState({
@@ -40,13 +48,28 @@ export default function BillingPage() {
   });
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isPaidPlan, setIsPaidPlan] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const fetchBillingData = async () => {
     setLoading(true);
     try {
       const supabase = createClient();
       const currentTenant = await getCurrentTenant(supabase);
-      
+
+      // Determine plan
+      if (currentTenant) {
+        const tier1 = (currentTenant.subscription_tier || '').toString().toUpperCase().trim();
+        const tier2 = (currentTenant.plan || '').toString().toUpperCase().trim();
+        const PAID = ['PRO', 'BUSINESS', 'ENTERPRISE'];
+        const paid = PAID.includes(tier1) && PAID.includes(tier2);
+        const isExpiredTrial =
+          paid &&
+          currentTenant.trial_ends_at &&
+          new Date(currentTenant.trial_ends_at) < new Date();
+        setIsPaidPlan(paid && !isExpiredTrial);
+      }
+
       const { data, error } = await supabase
         .from("orders")
         .select("*, customers(name)")
@@ -76,6 +99,21 @@ export default function BillingPage() {
     fetchBillingData();
   }, []);
 
+  const handleGSTClick = () => {
+    if (isPaidPlan) {
+      router.push('/dashboard/billing/gst-reports');
+    } else {
+      setShowUpgradeModal(true);
+    }
+  };
+
+  const benefits = [
+    { icon: FileSpreadsheet, title: t("Monthly GST Summary", "నెలవారీ GST సారాంశం"), desc: t("Auto-compiled B2B & B2C tax breakdowns every month", "ప్రతి నెలా B2B & B2C పన్ను వివరాలు స్వయంచాలకంగా") },
+    { icon: Download, title: t("GSTR-1 CSV Export", "GSTR-1 CSV ఎగుమతి"), desc: t("One-click export ready for your CA or tax portal upload", "CA లేదా పన్ను పోర్టల్ కోసం ఒక క్లిక్ ఎగుమతి") },
+    { icon: ShieldCheck, title: t("CGST / SGST / IGST Tracking", "CGST / SGST / IGST ట్రాకింగ్"), desc: t("Automatic tax calculation on every invoice you generate", "ప్రతి ఇన్వాయిస్‌లో స్వయంచాలక పన్ను లెక్కింపు") },
+    { icon: TrendingUp, title: t("Taxable Value Reports", "పన్ను విధించదగిన విలువ నివేదికలు"), desc: t("Track revenue, outstanding balances and tax liability at a glance", "రాబడి, బకాయిలు మరియు పన్ను బాధ్యతను చూడండి") },
+  ];
+
   const statCards = [
     { label: t("Total Revenue (Advances)", "మొత్తం రాబడి (అడ్వాన్స్)"), value: stats.totalRevenue, color: "bg-green-500", icon: TrendingUp },
     { label: t("Outstanding Balance", "మొత్తం బకాయిలు"), value: stats.outstandingBalance, color: "bg-red-500", icon: Clock },
@@ -84,18 +122,117 @@ export default function BillingPage() {
 
   return (
     <div className="space-y-8">
+
+      {/* Upgrade Modal */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowUpgradeModal(false)} />
+          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-300">
+            {/* Top banner */}
+            <div className="bg-white border-b border-gray-50 p-8 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+              {/* Close button */}
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                className="absolute top-4 right-4 p-1.5 rounded-full bg-gray-50 hover:bg-gray-100 transition-colors z-10"
+              >
+                <X className="w-4 h-4 text-gray-400" />
+              </button>
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="bg-orange-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">PRO Feature</span>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-orange-50 rounded-2xl">
+                    <FileSpreadsheet className="w-8 h-8 text-orange-500" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-semibold uppercase tracking-tighter leading-tight text-gray-900">
+                      {t("GST Reports & Compliance", "GST నివేదికలు & కంప్లయన్స్")}
+                    </h2>
+                    <p className="text-gray-400 text-sm mt-1 font-medium">
+                      {t("Available on Pro & Business plans", "Pro & Business ప్లాన్లలో అందుబాటులో ఉంది")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Benefits */}
+            <div className="p-6 space-y-4">
+              <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">
+                {t("What you unlock with Pro", "Pro తో మీకు లభించేవి")}
+              </p>
+              <ul className="space-y-3">
+                {benefits.map((b, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <div className="p-1.5 bg-green-50 rounded-lg mt-0.5 flex-shrink-0">
+                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{b.title}</p>
+                      <p className="text-[11px] text-gray-400 font-medium leading-relaxed">{b.desc}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Pricing + CTA */}
+            <div className="px-6 pb-6 space-y-3">
+              <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-orange-600 uppercase tracking-widest font-semibold">Pro Plan</p>
+                  <div className="flex items-baseline gap-1 mt-0.5">
+                    <span className="text-2xl font-semibold text-gray-900">₹499</span>
+                    <span className="text-xs text-gray-400 font-medium">/ month</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">Includes</p>
+                  <p className="text-xs text-gray-600 font-semibold">Unlimited orders + All reports</p>
+                </div>
+              </div>
+              <Link
+                href="/dashboard/settings"
+                onClick={() => setShowUpgradeModal(false)}
+                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3.5 rounded-2xl text-sm font-semibold uppercase tracking-widest shadow-lg shadow-orange-200 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <Zap className="w-4 h-4" />
+                {t("Upgrade to Pro Now", "ఇప్పుడు Pro కు అప్‌గ్రేడ్ చేయండి")}
+              </Link>
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                className="w-full flex items-center justify-center gap-2 py-2 text-xs text-gray-400 font-medium hover:text-gray-600 transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+                {t("Maybe later", "తర్వాత చేస్తాను")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
       <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-xl font-normal text-gray-900 uppercase tracking-tighter">{t("Billing & Finance", "బిల్లింగ్ మరియు ఫైనాన్స్")}</h1>
-          <p className="text-[10px] text-gray-400 uppercase tracking-widest">{t("Revenue & Tax Management", "రాబడి మరియు పన్ను నిర్వహణ")}</p>
+          <h1 className="text-xl font-semibold text-gray-900 uppercase tracking-tighter">{t("Billing & Finance", "బిల్లింగ్ మరియు ఫైనాన్స్")}</h1>
+          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">{t("Revenue & Tax Management", "రాబడి మరియు పన్ను నిర్వహణ")}</p>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/dashboard/billing/gst-reports" className="bg-white text-primary border border-primary/20 px-5 py-2.5 rounded-xl text-sm font-normal flex items-center gap-2 hover:bg-primary/5 hover:border-primary/40 active:scale-[0.97] transition-all shadow-sm">
-            <TrendingUp className="w-4 h-4" /> {t("GST Reports", "GST నివేదికలు")}
-          </Link>
+          {/* GST Reports — intercepts for FREE users */}
+          <button
+            onClick={handleGSTClick}
+            className="relative bg-gray-50 text-gray-900 border border-gray-100 px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 hover:bg-gray-100 active:scale-[0.97] transition-all"
+          >
+            <TrendingUp className="w-4 h-4 text-primary" /> {t("GST Reports", "GST నివేదికలు")}
+            {!isPaidPlan && (
+              <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-widest shadow-sm border border-white">PRO</span>
+            )}
+          </button>
           <button 
             onClick={() => setIsPaymentModalOpen(true)}
-            className="bg-gradient-to-br from-primary to-[#2a4d7d] text-white px-5 py-2.5 rounded-xl text-sm font-normal flex items-center gap-2 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.97] transition-all shadow-lg shadow-primary/20"
+            className="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 hover:bg-primary/90 active:scale-[0.97] transition-all shadow-sm"
           >
             <Plus className="w-4 h-4" /> {t("New Transaction", "కొత్త లావాదేవీ")}
           </button>
@@ -116,8 +253,8 @@ export default function BillingPage() {
                   <stat.icon className="w-6 h-6" />
                </div>
                <div>
-                  <p className="text-sm text-gray-500 ">{stat.label}</p>
-                  <p className="text-xl  text-gray-900">
+                  <p className="text-sm font-medium text-gray-500">{stat.label}</p>
+                  <p className="text-xl font-semibold text-gray-900 tracking-tight">
                     {stat.isCount ? stat.value : formatCurrency(stat.value)}
                   </p>
                </div>
@@ -128,7 +265,7 @@ export default function BillingPage() {
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-h-[400px]">
         <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-          <h2 className="text-lg  text-gray-900">
+          <h2 className="text-xl font-semibold text-gray-900 tracking-tight">
             {t("Recent Revenue Events", "ఇటీవలి రాబడి")}
           </h2>
         </div>
@@ -147,7 +284,7 @@ export default function BillingPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-gray-50 text-gray-500 text-xs  uppercase tracking-wider">
+                <tr className="bg-gray-50 text-gray-400 text-[10px] font-semibold uppercase tracking-widest">
                   <th className="px-6 py-4">{t("Reference", "రెఫరెన్స్")}</th>
                   <th className="px-6 py-4">{t("Customer", "కస్టమర్")}</th>
                   <th className="px-6 py-4">{t("Status", "స్థితి")}</th>
@@ -163,9 +300,9 @@ export default function BillingPage() {
                     <tr key={ord.id} className="hover:bg-gray-50/50 transition-all">
                       <td className="px-6 py-4 whitespace-nowrap">
                          <span className="text-[10px]  font-mono text-gray-400 uppercase">{ord.friendly_id || `# ${ord.id.split('-')[0]}`}</span>
-                         <p className="text-[10px] text-gray-400">{formatDate(ord.created_at)}</p>
+                         <p className="text-[10px] font-medium text-gray-400">{formatDate(ord.created_at)}</p>
                       </td>
-                      <td className="px-6 py-4 text-sm  text-gray-900">{ord.customers?.name || "Walk-in"}</td>
+                      <td className="px-6 py-4 text-sm font-semibold text-gray-900">{ord.customers?.name || "Walk-in"}</td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 text-[9px]  rounded-full uppercase tracking-widest ${
                           ord.status === "DELIVERED" ? "bg-gray-100 text-gray-600" : "bg-primary text-white"
@@ -174,10 +311,10 @@ export default function BillingPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <span className="text-sm  text-green-600">+{formatCurrency(ord.advance_paid)}</span>
+                        <span className="text-sm font-medium text-green-600">+{formatCurrency(ord.advance_paid)}</span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <span className={`text-sm  ${balance > 0 ? "text-red-500" : "text-gray-300"}`}>
+                        <span className={`text-sm font-semibold ${balance > 0 ? "text-red-500" : "text-gray-300"}`}>
                            {balance > 0 ? formatCurrency(balance) : t("PAID", "చెల్లించారు")}
                         </span>
                       </td>

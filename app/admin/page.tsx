@@ -568,7 +568,7 @@ export default function AdminDashboard() {
                 <div className="flex justify-between items-center bg-gray-50/50 p-4 rounded-2xl border border-gray-50">
                   <div>
                     <p className="text-sm font-normal text-gray-900">Free Plan</p>
-                    <p className="text-[10px] text-gray-400 font-normal uppercase tracking-tight">Up to 50 orders/month</p>
+                    <p className="text-[10px] text-gray-400 font-normal uppercase tracking-tight">Unlimited orders</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xl sm:text-2xl font-normal text-gray-900">{stats.freePlans}</p>

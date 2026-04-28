@@ -2,20 +2,20 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Menu, X, Check, ArrowRight, Star, Quote, MessageCircle, FileText, Users, Package, Globe, BarChart, UserPlus, Settings, Rocket, ShieldCheck, Download, Languages, Phone } from "lucide-react";
+import { Menu, X, Check, ArrowRight, MessageCircle, FileText, Users, Package, Globe, BarChart, UserPlus, Settings, Rocket, ShieldCheck, Download, Languages, Phone } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { translations, Language } from "./translations";
 
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
-  const [counters, setCounters] = useState({ shops: 0, orders: 0, years: 0 });
+
   const [lang, setLang] = useState<Language>('en');
   
   const t = translations[lang];
   
   const featuresRef = useRef<HTMLDivElement>(null);
-  const statsRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -23,41 +23,7 @@ export default function LandingPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            // Animate counters
-            animateCounter('shops', 1200, 2000);
-            animateCounter('orders', 50000, 2500);
-            animateCounter('years', 3, 1500);
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
 
-    if (statsRef.current) {
-      observer.observe(statsRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  const animateCounter = (key: string, target: number, duration: number) => {
-    let start = 0;
-    const increment = target / (duration / 16);
-    const timer = setInterval(() => {
-      start += increment;
-      if (start >= target) {
-        start = target;
-        clearInterval(timer);
-      }
-      setCounters(prev => ({ ...prev, [key]: Math.floor(start) }));
-    }, 16);
-  };
 
   const scrollToFeatures = () => {
     featuresRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -65,18 +31,8 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-[#fafaf8]">
-      {/* Google Fonts */}
+      {/* Animations and utilities */}
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&display=swap');
-        
-        * {
-          font-family: 'DM Sans', 'Noto Sans Telugu', sans-serif;
-        }
-        
-        .font-syne {
-          font-family: 'Syne', sans-serif;
-        }
-        
         .animate-fade-up {
           opacity: 1;
           transform: translateY(0);
@@ -173,7 +129,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="animate-fade-up">
-              <h1 className="text-4xl sm:text-5xl lg:text-3xl font-normal font-syne leading-tight mb-4">
+              <h1 className="text-4xl sm:text-5xl lg:text-3xl font-normal font-sans leading-tight mb-4">
                 <span className="text-[#1e3a5f]">{t.hero.title1}</span><br />
                 <span className="text-[#f97316] font-extrabold">{t.hero.title2}</span>
               </h1>
@@ -294,7 +250,7 @@ export default function LandingPage() {
       {/* Pain Points Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-normal font-syne text-center mb-12 text-[#1e3a5f]">
+          <h2 className="text-4xl font-normal font-sans text-center mb-12 text-[#1e3a5f]">
             {t.painPoints.title}
           </h2>
           
@@ -315,7 +271,7 @@ export default function LandingPage() {
       {/* Features Section */}
       <section ref={featuresRef} className="py-16 px-4 sm:px-6 lg:px-8 bg-[#fafaf8]">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-normal font-syne text-center mb-4 text-[#1e3a5f]">
+          <h2 className="text-4xl font-normal font-sans text-center mb-4 text-[#1e3a5f]">
             {t.features.title}
           </h2>
           <p className="text-xl text-center text-gray-600 mb-12 max-w-3xl mx-auto">
@@ -395,7 +351,7 @@ export default function LandingPage() {
 
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-normal font-syne mb-2">
+            <h2 className="text-4xl md:text-5xl font-normal font-sans mb-2">
               {t.howItWorks.title} <span className="text-[#f97316]">{t.howItWorks.time}</span>
             </h2>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
@@ -413,7 +369,7 @@ export default function LandingPage() {
                 </div>
                 <div className="absolute -top-3 -right-3 w-8 h-8 bg-[#f97316] rounded-full flex items-center justify-center text-sm font-normal shadow-lg">1</div>
               </div>
-              <h3 className="text-2xl font-normal mb-4 font-syne">{t.howItWorks.steps[0].title}</h3>
+              <h3 className="text-2xl font-normal mb-4 font-sans">{t.howItWorks.steps[0].title}</h3>
               <p className="text-gray-400 leading-relaxed">{t.howItWorks.steps[0].desc}</p>
             </div>
             
@@ -424,7 +380,7 @@ export default function LandingPage() {
                 </div>
                 <div className="absolute -top-3 -right-3 w-8 h-8 bg-[#f97316] rounded-full flex items-center justify-center text-sm font-normal shadow-lg">2</div>
               </div>
-              <h3 className="text-2xl font-normal mb-4 font-syne">{t.howItWorks.steps[1].title}</h3>
+              <h3 className="text-2xl font-normal mb-4 font-sans">{t.howItWorks.steps[1].title}</h3>
               <p className="text-gray-400 leading-relaxed">{t.howItWorks.steps[1].desc}</p>
             </div>
             
@@ -435,7 +391,7 @@ export default function LandingPage() {
                 </div>
                 <div className="absolute -top-3 -right-3 w-8 h-8 bg-[#f97316] rounded-full flex items-center justify-center text-sm font-normal shadow-lg">3</div>
               </div>
-              <h3 className="text-2xl font-normal mb-4 font-syne">{t.howItWorks.steps[2].title}</h3>
+              <h3 className="text-2xl font-normal mb-4 font-sans">{t.howItWorks.steps[2].title}</h3>
               <p className="text-gray-400 leading-relaxed">{t.howItWorks.steps[2].desc}</p>
             </div>
           </div>
@@ -455,7 +411,7 @@ export default function LandingPage() {
                 <span className="bg-[#f97316] text-white text-xs font-normal px-4 py-1.5 rounded-full uppercase tracking-wider mb-4 inline-block">
                   Compliance Made Simple
                 </span>
-                <h2 className="text-3xl md:text-5xl font-normal font-syne mb-4">
+                <h2 className="text-3xl md:text-5xl font-normal font-sans mb-4">
                   GST invoices. Auto-calculated. Every time.
                 </h2>
               </div>
@@ -463,19 +419,19 @@ export default function LandingPage() {
               <div className="grid md:grid-cols-3 gap-8">
                 <div className="bg-white/5 border border-white/10 p-8 rounded-2xl hover:bg-white/10 transition-colors">
                   <ShieldCheck className="w-12 h-12 text-[#f97316] mb-6" />
-                  <div className="text-2xl font-normal mb-2 font-syne">CGST + SGST</div>
+                  <div className="text-2xl font-normal mb-2 font-sans">CGST + SGST</div>
                   <p className="text-gray-400">Perfectly split for local intra-state orders across India.</p>
                 </div>
                 
                 <div className="bg-white/5 border border-white/10 p-8 rounded-2xl hover:bg-white/10 transition-colors">
                   <Globe className="w-12 h-12 text-[#f97316] mb-6" />
-                  <div className="text-2xl font-normal mb-2 font-syne">IGST Support</div>
+                  <div className="text-2xl font-normal mb-2 font-sans">IGST Support</div>
                   <p className="text-gray-400">Handle inter-state digital orders with correct IGST automatically.</p>
                 </div>
                 
                 <div className="bg-white/5 border border-white/10 p-8 rounded-2xl hover:bg-white/10 transition-colors">
                   <Download className="w-12 h-12 text-[#f97316] mb-6" />
-                  <div className="text-2xl font-normal mb-2 font-syne">GSTR-1 Ready</div>
+                  <div className="text-2xl font-normal mb-2 font-sans">GSTR-1 Ready</div>
                   <p className="text-gray-400">Export clean CSV reports for your CA in seconds.</p>
                 </div>
               </div>
@@ -487,7 +443,7 @@ export default function LandingPage() {
       {/* Comparison Table */}
       <section id="why-us" className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-normal font-syne text-center mb-12 text-[#1e3a5f]">
+          <h2 className="text-4xl font-normal font-sans text-center mb-12 text-[#1e3a5f]">
             Why small shops choose PrintFlow
           </h2>
           
@@ -547,7 +503,7 @@ export default function LandingPage() {
       {/* Pricing */}
       <section id="pricing" className="py-16 px-4 sm:px-6 lg:px-8 bg-[#fafaf8]">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-normal font-syne text-center mb-4 text-[#1e3a5f]">
+          <h2 className="text-4xl font-normal font-sans text-center mb-4 text-[#1e3a5f]">
             {t.pricing.title}
           </h2>
           
@@ -563,7 +519,7 @@ export default function LandingPage() {
               <ul className="space-y-3 mb-8">
                 <li className="flex items-center">
                   <Check className="w-5 h-5 text-green-500 mr-3" />
-                  <span>50 orders per month</span>
+                  <span>Unlimited orders</span>
                 </li>
                 <li className="flex items-center">
                   <Check className="w-5 h-5 text-green-500 mr-3" />
@@ -659,62 +615,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-normal font-syne text-center mb-12 text-[#1e3a5f]">
-            {t.testimonials.title}
-          </h2>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            {t.testimonials.items.map((testimonial, idx) => (
-              <div key={idx} className="bg-gray-50 p-6 rounded-xl hover-lift">
-                <Quote className="w-8 h-8 text-[#f97316] mb-4" />
-                <p className="text-gray-700 mb-4 italic">
-                  &quot;{testimonial.quote}&quot;
-                </p>
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-[#1e3a5f] text-white rounded-full flex items-center justify-center font-normal mr-3">
-                    {testimonial.initials}
-                  </div>
-                  <div>
-                    <p className="font-normal">{testimonial.author}</p>
-                    <p className="text-sm text-gray-600">{testimonial.shop}</p>
-                    <div className="flex text-yellow-400">
-                      {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* Stats */}
-      <section ref={statsRef} className="py-16 px-4 sm:px-6 lg:px-8 bg-[#1e3a5f] text-white">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="grid md:grid-cols-3 gap-8">
-            <div>
-              <div className="text-5xl font-normal font-syne mb-2">{counters.shops}+</div>
-              <p className="text-xl">Print shops across India</p>
-            </div>
-            <div>
-              <div className="text-5xl font-normal font-syne mb-2">₹{counters.orders.toLocaleString()}+</div>
-              <p className="text-xl">Orders managed monthly</p>
-            </div>
-            <div>
-              <div className="text-5xl font-normal font-syne mb-2">{counters.years}+</div>
-              <p className="text-xl">Years serving printers</p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Final CTA */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-[#1e3a5f] text-white">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-normal font-syne mb-6">
+          <h2 className="text-4xl md:text-5xl font-normal font-sans mb-6">
             Your print shop runs on hard work.<br />
             Let PrintFlow handle the paperwork.
           </h2>

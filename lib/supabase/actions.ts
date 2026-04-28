@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@/lib/supabase/admin";
-import { getCurrentTenant, checkOrderLimit } from "@/lib/tenant";
+import { getCurrentTenant } from "@/lib/tenant";
 import { isSuperAdmin } from "@/lib/superadmin";
 import { calculateGST } from "@/lib/gst";
 import { sendWhatsAppMessage, formatStatusMessage } from "@/lib/whatsapp";
@@ -157,12 +157,8 @@ export async function createOrder(data: OrderData) {
   }
 
   // 0. Plan Enforcement (skip for super admin)
-  if (!superAdmin) {
-    const limitCheck = await checkOrderLimit(tenant);
-    if (!limitCheck.allowed) {
-      throw new Error(limitCheck.reason === 'limit_reached' ? "Monthly order limit reached for FREE plan." : "Subscription expired.");
-    }
-  }
+  // Unlimited orders model: no hard limit check required here.
+
 
   // 1. Check if customer exists by phone (if provided and not empty)
   let customerId = null;

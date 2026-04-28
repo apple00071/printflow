@@ -74,15 +74,7 @@ export interface TranslationStructure {
     tooltip: string;
     prefixedMessage: string;
   };
-  testimonials: {
-    title: string;
-    items: {
-      quote: string;
-      author: string;
-      shop: string;
-      initials: string;
-    }[];
-  };
+
 }
 
 export const translations: Record<Language, TranslationStructure> = {
@@ -204,29 +196,7 @@ export const translations: Record<Language, TranslationStructure> = {
         tooltip: "Need help? Chat with us",
         prefixedMessage: "Hi, I'm interested in PrintFlow for my print shop. Can you help me get started?"
     },
-    testimonials: {
-        title: "Trusted by print shops across India",
-        items: [
-            {
-                quote: "Earlier I used to write 30 invoices a week by hand. Now PrintFlow generates them in seconds with GST.",
-                author: "Ravi Kumar",
-                shop: "Sri Lakshmi Printers, Vijayawada",
-                initials: "RK"
-            },
-            {
-                quote: "Managing my offset and digital printing orders was always a mess. PrintFlow made it simple and tracked all my payments.",
-                author: "Venkatesh",
-                shop: "Metro Graphics, Hyderabad (Ameerpet)",
-                initials: "VN"
-            },
-            {
-                quote: "Finally a software that works on my phone! I can see my shop's performance from anywhere. Very easy to use.",
-                author: "Anitha Reddy",
-                shop: "Sai Digital Press, Visakhapatnam",
-                initials: "AR"
-            }
-        ]
-    }
+
   },
   te: {
     nav: {
@@ -346,29 +316,6 @@ export const translations: Record<Language, TranslationStructure> = {
         tooltip: "సహాయం కావాలా? మాతో చాట్ చేయండి",
         prefixedMessage: "నమస్కారం, నా ప్రింట్ షాప్ కోసం ప్రింట్ ఫ్లో ఉపయోగించాలనుకుంటున్నాను. ప్రారంభించడానికి నాకు సహాయం చేస్తారా?"
     },
-    testimonials: {
-        title: "భారతదేశం వ్యాప్తంగా ప్రింట్ షాపుల నమ్మకం",
-        items: [
-            {
-                quote: "గతంలో నేను వారానికి 30 ఇన్వాయిస్లను చేతితో రాసేవాడిని. ఇప్పుడు ప్రింట్ ఫ్లో సెకన్లలో GST తో ఇన్వాయిస్లను తయారు చేస్తుంది.",
-                author: "రవి కుమార్",
-                shop: "శ్రీ లక్ష్మి ప్రింటర్స్, విజయవాడ",
-                initials: "RK"
-            },
-            {
-                quote: "నా ఆఫ్సెట్ మరియు డిజిటల్ ప్రింటిंग ఆర్డర్లను నిర్వహించడం ఎప్పుడూ గందరగోళంగా ఉండేది. ప్రింట్ ఫ్లో దాన్ని సులభతరం చేసింది.",
-                author: "వెంకటేశ్",
-                shop: "మెట్రో గ్రాఫిక్స్, హైదరాబాద్ (అమీర్పేట్)",
-                initials: "VN"
-            },
-            {
-                quote: "చివరికి నా ఫోన్ లో పనిచేసే ఒక సాఫ్ట్ వేర్ దొరికింది! ఎక్కడి నుండైనా నా షాప్ పనితీరును నేను చూడగలను.",
-                author: "అనిత రెడ్డి",
-                shop: "సాయి డిజిటల్ ప్రెస్, విశాఖపట్నం",
-                initials: "AR"
-            }
-        ]
-    }
   },
   hi: {
     nav: {
@@ -488,28 +435,6 @@ export const translations: Record<Language, TranslationStructure> = {
         tooltip: "मदद चाहिए? हमसे चैट करें",
         prefixedMessage: "नमस्ते, मैं अपनी प्रिंट शॉप के लिए प्रिंटफ्लो में रुचि रखता हूं। क्या आप शुरू करने में मेरी मदद कर सकते हैं?"
     },
-    testimonials: {
-        title: "भारत भर की प्रिंट शॉप्स का भरोसा",
-        items: [
-            {
-                quote: "पहले मैं हाथ से हफ्ते में 30 चालान लिखता था। अब प्रिंटफ्लो सेकंडों में जीएसटी के साथ चालान बना देता है।",
-                author: "रवि कुमार",
-                shop: "श्री लक्ष्मी प्रिंटर्स, विजयवाड़ा",
-                initials: "RK"
-            },
-            {
-                quote: "मेरे ऑफसेट और डिजिटल प्रिंटिंग ऑर्डर को मैनेज करना हमेशा एक झंझट था। प्रिंटफ्लो ने इसे सरल बना दिया।",
-                author: "वेंकटेश",
-                shop: "मेट्रो ग्राफिक्स, हैदराबाद",
-                initials: "VN"
-            },
-            {
-                quote: "आखिरकार ऐसा सॉफ्टवेयर मिला जो मेरे फोन पर काम करता है! मैं कहीं से भी अपनी दुकान का प्रदर्शन देख सकता हूं।",
-                author: "अनिता रेड्डी",
-                shop: "साई डिजिटल प्रेस, विशाखापत्तनम",
-                initials: "AR"
-            }
-        ]
-    }
+
   }
 };

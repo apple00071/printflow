@@ -79,7 +79,10 @@ export async function PATCH(
 
     // Mapping payload logic to the database columns
     const updateData: Record<string, string> = {};
-    if (body.plan) updateData.plan = body.plan.toLowerCase();
+    if (body.plan) {
+      updateData.plan = body.plan.toLowerCase();
+      updateData.subscription_tier = body.plan.toUpperCase(); // keep both fields in sync
+    }
     if (body.plan_status) updateData.plan_status = body.plan_status;
 
     if (Object.keys(updateData).length === 0) {

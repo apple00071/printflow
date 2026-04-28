@@ -163,13 +163,13 @@ export default function OrdersPage() {
             {/* Desktop Table */}
             <table className="w-full text-left hidden sm:table">
               <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="px-6 py-4 text-xs  text-gray-500 uppercase tracking-wider">{t("Order ID", "ఆర్డర్ ID")}</th>
-                  <th className="px-6 py-4 text-xs  text-gray-500 uppercase tracking-wider">{t("Customer", "కస్టమర్")}</th>
-                  <th className="px-6 py-4 text-xs  text-gray-500 uppercase tracking-wider">{t("Order Details", "ఆర్డర్ వివరాలు")}</th>
-                  <th className="px-6 py-4 text-xs  text-gray-500 uppercase tracking-wider">{t("Status", "స్థితి")}</th>
-                  <th className="px-6 py-4 text-xs  text-gray-500 uppercase tracking-wider text-right">{t("Amount", "మొత్తం")}</th>
-                  <th className="px-6 py-4 text-xs  text-gray-500 uppercase tracking-wider text-right">{t("Actions", "చర్యలు")}</th>
+                <tr className="text-gray-400 text-[10px] font-semibold uppercase tracking-widest">
+                  <th className="px-6 py-4">{t("Order ID", "ఆర్డర్ ID")}</th>
+                  <th className="px-6 py-4">{t("Customer", "కస్టమర్")}</th>
+                  <th className="px-6 py-4">{t("Order Details", "ఆర్డర్ వివరాలు")}</th>
+                  <th className="px-6 py-4">{t("Status", "స్థితి")}</th>
+                  <th className="px-6 py-4 text-right">{t("Amount", "మొత్తం")}</th>
+                  <th className="px-6 py-4 text-right">{t("Actions", "చర్యలు")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -184,16 +184,16 @@ export default function OrdersPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
-                        <span className="text-sm  text-gray-900">{order.customers?.name || "Unknown"}</span>
-                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                        <span className="text-sm font-semibold text-gray-900">{order.customers?.name || "Unknown"}</span>
+                        <span className="text-xs font-medium text-gray-500 flex items-center gap-1">
                           <Phone className="w-3 h-3" /> {order.customers?.phone || "N/A"}
                         </span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
-                        <span className="text-sm text-gray-900 ">{order.job_type}</span>
-                        <span className="text-xs text-gray-500 font-normal">{t("Qty", "క్వాంటిటీ")}: {order.quantity}</span>
+                        <span className="text-sm font-semibold text-gray-900 ">{order.job_type}</span>
+                        <span className="text-xs text-gray-500 font-medium">{t("Qty", "క్వాంటిటీ")}: {order.quantity}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -240,11 +240,11 @@ export default function OrdersPage() {
                   >
                      <div className="flex justify-between items-start">
                         <div className="flex flex-col">
-                           <span className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-tight">#{order.friendly_id || order.id.slice(0, 8)}</span>
-                           <span className="text-base font-bold text-gray-900">{order.customers?.name || "Unknown"}</span>
+                           <span className="text-[10px] font-mono font-semibold text-gray-400 uppercase tracking-tight">#{order.friendly_id || order.id.slice(0, 8)}</span>
+                           <span className="text-base font-semibold text-gray-900">{order.customers?.name || "Unknown"}</span>
                         </div>
                         <span className={cn(
-                          "px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                          "px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider",
                           getStatusColor(order.status)
                         )}>
                           {order.status}
@@ -257,9 +257,9 @@ export default function OrdersPage() {
                            <p className="text-xs text-gray-400 flex items-center gap-1"><Phone className="w-3 h-3" /> {order.customers?.phone || "N/A"}</p>
                         </div>
                         <div className="text-right">
-                           <p className="text-sm font-bold text-gray-900">{formatCurrency(order.total_with_gst || order.total_amount)}</p>
+                           <p className="text-sm font-semibold text-gray-900">{formatCurrency(order.total_with_gst || order.total_amount)}</p>
                            {((order.total_with_gst || order.total_amount) - order.advance_paid) > 0 && (
-                             <p className="text-[10px] text-red-500 font-bold uppercase">
+                             <p className="text-[10px] text-red-500 font-semibold uppercase">
                                Due: {formatCurrency((order.total_with_gst || order.total_amount) - order.advance_paid)}
                              </p>
                            )}

@@ -149,11 +149,9 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
     }
   }
 
-  // Calculate REAL usage
   const isPaid = tenant?.plan === 'PRO' || tenant?.plan === 'BUSINESS';
-  const orderLimit = isPaid ? 1000 : 50;
-  const usagePercent = Math.min(Math.round(((tenant?.orders_this_month || 0) / orderLimit) * 100), 100);
-  const isNearLimit = usagePercent > 80;
+  const usagePercent = 100; // Orders are now unlimited for all plans
+  const isNearLimit = false;
 
   if (loading) {
     return (
@@ -363,7 +361,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
                   ></div>
                 </div>
                 <p className={`text-[9px] font-normal ${tenant.plan === 'PRO' ? 'opacity-40' : 'text-gray-400'}`}>
-                  {tenant.orders_this_month} / {isPaid ? 'Unlimited (1k limit)' : '50'} orders this month
+                  {tenant.orders_this_month} orders this month — Unlimited
                 </p>
               </div>
             </div>

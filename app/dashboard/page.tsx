@@ -183,17 +183,17 @@ export default function DashboardPage() {
          <div className="absolute right-0 top-0 w-64 h-64 bg-primary/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
          <div className="relative z-10">
             <h1 className="text-3xl font-medium text-gray-900 leading-tight tracking-tight">
-               {t("Welcome back,", "మళ్ళీ స్వాగతం,", "स्वागत है,")} <span className="font-bold text-primary">{tenantInfo?.name || "Member"}</span>
+               {t("Welcome back,", "మళ్ళీ స్వాగతం,", "स्वागत है,")} <span className="font-semibold text-primary">{tenantInfo?.name || "Member"}</span>
             </h1>
             <div className="flex flex-wrap items-center gap-2 mt-1">
                <p className="text-gray-500">{t("Here's what's happening today.", "ఈరోజు విశేషాలు ఇక్కడ ఉన్నాయి.", "आज क्या हो रहा है, यहाँ देखें।")}</p>
                {overdueOrders.length > 0 && (
-                  <span className="px-2 py-0.5 bg-red-100 text-red-600 rounded-full text-[10px] font-bold uppercase tracking-tighter border border-red-200 animate-pulse">
+                  <span className="px-2 py-0.5 bg-red-100 text-red-600 rounded-full text-[10px] font-semibold uppercase tracking-tighter border border-red-200 animate-pulse">
                      {overdueOrders.length} Overdue
                   </span>
                )}
                {lowStockCount > 0 && (
-                  <span className="px-2 py-0.5 bg-orange/10 text-orange rounded-full text-[10px] font-bold uppercase tracking-tighter border border-orange/20">
+                  <span className="px-2 py-0.5 bg-orange/10 text-orange rounded-full text-[10px] font-semibold uppercase tracking-tighter border border-orange/20">
                      {lowStockCount} Low Stock
                   </span>
                )}
@@ -226,8 +226,8 @@ export default function DashboardPage() {
                   <stat.icon className="w-6 h-6" />
                 </div>
                 <div className="flex-1">
-                   <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">{stat.label}</p>
-                   <p className="text-2xl font-bold text-gray-900 tracking-tight">{stat.value}</p>
+                   <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-0.5">{stat.label}</p>
+                   <p className="text-2xl font-semibold text-gray-900 tracking-tight">{stat.value}</p>
                 </div>
               </div>
             ))}
@@ -238,7 +238,7 @@ export default function DashboardPage() {
             {/* Revenue Trend */}
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 min-h-[350px]">
               <div className="flex items-center justify-between mb-8">
-                 <h2 className="text-lg font-bold text-gray-900">{t("Revenue Trend", "ఆదాయం సరళి", "आय का रुझान")}</h2>
+                 <h2 className="text-lg font-semibold text-gray-900">{t("Revenue Trend", "ఆదాయం సరళి", "आय का रुझान")}</h2>
                  <span className="text-xs text-gray-400 font-medium">Last 6 Months</span>
               </div>
               {loading ? (
@@ -254,7 +254,7 @@ export default function DashboardPage() {
 
             {/* Job Types */}
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 min-h-[350px]">
-              <h2 className="text-lg font-bold text-gray-900 mb-8">{t("Revenue by Product", "ఆర్డర్ రకాలు", "उत्पाद के अनुसार आय")}</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-8">{t("Revenue by Product", "ఆర్డర్ రకాలు", "उत्पाद के अनुसार आय")}</h2>
               {loading ? (
                   <div className="flex flex-col items-center justify-center p-10 text-gray-400">
                       <Loader2 className="w-8 h-8 animate-spin mb-2" />
@@ -272,8 +272,8 @@ export default function DashboardPage() {
       {/* Recent Orders Table Component (Simplified) */}
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-xl font-bold text-gray-900">{t("Recent Orders", "ఇటీవలి ఆర్డర్లు", "हाल के आदेश")}</h2>
-          <Link href="/dashboard/orders" className="px-4 py-2 bg-gray-50 text-gray-600 rounded-xl text-xs font-bold hover:bg-gray-100 transition-all border border-gray-100">
+          <h2 className="text-xl font-semibold text-gray-900">{t("Recent Orders", "ఇటీవలి ఆర్డర్లు", "हाल के आदेश")}</h2>
+          <Link href="/dashboard/orders" className="px-4 py-2 bg-gray-50 text-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-100 transition-all border border-gray-100">
             {t("View Full Ledger", "పూర్తిగా చూడండి", "पूरा लेजर देखें")}
           </Link>
         </div>
@@ -281,10 +281,10 @@ export default function DashboardPage() {
            <table className="w-full text-left">
               <thead>
                  <tr className="border-b border-gray-50">
-                    <th className="pb-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("Customer", "కస్టమర్", "ग्राहक")}</th>
-                    <th className="pb-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("Product", "ఉత్పత్తి", "उत्पाद")}</th>
-                    <th className="pb-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("Status", "స్థితి", "स्थिति")}</th>
-                    <th className="pb-4 text-right text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("Amount", "మొత్తం", "मात्रा")}</th>
+                    <th className="pb-4 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">{t("Customer", "కస్టమర్", "ग्राहक")}</th>
+                    <th className="pb-4 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">{t("Product", "ఉత్పత్తి", "उत्पाद")}</th>
+                    <th className="pb-4 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">{t("Status", "స్థితి", "स्थिति")}</th>
+                    <th className="pb-4 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-widest">{t("Amount", "మొత్తం", "मात्रा")}</th>
                  </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -293,15 +293,15 @@ export default function DashboardPage() {
                  ) : recentOrders.map((order) => (
                     <tr key={order.id} className="group hover:bg-gray-50/50 transition-all cursor-pointer" onClick={() => router.push(`/dashboard/orders/${order.id}`)}>
                        <td className="py-4">
-                          <p className="text-sm font-bold text-gray-900 group-hover:text-primary transition-colors">{order.customers?.name}</p>
+                          <p className="text-sm font-semibold text-gray-900 group-hover:text-primary transition-colors">{order.customers?.name}</p>
                           <p className="text-[10px] font-mono text-gray-400 uppercase">{order.friendly_id || `#${order.id.split('-')[0]}`}</p>
                        </td>
                        <td className="py-4">
-                          <span className="text-xs text-gray-600">{order.job_type || "-"}</span>
+                          <span className="text-xs font-medium text-gray-600">{order.job_type || "-"}</span>
                        </td>
                        <td className="py-4">
                           <span className={cn(
-                             "px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter",
+                             "px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-tighter",
                              order.status === 'DELIVERED' ? "bg-green-100 text-green-700" :
                              order.status === 'READY' ? "bg-blue-100 text-blue-700" :
                              "bg-orange/10 text-orange"
@@ -310,7 +310,7 @@ export default function DashboardPage() {
                           </span>
                        </td>
                        <td className="py-4 text-right">
-                          <p className="text-sm font-bold text-gray-900">{formatCurrency(order.total_amount)}</p>
+                          <p className="text-sm font-semibold text-gray-900">{formatCurrency(order.total_amount)}</p>
                        </td>
                     </tr>
                  ))}

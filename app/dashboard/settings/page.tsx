@@ -56,6 +56,7 @@ export default function SettingsPage() {
     logo_url?: string;
     id_prefix?: string;
     subscription_tier?: string;
+    plan?: string;
     orders_this_month?: number;
     subscription_end_date?: string;
   }
@@ -164,10 +165,10 @@ export default function SettingsPage() {
                <button 
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all  ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                     activeTab === tab.id 
-                      ? "bg-primary text-white shadow-lg shadow-primary/20" 
-                      : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-100"
+                      ? "bg-primary/5 text-primary border border-primary/20 shadow-sm" 
+                      : "bg-white text-gray-500 hover:bg-gray-50 border border-transparent"
                   }`}
                >
                   <tab.icon className="w-5 h-5" />
@@ -184,7 +185,7 @@ export default function SettingsPage() {
               <div className="p-8 space-y-10">
                  <div className="border-b border-gray-100 pb-6 flex items-center justify-between">
                     <div className="space-y-1">
-                       <h2 className="text-xl font-normal text-gray-900 uppercase tracking-tighter">{t("Counter QR Storefront", "కౌంటర్ QR స్టోర్‌ఫ్రంట్")}</h2>
+                       <h2 className="text-xl font-semibold text-gray-900 uppercase tracking-tighter">{t("Counter QR Storefront", "కౌంటర్ QR స్టోర్‌ఫ్రంట్")}</h2>
                        <p className="text-[10px] text-gray-400 uppercase tracking-widest">{t("Let customers order by scanning a code", "ఖాతాదారులు కోడ్‌ని స్కాన్ చేయడం ద్వారా ఆర్డర్ చేయనివ్వండి")}</p>
                     </div>
                     <div className="bg-green-500/10 text-green-600 px-3 py-1 rounded-full flex items-center gap-1.5 animate-pulse">
@@ -246,7 +247,7 @@ export default function SettingsPage() {
                                 </div>
                              </div>
                              <div className="flex gap-4">
-                                <div className="w-8 h-8 rounded-full bg-orange/10 flex items-center justify-center text-orange font-black text-xs shrink-0">2</div>
+                                <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-600 font-black text-xs shrink-0">2</div>
                                 <div className="space-y-1">
                                    <p className="font-bold text-gray-900">{t("Customer Scans & Submits", "కస్టమర్ స్కాన్ చేసి సబ్మిట్ చేస్తారు")}</p>
                                    <p className="text-xs text-gray-500 leading-relaxed">{t("They enter their name, phone, and upload their design files directly from their phone.", "వారు తమ పేరు, ఫోన్ నంబర్ నమోదు చేసి, నేరుగా వారి ఫోన్ నుండి వారి డిజైన్ ఫైల్‌లను అప్‌లోడ్ చేస్తారు.")}</p>
@@ -262,12 +263,12 @@ export default function SettingsPage() {
                           </div>
                        </div>
 
-                       <div className="bg-[#1e3a5f] p-8 rounded-[32px] text-white space-y-4 relative overflow-hidden group">
+                       <div className="bg-primary/5 p-8 rounded-[32px] border border-primary/10 text-primary space-y-4 relative overflow-hidden group">
                           <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                              <Store className="w-32 h-32" />
                           </div>
                           <h4 className="text-sm font-black uppercase tracking-widest">{t("Storefront Link", "స్టోర్‌ఫ్రంట్ లింక్")}</h4>
-                          <div className="bg-white/10 p-4 rounded-xl font-mono text-xs break-all border border-white/5">
+                          <div className="bg-white/50 p-4 rounded-xl font-mono text-xs break-all border border-primary/10 text-primary/80">
                              {typeof window !== 'undefined' ? `${window.location.origin}/shop/${tenant?.slug}` : ''}
                           </div>
                        </div>
@@ -280,13 +281,13 @@ export default function SettingsPage() {
               <div className="p-8 space-y-10">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-6">
                   <div>
-                    <h2 className="text-xl text-gray-900">{t("Business Details", "బిజినెస్ వివరాలు")}</h2>
-                    <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">Manage your shop&apos;s core identity</p>
+                    <h2 className="text-xl font-semibold text-gray-900 tracking-tighter">{t("Business Details", "బిజినెస్ వివరాలు")}</h2>
+                    <p className="text-xs text-gray-400 uppercase tracking-widest mt-1">Manage your shop&apos;s core identity</p>
                   </div>
                   <button 
                     onClick={handleSaveBusinessDetails}
                     disabled={saveLoading}
-                    className="bg-primary text-white px-6 py-2.5 rounded-xl flex items-center gap-2 hover:opacity-90 transition-all font-bold text-xs uppercase tracking-widest disabled:opacity-50"
+                    className="bg-blue-500 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 hover:bg-blue-600 active:scale-95 transition-all font-semibold text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/10 disabled:opacity-50"
                   >
                      {saveLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                      {t("Save Changes", "మారపులను సేవ్ చేయండి")}
@@ -408,94 +409,106 @@ export default function SettingsPage() {
               <div className="p-8 space-y-8">
                  <Script src="https://checkout.razorpay.com/v1/checkout.js" />
                  <div className="border-b border-gray-100 pb-6">
-                    <h2 className="text-xl font-normal text-gray-900 uppercase tracking-tighter">{t("Subscription & Usage", "సబ్‌స్క్రిప్షన్ వివరాలు")}</h2>
+                    <h2 className="text-xl font-semibold text-gray-900 uppercase tracking-tighter">{t("Subscription & Usage", "సబ్‌స్క్రిప్షన్ వివరాలు")}</h2>
                     <p className="text-xs text-gray-400 uppercase tracking-widest">{t("Manage your plan and billing", "మీ ప్లాన్ మరియు బిల్లింగ్ వివరాలు")}</p>
                  </div>
 
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Current Plan Card */}
-                    <div className="bg-primary p-8 rounded-3xl text-white shadow-xl shadow-primary/20 space-y-6">
+                    <div className="bg-white p-8 rounded-3xl text-gray-900 shadow-sm border border-gray-100 space-y-6">
                        <div className="space-y-2">
-                          <p className="text-[10px] uppercase tracking-[0.2em] opacity-60 font-normal">{t("Current Plan", "ప్రస్తుత ప్లాన్")}</p>
-                          <h3 className="text-3xl font-normal italic tracking-tighter uppercase">{tenant?.subscription_tier || 'FREE'}</h3>
+                          <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-medium">{t("Current Plan", "ప్రస్తుత ప్లాన్")}</p>
+                          <h3 className="text-3xl font-semibold italic tracking-tighter uppercase text-primary">{(tenant?.plan || tenant?.subscription_tier || 'FREE')}</h3>
                        </div>
                        
                        <div className="space-y-4 pt-4">
-                          <div className="flex justify-between items-end border-b border-white/10 pb-4">
+                          <div className="flex justify-between items-end border-b border-gray-50 pb-4">
                              <div className="space-y-1">
-                                <p className="text-[10px] uppercase opacity-60">{t("Usage this month", "ఈ నెల వినియోగం")}</p>
-                                <p className="text-xl font-normal">{tenant?.orders_this_month || 0} / {tenant?.subscription_tier === 'FREE' ? '50' : '∞'}</p>
+                                <p className="text-[10px] uppercase text-gray-400 font-medium">{t("Usage this month", "ఈ నెల వినియోగం")}</p>
+                                <p className="text-xl font-medium text-gray-900">{tenant?.orders_this_month || 0} {t("orders", "ఆర్డర్లు")}</p>
                              </div>
-                             {tenant?.subscription_tier === 'FREE' && (
-                               <p className="text-[10px] bg-white/20 px-2 py-1 rounded font-normal uppercase tracking-widest leading-none">
-                                  {Math.round(((tenant?.orders_this_month || 0) / 50) * 100)}%
-                               </p>
-                             )}
+                             <p className="text-[10px] bg-gray-50 px-2 py-1 rounded font-semibold text-gray-400 uppercase tracking-widest leading-none">
+                                ∞
+                             </p>
                           </div>
-                          <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                             <div 
-                                className="h-full bg-white transition-all duration-1000" 
-                                style={{ width: `${tenant?.subscription_tier === 'FREE' ? Math.min(((tenant?.orders_this_month || 0) / 50) * 100, 100) : 100}%` }}
+                          <div className="h-1.5 w-full bg-gray-50 rounded-full overflow-hidden">
+                             <div
+                                className="h-full bg-primary transition-all duration-1000"
+                                style={{ width: '100%' }}
                              />
                           </div>
                        </div>
                     </div>
 
                      {/* Upgrade Options */}
-                     {tenant?.subscription_tier === 'FREE' ? (
-                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-                          <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between space-y-4">
-                             <div className="space-y-1">
-                                <h3 className="text-lg font-normal text-gray-900 uppercase tracking-tighter">Pro Plan</h3>
-                                <p className="text-[10px] text-gray-400 tracking-widest leading-relaxed">
-                                   Unlimited orders & reports
-                                </p>
-                             </div>
-                             <div className="space-y-3">
-                                <div className="flex items-baseline gap-1">
-                                   <span className="text-xl font-normal text-primary">₹499</span>
-                                   <span className="text-[9px] text-gray-400 uppercase">/ month</span>
+                     {(() => {
+                        const tier = (tenant?.plan || tenant?.subscription_tier || 'FREE').toUpperCase().trim();
+                        const isFree = tier === 'FREE';
+                        
+                        if (isFree) {
+                           return (
+                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between space-y-4">
+                                   <div className="space-y-1">
+                                      <h3 className="text-lg font-semibold text-gray-900 uppercase tracking-tighter">Pro Plan</h3>
+                                      <p className="text-[10px] text-gray-400 font-medium tracking-widest leading-relaxed">
+                                         Unlimited orders & reports
+                                      </p>
+                                   </div>
+                                   <div className="space-y-3">
+                                      <div className="flex items-baseline gap-1">
+                                         <span className="text-xl font-semibold text-primary">₹499</span>
+                                         <span className="text-[9px] text-gray-400 font-medium uppercase">/ month</span>
+                                      </div>
+                                      <button 
+                                         onClick={handleUpgrade}
+                                         disabled={loading}
+                                         className="w-full bg-primary text-white py-3 rounded-xl font-semibold uppercase tracking-widest text-[10px] shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                                      >
+                                         {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Upgrade to Pro"}
+                                      </button>
+                                   </div>
                                 </div>
-                                <button 
-                                   onClick={handleUpgrade}
-                                   disabled={loading}
-                                   className="w-full bg-primary text-white py-3 rounded-xl font-normal uppercase tracking-widest text-[10px] shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
-                                >
-                                   {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Upgrade to Pro"}
-                                </button>
-                             </div>
-                          </div>
 
-                          <div className="bg-[#1e3a5f] p-6 rounded-3xl border border-white/10 shadow-xl flex flex-col justify-between space-y-4">
-                             <div className="space-y-1">
-                                <h3 className="text-lg font-normal text-white uppercase tracking-tighter">Business</h3>
-                                <p className="text-[10px] text-blue-200/60 tracking-widest leading-relaxed">
-                                   Advanced scaling & support
-                                </p>
-                             </div>
-                             <div className="space-y-3">
-                                <div className="flex items-baseline gap-1">
-                                   <span className="text-xl font-normal text-white">₹999</span>
-                                   <span className="text-[9px] text-blue-200/40 uppercase">/ month</span>
+                                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between space-y-4">
+                                   <div className="space-y-1">
+                                      <div className="flex items-center justify-between">
+                                         <h3 className="text-lg font-semibold text-gray-900 uppercase tracking-tighter">Business</h3>
+                                         <span className="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-widest leading-none">Enterprise</span>
+                                      </div>
+                                      <p className="text-[10px] text-gray-400 font-medium tracking-widest leading-relaxed">
+                                         Advanced scaling & support
+                                      </p>
+                                   </div>
+                                   <div className="space-y-3">
+                                      <div className="flex items-baseline gap-1">
+                                         <span className="text-xl font-semibold text-gray-900">₹999</span>
+                                         <span className="text-[9px] text-gray-400 font-medium uppercase">/ month</span>
+                                      </div>
+                                      <button 
+                                         onClick={() => alert("Business plan upgrade via sales. Please contact support.")}
+                                         className="w-full bg-gray-50 text-gray-900 py-3 rounded-xl font-semibold uppercase tracking-widest text-[10px] border border-gray-100 hover:bg-gray-100 active:scale-95 transition-all"
+                                      >
+                                         Contact Support
+                                      </button>
+                                   </div>
                                 </div>
-                                <button 
-                                   onClick={() => alert("Business plan upgrade via sales. Please contact support.")}
-                                   className="w-full bg-white text-primary py-3 rounded-xl font-normal uppercase tracking-widest text-[10px] shadow-lg hover:scale-[1.02] active:scale-95 transition-all"
-                                >
-                                   Contact Support
-                                </button>
                              </div>
-                          </div>
-                       </div>
-                    ) : (
-                      <div className="bg-green-50 p-8 rounded-3xl border border-green-100 flex flex-col items-center justify-center text-center space-y-4">
-                         <div className="p-4 bg-green-500 rounded-full text-white">
-                            <Save className="w-8 h-8" />
-                         </div>
-                         <h3 className="text-lg font-normal text-green-900 uppercase tracking-tight">{t("You are on Pro Plan", "మీరు ప్రో ప్లాన్ లో ఉన్నారు")}</h3>
-                         <p className="text-xs text-green-600 tracking-widest">{t("Next billing: ", "తదుపరి బిల్లింగ్: ")} {tenant?.subscription_end_date ? formatDate(tenant.subscription_end_date) : 'N/A'}</p>
-                      </div>
-                    )}
+                           );
+                        } else {
+                           return (
+                             <div className="bg-green-50 p-8 rounded-3xl border border-green-100 flex flex-col items-center justify-center text-center space-y-4">
+                                <div className="p-4 bg-green-500 rounded-full text-white">
+                                   <Save className="w-8 h-8" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-green-900 uppercase tracking-tight">
+                                   {tier === 'BUSINESS' ? t("You are on Business Plan", "మీరు బిజినెస్ ప్లాన్ లో ఉన్నారు") : t("You are on Pro Plan", "మీరు ప్రో ప్లాన్ లో ఉన్నారు")}
+                                </h3>
+                                <p className="text-xs text-green-600 font-medium tracking-widest">{t("Next billing: ", "తదుపరి బిల్లింగ్: ")} {tenant?.subscription_end_date ? formatDate(tenant.subscription_end_date) : 'N/A'}</p>
+                             </div>
+                           );
+                        }
+                     })()}
                  </div>
               </div>
             )}
@@ -530,7 +543,7 @@ export default function SettingsPage() {
                     <div className="bg-white p-6 rounded-2xl border border-gray-200">
                        <div className="flex items-center justify-between mb-4">
                           <h3 className="font-normal text-gray-900">{t("Team Members", "టీమ్ సభ్యులు")}</h3>
-                          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors">
+                          <button className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600 transition-colors">
                              {t("Add Member", "సభ్యుడిని జోడించండి")}
                           </button>
                        </div>
@@ -582,10 +595,12 @@ export default function SettingsPage() {
             )}
 
             {activeTab === "profile" && (
-               <ProfileSettings />
+               <div className="p-8">
+                 <ProfileSettings />
+               </div>
             )}
 
-            {activeTab !== "business" && activeTab !== "subscription" && activeTab !== "profile" && (
+            {activeTab !== "business" && activeTab !== "subscription" && activeTab !== "profile" && activeTab !== "team" && (
                <div className="flex flex-col items-center justify-center p-20 text-center space-y-4">
                   <div className="bg-gray-50 p-6 rounded-full">
                      <Settings className="w-12 h-12 text-gray-300 animate-spin-slow" />

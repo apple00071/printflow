@@ -77,7 +77,6 @@
 
 - `lib/tenant.ts`:
   - `getCurrentTenant(...)`: resolves current user -> profile -> tenant
-  - `checkOrderLimit(...)`: enforces free-plan order cap and expired-trial downgrade
   - `getTenantBySlug(...)`: public tenant lookup
 
 ### Super-admin detection
@@ -102,7 +101,6 @@ Important behavior in `lib/supabase/actions.ts`:
 - customers are auto-created from phone number when missing
 - GST is calculated during create/update
 - invoice and challan numbers come from Supabase RPC functions
-- free-tier order limits are checked before order creation
 
 ### GST and billing helpers
 
