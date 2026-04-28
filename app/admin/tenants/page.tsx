@@ -631,27 +631,27 @@ export default function TenantsPage() {
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="font-normal text-gray-900">{selectedTenant.name}</h4>
                 <p className="text-sm text-gray-500">{selectedTenant.email}</p>
-                <p className="text-sm text-gray-500">Plan: {selectedTenant.plan} ({selectedTenant.plan_status})</p>
+                <p className="text-sm text-gray-500">Plan: {selectedTenant.subscription_tier || selectedTenant.plan} ({selectedTenant.plan_status})</p>
               </div>
               
               <div className="space-y-2">
                 <button 
                   onClick={() => handleUpdatePlan('BUSINESS')}
-                  disabled={selectedTenant.plan === 'BUSINESS'}
+                  disabled={(selectedTenant.subscription_tier || selectedTenant.plan) === 'BUSINESS'}
                   className="w-full text-left px-4 py-2 border border-blue-300 bg-blue-50/10 text-blue-700 rounded-lg hover:bg-blue-50 transition-all font-normal text-sm active:scale-95 disabled:opacity-50"
                 >
                   Upgrade to Business (₹999)
                 </button>
                 <button 
                   onClick={() => handleUpdatePlan('PRO')}
-                  disabled={selectedTenant.plan === 'PRO'}
+                  disabled={(selectedTenant.subscription_tier || selectedTenant.plan) === 'PRO'}
                   className="w-full text-left px-4 py-2 border border-purple-300 bg-purple-50/10 text-purple-700 rounded-lg hover:bg-purple-50 transition-all font-normal text-sm active:scale-95 disabled:opacity-50"
                 >
                   Upgrade to Pro (₹499)
                 </button>
                 <button 
                   onClick={() => handleUpdatePlan('FREE')}
-                  disabled={selectedTenant.plan === 'FREE'}
+                  disabled={(selectedTenant.subscription_tier || selectedTenant.plan) === 'FREE'}
                   className="w-full text-left px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all text-gray-600 font-normal text-sm active:scale-95 disabled:opacity-50"
                 >
                   Downgrade to Free
