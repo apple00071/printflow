@@ -128,7 +128,7 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
            <div className="w-20 h-20 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-red-500/5 border border-red-100">
               <AlertCircle className="w-10 h-10" />
            </div>
-           <h1 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight">Access Denied</h1>
+           <h1 className="text-2xl font-semibold text-gray-900 mb-2 tracking-tight">Access Denied</h1>
            <p className="text-gray-500 max-w-sm text-sm leading-relaxed mb-8">This proof link is invalid or has expired. Please contact the print shop for a fresh approval link.</p>
            <button onClick={() => window.location.reload()} className="px-6 py-2 bg-gray-900 text-white text-[10px] font-bold uppercase tracking-widest rounded-full hover:bg-black transition-all">TRY AGAIN</button>
         </div>
@@ -179,7 +179,7 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
                      {order.tenants?.name || "Approval Portal"}
                   </h3>
                   <div className="flex items-center gap-2">
-                     <span className="text-xs font-semibold text-gray-900">Design Approval</span>
+                     <span className="text-xs font-medium text-gray-900">Design Approval</span>
                      <div className="w-1 h-1 rounded-full bg-gray-300" />
                      <span className="text-[10px] font-semibold text-primary tabular-nums">
                         {order.friendly_id || `#${order?.id?.split('-')[0]}`}
@@ -191,7 +191,7 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
             <div className="hidden md:flex items-center gap-6">
                <div className="text-right">
                   <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1 text-right">CLIENT</p>
-                  <p className="text-[11px] font-semibold text-gray-900 tracking-tight">{order.customers?.name}</p>
+                  <p className="text-[11px] font-medium text-gray-900 tracking-tight">{order.customers?.name}</p>
                </div>
             </div>
          </div>
@@ -210,7 +210,7 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
                      <div className="p-4 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
                         <div className="flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-gray-100 shadow-sm">
                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                           <span className="text-[10px] font-semibold text-gray-600 uppercase tracking-tight">Final Artwork Proof</span>
+                           <span className="text-[10px] font-medium text-gray-600 uppercase tracking-tight">Final Artwork Proof</span>
                         </div>
                         {order.proof_image_url && (
                            <button 
@@ -229,12 +229,12 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
                                  <div className="w-24 h-24 bg-red-50 text-red-500 rounded-[32px] flex items-center justify-center mb-6 shadow-xl shadow-red-500/10 border border-red-100">
                                     <FileText className="w-12 h-12" />
                                  </div>
-                                 <h4 className="text-xl font-bold text-gray-900 mb-2 tracking-tight">Vector Document</h4>
+                                 <h4 className="text-xl font-semibold text-gray-900 mb-2 tracking-tight">Vector Document</h4>
                                  <p className="text-sm text-gray-500 leading-relaxed mb-8 font-medium">This design is a high-resolution PDF. Please review it in its native viewer before approving.</p>
                                  <a 
                                     href={order.proof_image_url} 
                                     target="_blank" 
-                                    className="w-full py-4 bg-gray-900 text-white rounded-2xl text-[11px] font-bold tracking-widest shadow-2xl shadow-gray-900/30 hover:bg-black transition-all flex items-center justify-center gap-2 active:scale-[0.98] uppercase"
+                                    className="w-full py-4 bg-gray-900 text-white rounded-2xl text-[11px] font-semibold tracking-widest shadow-2xl shadow-gray-900/30 hover:bg-black transition-all flex items-center justify-center gap-2 active:scale-[0.98] uppercase"
                                  >
                                     Inspect Full PDF <ExternalLink className="w-4 h-4" />
                                  </a>
@@ -281,7 +281,7 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
                      </div>
                      <div>
                         <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Specifications</h4>
-                        <p className="text-base font-bold text-gray-900 tracking-tight">{order.job_type}</p>
+                        <p className="text-base font-semibold text-gray-900 tracking-tight">{order.job_type}</p>
                      </div>
                   </div>
 
@@ -293,8 +293,8 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
                         { label: "Finishing", value: order.lamination || "No Lamination", icon: Clock },
                      ].map((item, i) => (
                         <div key={i} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl border border-gray-50 group hover:border-primary/20 transition-all">
-                           <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-tight">{item.label}</span>
-                           <span className="text-xs font-bold text-gray-900 tracking-tight">{item.value}</span>
+                           <span className="text-[10px] font-medium text-gray-400 uppercase tracking-tight">{item.label}</span>
+                           <span className="text-xs font-semibold text-gray-900 tracking-tight">{item.value}</span>
                         </div>
                      ))}
                   </div>
@@ -314,7 +314,7 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
                         {order.proof_status === 'APPROVED' ? <CheckCircle2 className="w-8 h-8" /> : <MessageSquare className="w-8 h-8" />}
                      </div>
                      <div>
-                        <h2 className="text-xl font-bold text-green-900">{isApproved ? "Confirmed!" : "Revised!"}</h2>
+                        <h2 className="text-xl font-semibold text-green-900">{isApproved ? "Confirmed!" : "Revised!"}</h2>
                         <p className="text-sm text-green-700/70 font-medium leading-relaxed">
                            {isApproved 
                              ? "Our production team will begin printing immediately." 
@@ -354,7 +354,7 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
                         <button 
                            onClick={() => handleApproval(false)}
                            disabled={status === 'SAVING' || !feedback.trim()}
-                           className="px-8 h-12 bg-gray-900 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-xl shadow-gray-900/20 active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2"
+                           className="px-8 h-12 bg-gray-900 text-white rounded-xl text-[10px] font-semibold uppercase tracking-widest shadow-xl shadow-gray-900/20 active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2"
                         >
                            {status === 'SAVING' ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Submit Feedback <ChevronRight className="w-4 h-4" /></>}
                         </button>
@@ -376,7 +376,7 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
                      <button 
                          onClick={() => setShowFeedback(true)}
                          className={cn(
-                           "h-14 px-6 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap",
+                           "h-14 px-6 rounded-full text-[10px] font-semibold uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap",
                            showFeedback ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100"
                          )}
                      >
@@ -385,7 +385,7 @@ export default function ProofingPage({ params }: { params: { orderId: string } }
                      <button 
                         onClick={() => handleApproval(true)}
                         disabled={status === 'SAVING'}
-                        className="h-14 px-10 bg-gradient-to-r from-primary to-primary/90 text-white rounded-full text-[11px] font-bold uppercase tracking-widest shadow-xl shadow-primary/20 hover:shadow-primary/40 active:scale-95 transition-all flex items-center gap-3 whitespace-nowrap"
+                        className="h-14 px-10 bg-gradient-to-r from-primary to-primary/90 text-white rounded-full text-[11px] font-semibold uppercase tracking-widest shadow-xl shadow-primary/20 hover:shadow-primary/40 active:scale-95 transition-all flex items-center gap-3 whitespace-nowrap"
                      >
                         {status === 'SAVING' ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Approve & Print <ChevronRight className="w-4 h-4" /></>}
                      </button>

@@ -94,7 +94,7 @@ export const Logo: React.FC<LogoProps> = ({
 
       {showText && (
         <div className="flex flex-col leading-tight">
-          <div className={cn("flex items-center tracking-tighter uppercase font-normal", currentSize.text)}>
+          <div className={cn("flex items-center tracking-tighter uppercase font-medium", currentSize.text)}>
             <span className={primaryColor}>Print</span>
             <span className={cn("ml-1.5", accentColor)}>Flow</span>
           </div>
