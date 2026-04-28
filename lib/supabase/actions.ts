@@ -424,14 +424,39 @@ export async function updateOrderStatus(orderId: string, status: string, actualD
   // Send WhatsApp Notification for Status Change
   if (data && data.customers?.phone) {
     const balance = Number(data.total_with_gst || data.total_amount) - Number(data.advance_paid);
+    
+    let totalBalance = undefined;
+    if (status.toUpperCase() === "DELIVERED" && data.customer_id) {
+      try {
+        const adminSupabase = createAdminClient();
+        const { data: customerOrders } = await adminSupabase
+          .from("orders")
+          .select("total_with_gst, total_amount, advance_paid")
+          .eq("customer_id", data.customer_id);
+
+        if (customerOrders && customerOrders.length > 0) {
+          totalBalance = customerOrders.reduce((acc: number, o: { total_with_gst?: number | null, total_amount?: number | null, advance_paid?: number | null }) => {
+            const t = Number(o.total_with_gst || o.total_amount || 0);
+            const p = Number(o.advance_paid || 0);
+            return acc + (t - p);
+          }, 0);
+        }
+      } catch (e) {
+        console.error("Error calculating total outstanding balance:", e);
+      }
+    }
+
     const message = formatStatusMessage(
       status,
-      data.customers.name,
+      data.customers?.name || "Customer",
       data.job_type,
       data.friendly_id || data.id,
       data.tenants?.name || "PrintFlow",
-      balance
+      balance,
+      undefined,
+      totalBalance
     );
+
 
     if (message) {
       // Fire and forget
@@ -629,6 +654,55 @@ export async function updateOrder(id: string, data: OrderData) {
     if (!tenant) throw new Error("Unauthorized");
   }
 
+  // 1. Handle Customer Update/Re-link
+  let customerId = null;
+  const { data: currentOrder } = await supabase
+    .from("orders")
+    .select("customer_id")
+    .eq("id", id)
+    .single();
+  
+  if (currentOrder?.customer_id) {
+    customerId = currentOrder.customer_id;
+    
+    // If phone is provided, check if it belongs to someone else
+    if (data.phone && data.phone.trim() !== "") {
+      let customerQuery = supabase
+        .from("customers")
+        .select("id")
+        .eq("phone", data.phone);
+      
+      if (!superAdmin && tenant?.id) {
+        customerQuery = customerQuery.eq("tenant_id", tenant.id);
+      }
+      
+      const { data: existingCustomer } = await customerQuery.maybeSingle();
+      
+      if (existingCustomer && existingCustomer.id !== customerId) {
+        // Phone belongs to another customer, re-link this order to that customer
+        customerId = existingCustomer.id;
+      } else {
+        // Phone is same or doesn't exist, update current customer record
+        await supabase
+          .from("customers")
+          .update({
+            name: data.customerName,
+            phone: data.phone.trim() !== "" ? data.phone : null
+          })
+          .eq("id", customerId);
+      }
+    } else {
+      // No phone provided, just update name
+      await supabase
+        .from("customers")
+        .update({
+          name: data.customerName,
+          phone: null
+        })
+        .eq("id", customerId);
+    }
+  }
+
   // Re-calculate GST for update
   let gst_type = 'NONE';
   let cgst = 0, sgst = 0, igst = 0;
@@ -647,6 +721,7 @@ export async function updateOrder(id: string, data: OrderData) {
   const { data: order, error } = await supabase
     .from("orders")
     .update({
+      customer_id: customerId, // Update the customer link if it changed
       job_type: data.jobType,
       quantity: data.quantity,
       paper_type: data.paperType,
@@ -678,6 +753,23 @@ export async function updateOrder(id: string, data: OrderData) {
   if (error) throw error;
   return order;
 }
+
+export async function searchCustomers(query: string) {
+  const supabase = createClient();
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant) throw new Error("Unauthorized");
+
+  const { data, error } = await supabase
+    .from("customers")
+    .select("id, name, phone, gstin")
+    .eq("tenant_id", tenant.id)
+    .or(`name.ilike.%${query}%,phone.ilike.%${query}%`)
+    .limit(5);
+
+  if (error) throw error;
+  return data;
+}
+
 
 export async function addPayment(orderId: string, amount: number, method: string) {
   const supabase = createClient();

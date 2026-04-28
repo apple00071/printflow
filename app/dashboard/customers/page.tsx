@@ -34,7 +34,6 @@ interface Customer {
 
 export default function CustomersPage() {
   const { t } = useLanguage();
-  const [searchQuery, setSearchQuery] = useState("");
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -104,6 +103,8 @@ export default function CustomersPage() {
     }
     fetchCustomersData();
   }, []);
+
+  const [searchQuery, setSearchQuery] = useState("");
 
   const filteredCustomers = customers.filter(c => 
     c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

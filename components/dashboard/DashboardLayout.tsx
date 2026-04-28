@@ -17,8 +17,10 @@ import {
   Plus,
   Search,
   Bell,
-  ChevronDown
+  ChevronDown,
+  Layers
 } from "lucide-react";
+
 import { Logo } from "@/components/Logo";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
@@ -86,6 +88,13 @@ const navItems = [
     hindi: "टीम",
     href: "/dashboard/team",
     icon: Users,
+  },
+  {
+    name: "PDF Imposer",
+    telugu: "పిడిఎఫ్ ఇంపొజర్",
+    hindi: "पीडीएफ इम्पोजर",
+    href: "/dashboard/tools/imposer",
+    icon: Layers,
   },
   {
     name: "Settings",
@@ -182,8 +191,8 @@ export default function DashboardLayout({
         onMouseLeave={() => setIsSidebarOpen(false)}
         className={cn(
           "fixed inset-y-0 left-0 z-40 bg-primary text-white transition-all duration-300 ease-in-out transform",
-          "w-56",
-          isSidebarOpen ? "translate-x-0 lg:w-56" : "-translate-x-full lg:w-20 lg:translate-x-0"
+          "w-48",
+          isSidebarOpen ? "translate-x-0 lg:w-48" : "-translate-x-full lg:w-20 lg:translate-x-0"
         )}
       >
         <div className="flex flex-col h-full overflow-hidden">
@@ -233,7 +242,7 @@ export default function DashboardLayout({
       </aside>
 
       {/* Main Content */}
-      <div className={cn("flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out", isSidebarOpen ? "lg:ml-56" : "lg:ml-20")}>
+      <div className={cn("flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out", isSidebarOpen ? "lg:ml-48" : "lg:ml-20")}>
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-20">
           <div className="flex items-center gap-6 flex-1">
             <div className="flex items-center gap-4">

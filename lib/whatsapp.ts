@@ -62,7 +62,8 @@ export function formatStatusMessage(
   orderId: string,
   tenantName: string,
   balance: number,
-  proofingToken?: string
+  proofingToken?: string,
+  totalBalance?: number
 ): string {
   const safeCustomer = customerName || "Customer";
   const safeJob = jobType || "Order";
@@ -93,7 +94,22 @@ export function formatStatusMessage(
       return `🔔 New Storefront Order! ${safeCustomer} has placed an order for *${safeJob}*. View it in your dashboard. Order ID: ${safeID}.`;
 
     case "DELIVERED":
-      return `Thank you for choosing *${tenantName}*! Your order for ${safeJob} has been delivered. We hope to see you again soon!`;
+      let msg = `Hi *${customerName}*, thank you for choosing *${tenantName}*! Your order for ${safeJob} has been delivered.`;
+      
+      if (balance > 0) {
+        msg += `\n\n*Pending Balance for this order:* ₹${balance.toFixed(2)}`;
+      }
+
+      if (totalBalance !== undefined && totalBalance > 0) {
+        msg += `\n*Total Outstanding Balance:* ₹${totalBalance.toFixed(2)}`;
+        msg += `\n\n*Please settle the outstanding balance at your earliest convenience.*`;
+      } else {
+        msg += `\n\nWe hope to see you again soon!`;
+      }
+      return msg;
+
+
+
     
     default:
       return "";

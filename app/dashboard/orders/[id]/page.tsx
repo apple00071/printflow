@@ -388,6 +388,15 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                         {t("Download File", "ఫైల్ డౌన్‌లోడ్")}
                       </span>
                     </a>
+                    <Link 
+                      href={`/dashboard/tools/imposer?fileUrl=${encodeURIComponent(order.file_url)}&orderId=${order.id}`}
+                      className="inline-flex items-center gap-3 px-4 py-2.5 bg-orange text-white rounded-xl hover:bg-orange/90 transition-colors shadow-lg shadow-orange/20"
+                    >
+                      <FileIcon className="w-4 h-4" />
+                      <span className="text-sm font-normal">
+                        {t("Impose File", "ఇంపోజ్ చేయండి", "इम्पोज़ करें")}
+                      </span>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -443,7 +452,12 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
               
               <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
                 <span className="text-xs text-gray-400 uppercase tracking-wider font-medium">{t("Balance Due", "బకాయి")}</span>
-                <span className="text-xl text-primary font-bold">{formatCurrency((order.total_with_gst || order.total_amount) - order.advance_paid)}</span>
+                <span className={cn(
+                  "text-xl font-bold",
+                  ((order.total_with_gst || order.total_amount) - order.advance_paid) > 0 ? "text-red-600" : "text-green-600"
+                )}>
+                  {formatCurrency((order.total_with_gst || order.total_amount) - order.advance_paid)}
+                </span>
               </div>
             </div>
             {((order.total_with_gst || order.total_amount) - order.advance_paid) > 0 && (
@@ -674,36 +688,69 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
             </div>
             
             <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">{t("Order Balance", "ఆర్డర్ బకాయి")}</p>
+                <div className="flex items-center justify-between">
+                  <span className={cn(
+                    "text-lg font-bold",
+                    ((order.total_with_gst || order.total_amount) - order.advance_paid) > 0 ? "text-red-600" : "text-green-600"
+                  )}>
+                    {formatCurrency((order.total_with_gst || order.total_amount) - order.advance_paid)}
+                  </span>
+                  {((order.total_with_gst || order.total_amount) - order.advance_paid) > 0 && (
+                    <span className="text-[10px] px-2 py-1 bg-red-100 text-red-700 rounded-full font-bold uppercase animate-pulse">
+                      {t("Payment Pending", "పేమెంట్ బాకీ ఉంది")}
+                    </span>
+                  )}
+                </div>
+              </div>
+
               <p className="text-xs text-gray-500 leading-relaxed uppercase tracking-wider">
-                Specify the actual date the order was delivered to the customer.
+                {((order.total_with_gst || order.total_amount) - order.advance_paid) > 0 
+                  ? t("Please collect the pending balance before marking as delivered.", "డెలివరీ చేసే ముందు బాకీ ఉన్న మొత్తాన్ని వసూలు చేయండి.")
+                  : t("Specify the actual date the order was delivered.", "ఆర్డర్ డెలివరీ అయిన తేదీని పేర్కొనండి.")}
               </p>
               
               <div className="space-y-2">
-                <label className="text-[10px] text-gray-400 uppercase tracking-widest px-1">Delivery Date</label>
+                <label className="text-[10px] text-gray-400 uppercase tracking-widest px-1">{t("Delivery Date", "డెలివరీ తేదీ")}</label>
                 <CustomDatePicker
                   value={actualDeliveryDate}
                   onChange={(val) => setActualDeliveryDate(val)}
                 />
               </div>
 
-              <button
-                onClick={async () => {
-                  setUpdating(true);
-                  setShowDeliveryModal(false);
-                  try {
-                    await updateOrderStatus(order.id, "DELIVERED", actualDeliveryDate);
-                    setOrder({ ...order, status: "DELIVERED", actual_delivery_date: actualDeliveryDate } as Order);
-                    showToast(t("Order marked as delivered", "ఆర్డర్ డెలివరీ అయినట్లు గుర్తించబడింది"), "success");
-                  } catch {
-                    showToast(t("Failed to update delivery date. Please try again.", "డెలివరీ తేదీ నవీకరించడం విఫలమైంది."), "error");
-                  } finally {
-                    setUpdating(false);
-                  }
-                }}
-                className="w-full py-3 bg-primary text-white text-xs rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 font-normal uppercase tracking-widest mt-2"
-              >
-                Confirm Delivery
-              </button>
+              <div className="flex flex-col gap-2 pt-2">
+                <button
+                  onClick={async () => {
+                    setUpdating(true);
+                    setShowDeliveryModal(false);
+                    try {
+                      await updateOrderStatus(order.id, "DELIVERED", actualDeliveryDate);
+                      setOrder({ ...order, status: "DELIVERED", actual_delivery_date: actualDeliveryDate } as Order);
+                      showToast(t("Order marked as delivered", "ఆర్డర్ డెలివరీ అయినట్లు గుర్తించబడింది"), "success");
+                    } catch {
+                      showToast(t("Failed to update delivery date. Please try again.", "డెలివరీ తేదీ నవీకరించడం విఫలమైంది."), "error");
+                    } finally {
+                      setUpdating(false);
+                    }
+                  }}
+                  className="w-full py-3 bg-primary text-white text-xs rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 font-bold uppercase tracking-widest"
+                >
+                  {t("Confirm Delivery", "డెలివరీని నిర్ధారించండి")}
+                </button>
+                
+                {((order.total_with_gst || order.total_amount) - order.advance_paid) > 0 && (
+                  <button
+                    onClick={() => {
+                      setShowDeliveryModal(false);
+                      setIsPaymentModalOpen(true);
+                    }}
+                    className="w-full py-2.5 bg-white border border-red-200 text-red-600 text-[10px] rounded-xl hover:bg-red-50 transition-all font-bold uppercase tracking-widest"
+                  >
+                    {t("Add Payment First", "ముందు పేమెంట్ జోడించండి")}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
