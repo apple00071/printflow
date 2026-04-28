@@ -67,7 +67,7 @@ export default function GSTReportsPage() {
       const tier1 = (currentTenant.subscription_tier || '').toString().toUpperCase().trim();
       const tier2 = (currentTenant.plan || '').toString().toUpperCase().trim();
       const PAID = ['PRO', 'BUSINESS', 'ENTERPRISE'];
-      const isPaidPlan = PAID.includes(tier1) && PAID.includes(tier2);
+      const isPaidPlan = PAID.includes(tier1) || PAID.includes(tier2);
 
       // If the paid plan has an expired trial, treat as FREE
       const isExpiredTrial =

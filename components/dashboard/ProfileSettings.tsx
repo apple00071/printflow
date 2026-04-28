@@ -32,6 +32,7 @@ interface Tenant {
   name: string;
   email: string;
   subscription_tier: string;
+  plan?: string;
   subscription_status: string;
 }
 
@@ -312,11 +313,11 @@ export default function ProfileSettings() {
               <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Subscription</p>
               <div>
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                  tenant.subscription_tier === 'PRO' 
+                  (tenant.subscription_tier || tenant.plan || 'FREE').toString().toUpperCase().trim() === 'PRO' 
                     ? 'bg-purple-50 text-purple-600 border border-purple-100' 
                     : 'bg-gray-50 text-gray-600 border border-gray-100'
                 }`}>
-                  {tenant.subscription_tier}
+                  {tenant.subscription_tier || tenant.plan || 'FREE'}
                 </span>
               </div>
             </div>

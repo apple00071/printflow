@@ -418,7 +418,7 @@ export default function SettingsPage() {
                     <div className="bg-white p-8 rounded-3xl text-gray-900 shadow-sm border border-gray-100 space-y-6">
                        <div className="space-y-2">
                           <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-medium">{t("Current Plan", "ప్రస్తుత ప్లాన్")}</p>
-                          <h3 className="text-3xl font-semibold italic tracking-tighter uppercase text-primary">{(tenant?.plan || tenant?.subscription_tier || 'FREE')}</h3>
+                          <h3 className="text-3xl font-semibold italic tracking-tighter uppercase text-primary">{(tenant?.subscription_tier || tenant?.plan || 'FREE')}</h3>
                        </div>
                        
                        <div className="space-y-4 pt-4">

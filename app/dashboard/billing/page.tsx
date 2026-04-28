@@ -62,7 +62,7 @@ export default function BillingPage() {
         const tier1 = (currentTenant.subscription_tier || '').toString().toUpperCase().trim();
         const tier2 = (currentTenant.plan || '').toString().toUpperCase().trim();
         const PAID = ['PRO', 'BUSINESS', 'ENTERPRISE'];
-        const paid = PAID.includes(tier1) && PAID.includes(tier2);
+        const paid = PAID.includes(tier1) || PAID.includes(tier2);
         const isExpiredTrial =
           paid &&
           currentTenant.trial_ends_at &&
