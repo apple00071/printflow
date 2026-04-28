@@ -197,8 +197,8 @@ export default function TenantsPage() {
   const stats = {
     totalTenants: tenants.length,
     activeTenants: tenants.filter(t => (t.plan_status || t.subscription_status) === 'ACTIVE').length,
-    proPlans: tenants.filter(t => (t.plan || t.subscription_tier) === 'PRO').length,
-    freePlans: tenants.filter(t => (t.plan || t.subscription_tier) === 'FREE').length,
+    proPlans: tenants.filter(t => (t.subscription_tier || t.plan) === 'PRO').length,
+    freePlans: tenants.filter(t => (t.subscription_tier || t.plan) === 'FREE').length,
     totalOrders: tenants.reduce((sum, t) => sum + (t.orders_this_month || 0), 0),
   };
 
@@ -325,13 +325,13 @@ export default function TenantsPage() {
                     </div>
                     <div className="ml-3">
                       <span className={`px-2 py-1 text-[9px] font-normal rounded-lg border shadow-sm ${
-                        (tenant.plan || tenant.subscription_tier) === 'BUSINESS'
+                        (tenant.subscription_tier || tenant.plan) === 'BUSINESS'
                           ? 'bg-blue-100 text-blue-800 border-blue-200'
-                          : (tenant.plan || tenant.subscription_tier) === 'PRO' 
+                          : (tenant.subscription_tier || tenant.plan) === 'PRO' 
                             ? 'bg-purple-100 text-purple-800 border-purple-200' 
                             : 'bg-gray-100 text-gray-800 border-gray-200'
                       }`}>
-                        {tenant.plan || tenant.subscription_tier || 'FREE'}
+                        {tenant.subscription_tier || tenant.plan || 'FREE'}
                       </span>
                     </div>
                   </div>
@@ -434,13 +434,13 @@ export default function TenantsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2.5 py-1 text-[10px] font-normal rounded-lg border ${
-                        (tenant.plan || tenant.subscription_tier) === 'BUSINESS'
+                        (tenant.subscription_tier || tenant.plan) === 'BUSINESS'
                           ? 'bg-blue-100 text-blue-800 border-blue-200'
-                          : (tenant.plan || tenant.subscription_tier) === 'PRO' 
+                          : (tenant.subscription_tier || tenant.plan) === 'PRO' 
                             ? 'bg-purple-100 text-purple-800 border-purple-200' 
                             : 'bg-gray-100 text-gray-800 border-gray-200'
                       }`}>
-                        {tenant.plan || tenant.subscription_tier || 'FREE'}
+                        {tenant.subscription_tier || tenant.plan || 'FREE'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-normal text-gray-900 hidden xs:table-cell">
