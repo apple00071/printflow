@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Building2, TrendingUp, CreditCard, BarChart3, LogOut, Plus, UserCheck, Zap, Power, Trash2 } from "lucide-react";
+import { Building2, TrendingUp, CreditCard, BarChart3, LogOut, Plus, UserCheck, Zap, Power, Trash2, MoreHorizontal, Search, Copy, Check } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -46,6 +46,12 @@ export default function AdminDashboard() {
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState('');
   const [activeTab, setActiveTab] = useState<'overview' | 'tenants' | 'subscriptions'>('overview');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showActionsModal, setShowActionsModal] = useState(false);
+  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [lastCreatedTenant, setLastCreatedTenant] = useState<any>(null);
+  const [copied, setCopied] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -88,10 +94,17 @@ export default function AdminDashboard() {
       const data = await response.json();
 
       if (response.ok) {
-        // Success - show credentials
-        alert(`Tenant created successfully!\n\nBusiness: ${data.tenant.name}\nEmail: ${createFormData.email}\nPassword: ${data.tenant.tempPassword}\n\nPlease save these credentials.`);
+        // Success - set data and show modal
+        setLastCreatedTenant({
+          name: data.tenant.name,
+          email: createFormData.email,
+          password: data.tenant.tempPassword,
+          url: `https://${data.tenant.slug}.printflow.shop`
+        });
         
         setShowCreateModal(false);
+        setShowSuccessModal(true);
+        
         setCreateFormData({
           name: '',
           email: '',
@@ -112,15 +125,14 @@ export default function AdminDashboard() {
     }
   }
 
-  const handleTogglePlan = async (tenantId: string, currentPlan: string) => {
+  const handleUpdatePlan = async (tenantId: string, targetPlan: string) => {
     try {
-      const newPlan = currentPlan.toUpperCase() === 'PRO' ? 'FREE' : 'PRO';
       setLoading(true);
       
       const response = await fetch(`/api/admin/tenants/${tenantId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: newPlan }),
+        body: JSON.stringify({ plan: targetPlan }),
       });
 
       if (response.ok) {
@@ -130,7 +142,7 @@ export default function AdminDashboard() {
         setLoading(false);
       }
     } catch (error) {
-      console.error('Error toggling plan:', error);
+      console.error('Error updating plan:', error);
       alert('Error updating plan');
       setLoading(false);
     }
@@ -170,6 +182,7 @@ export default function AdminDashboard() {
       });
 
       if (response.ok) {
+        setShowActionsModal(false);
         await fetchTenants();
       } else {
         alert('Failed to delete tenant');
@@ -182,16 +195,25 @@ export default function AdminDashboard() {
     }
   };
 
+  const filteredTenants = tenants.filter(tenant => {
+    const matchesSearch = tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         tenant.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (tenant.profiles?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (tenant.profiles?.username || '').toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return matchesSearch;
+  });
+
   const stats = {
     totalTenants: tenants.length,
-    activeTenants: tenants.filter(t => (t.plan_status || t.subscription_status) === 'ACTIVE').length,
+    activeTenants: tenants.filter(t => (t.plan_status || t.subscription_status || '').toUpperCase() === 'ACTIVE').length,
     totalOrders: tenants.reduce((sum, t) => sum + (t.orders_this_month || 0), 0),
-    proPlans: tenants.filter(t => (t.plan || t.subscription_tier) === 'PRO').length,
-    businessPlans: tenants.filter(t => (t.plan || t.subscription_tier) === 'BUSINESS').length,
-    freePlans: tenants.filter(t => (t.plan || t.subscription_tier) === 'FREE').length,
+    proPlans: tenants.filter(t => (t.plan || t.subscription_tier || '').toUpperCase() === 'PRO').length,
+    businessPlans: tenants.filter(t => (t.plan || t.subscription_tier || '').toUpperCase() === 'BUSINESS').length,
+    freePlans: tenants.filter(t => (t.plan || t.subscription_tier || '').toUpperCase() === 'FREE').length,
     monthlyRevenue: 
-      (tenants.filter(t => (t.plan || t.subscription_tier) === 'PRO').length * 499) + 
-      (tenants.filter(t => (t.plan || t.subscription_tier) === 'BUSINESS').length * 999),
+      (tenants.filter(t => (t.plan || t.subscription_tier || '').toUpperCase() === 'PRO').length * 499) + 
+      (tenants.filter(t => (t.plan || t.subscription_tier || '').toUpperCase() === 'BUSINESS').length * 999),
   };
 
   return (
@@ -213,14 +235,6 @@ export default function AdminDashboard() {
                 >
                   <BarChart3 className="w-4 h-4 sm:mr-1.5" />
                   <span className="hidden sm:inline">Analytics</span>
-                </Link>
-                <Link 
-                  href="/admin/tenants"
-                  className="flex items-center justify-center p-2 sm:px-3 sm:py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all font-normal text-xs sm:text-sm border border-transparent hover:border-blue-100"
-                  title="Tenants"
-                >
-                  <UserCheck className="w-4 h-4 sm:mr-1.5" />
-                  <span className="hidden sm:inline">Tenants</span>
                 </Link>
               </div>
               <div className="flex items-center gap-2">
@@ -321,35 +335,45 @@ export default function AdminDashboard() {
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-white rounded-xl shadow-sm border p-6">
-              <h3 className="text-lg font-normal text-gray-900 mb-4">Quick Actions</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Link 
-                  href="/admin/analytics"
-                  className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors block"
-                >
-                  <BarChart3 className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                  <p className="text-sm font-normal text-gray-900 text-center">View Analytics</p>
-                  <p className="text-xs text-gray-500 text-center">Detailed platform metrics</p>
-                </Link>
-                
-                <Link 
-                  href="/admin/tenants"
-                  className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors block"
-                >
-                  <UserCheck className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                  <p className="text-sm font-normal text-gray-900 text-center">Manage Tenants</p>
-                  <p className="text-xs text-gray-500 text-center">Customer accounts</p>
-                </Link>
-                
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors"
-                >
-                  <Plus className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                  <p className="text-sm font-normal text-gray-900 text-center">Create New Tenant</p>
-                  <p className="text-xs text-gray-500 text-center">Add new SaaS customer</p>
-                </button>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-50 bg-gray-50/30">
+                <h3 className="text-sm font-normal text-gray-900 uppercase tracking-tight">System Quick Actions</h3>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <Link 
+                    href="/admin/analytics"
+                    className="p-6 border border-gray-100 rounded-2xl hover:border-blue-200 hover:bg-blue-50/30 transition-all group active:scale-95 shadow-sm"
+                  >
+                    <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
+                      <BarChart3 className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <p className="text-sm font-normal text-gray-900 mb-1">View Analytics</p>
+                    <p className="text-[11px] text-gray-400 font-normal leading-relaxed">Access detailed platform metrics and business intelligence reports.</p>
+                  </Link>
+                  
+                  <button 
+                    onClick={() => setActiveTab('tenants')}
+                    className="p-6 border border-gray-100 rounded-2xl hover:border-green-200 hover:bg-green-50/30 transition-all group text-left active:scale-95 shadow-sm"
+                  >
+                    <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center mb-4 group-hover:bg-green-100 transition-colors">
+                      <UserCheck className="w-6 h-6 text-green-600" />
+                    </div>
+                    <p className="text-sm font-normal text-gray-900 mb-1">Manage Tenants</p>
+                    <p className="text-[11px] text-gray-400 font-normal leading-relaxed">Directly oversee customer accounts, subscriptions, and governance.</p>
+                  </button>
+                  
+                  <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="p-6 border border-gray-100 rounded-2xl hover:border-purple-200 hover:bg-purple-50/30 transition-all group text-left active:scale-95 shadow-sm"
+                  >
+                    <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mb-4 group-hover:bg-purple-100 transition-colors">
+                      <Plus className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <p className="text-sm font-normal text-gray-900 mb-1">Create New Tenant</p>
+                    <p className="text-[11px] text-gray-400 font-normal leading-relaxed">Provision a new SaaS instance and initialize business operations.</p>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -358,18 +382,30 @@ export default function AdminDashboard() {
         {/* Tenants Tab */}
         {activeTab === 'tenants' && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
+            <div className="p-4 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/30">
               <div>
-                <h2 className="text-base sm:text-lg font-normal text-gray-900">All Tenants ({tenants.length})</h2>
+                <h2 className="text-base sm:text-lg font-normal text-gray-900">All Tenants ({filteredTenants.length})</h2>
                 <p className="text-[10px] text-gray-400 font-normal uppercase tracking-widest mt-0.5">Live Subscription Data</p>
               </div>
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-blue-600 text-white px-4 py-2 sm:py-2.5 rounded-xl hover:bg-blue-700 transition-all flex items-center text-xs sm:text-sm font-normal active:scale-95"
-              >
-                <Plus className="w-4 h-4 mr-1 sm:mr-2" />
-                Add Tenant
-              </button>
+              <div className="flex items-center gap-3">
+                <div className="relative group w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Search tenants..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-xs font-normal"
+                  />
+                </div>
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="bg-blue-600 text-white px-4 py-2 sm:py-2.5 rounded-xl hover:bg-blue-700 transition-all flex items-center text-xs sm:text-sm font-normal active:scale-95 whitespace-nowrap"
+                >
+                  <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+                  Add Tenant
+                </button>
+              </div>
             </div>
             
             {loading ? (
@@ -377,7 +413,7 @@ export default function AdminDashboard() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
                 <p className="text-sm font-normal">Syncing data...</p>
               </div>
-            ) : tenants.length === 0 ? (
+            ) : filteredTenants.length === 0 ? (
               <div className="p-12 text-center text-gray-400">
                 <Building2 className="w-12 h-12 mx-auto mb-3 opacity-20" />
                 <p className="text-sm font-normal">No tenants found</p>
@@ -386,8 +422,12 @@ export default function AdminDashboard() {
               <>
                 {/* Mobile Card View */}
                 <div className="md:hidden divide-y divide-gray-50">
-                  {tenants.map((tenant) => (
-                    <div key={tenant.id} className="p-4 hover:bg-gray-50 transition-colors group">
+                  {filteredTenants.map((tenant) => (
+                    <div 
+                      key={tenant.id} 
+                      onClick={() => router.push(`/admin/tenants/${tenant.id}`)}
+                      className="p-4 hover:bg-gray-50 transition-colors group cursor-pointer"
+                    >
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex-1 min-w-0">
                           <h3 className="text-sm font-normal text-gray-900 truncate group-hover:text-blue-600 transition-colors">{tenant.name}</h3>
@@ -427,21 +467,21 @@ export default function AdminDashboard() {
 
                       <div className="flex gap-2">
                         <button 
-                          onClick={() => handleTogglePlan(tenant.id, tenant.plan || 'FREE')}
-                          className="flex-1 bg-white hover:bg-orange-50 text-orange-600 py-2 rounded-xl text-[10px] font-normal transition-all border border-gray-100 hover:border-orange-100 flex items-center justify-center gap-1 active:scale-95"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTenant(tenant);
+                            setShowActionsModal(true);
+                          }}
+                          className="flex-1 bg-white hover:bg-blue-50 text-blue-600 py-2.5 rounded-xl text-xs font-normal transition-all border border-gray-100 hover:border-blue-100 flex items-center justify-center gap-2 active:scale-95"
                         >
-                          <Zap className="w-3.5 h-3.5" />
-                          Toggle Plan
+                          <MoreHorizontal className="w-3.5 h-3.5" />
+                          Manage
                         </button>
                         <button 
-                          onClick={() => handleToggleStatus(tenant.id, tenant.plan_status || 'ACTIVE')}
-                          className="flex-1 bg-white hover:bg-blue-50 text-blue-600 py-2 rounded-xl text-[10px] font-normal transition-all border border-gray-100 hover:border-blue-100 flex items-center justify-center gap-1 active:scale-95"
-                        >
-                          <Power className="w-3.5 h-3.5" />
-                          Toggle Status
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteTenant(tenant.id, tenant.name)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteTenant(tenant.id, tenant.name);
+                          }}
                           className="bg-white hover:bg-red-50 text-red-500 p-2 rounded-xl border border-gray-100 hover:border-red-100 active:scale-95"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -480,8 +520,12 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-50">
-                      {tenants.map((tenant) => (
-                        <tr key={tenant.id} className="hover:bg-blue-50/20 transition-colors group">
+                      {filteredTenants.map((tenant) => (
+                        <tr 
+                          key={tenant.id} 
+                          onClick={() => router.push(`/admin/tenants/${tenant.id}`)}
+                          className="hover:bg-blue-50/20 transition-colors group cursor-pointer"
+                        >
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-normal text-gray-900 group-hover:text-blue-600">
                             {tenant.name}
                             <span className="block text-[10px] text-gray-400 font-normal uppercase tracking-tight group-hover:text-gray-500">{tenant.business_type}</span>
@@ -522,21 +566,21 @@ export default function AdminDashboard() {
                           <td className="px-6 py-4 whitespace-nowrap text-right">
                             <div className="flex items-center justify-end gap-2">
                               <button 
-                                onClick={() => handleTogglePlan(tenant.id, tenant.plan || 'FREE')}
-                                className="p-2 text-orange-500 hover:text-orange-700 hover:bg-orange-50 border border-transparent hover:border-orange-100 rounded-xl transition-all active:scale-90"
-                                title="Toggle Plan"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedTenant(tenant);
+                                  setShowActionsModal(true);
+                                }}
+                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded-xl transition-all active:scale-95"
+                                title="Manage Tenant"
                               >
-                                <Zap className="w-4 h-4" />
+                                <MoreHorizontal className="w-5 h-5" />
                               </button>
                               <button 
-                                onClick={() => handleToggleStatus(tenant.id, tenant.plan_status || 'ACTIVE')}
-                                className="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded-xl transition-all active:scale-90"
-                                title="Toggle Status"
-                              >
-                                <Power className="w-4 h-4" />
-                              </button>
-                              <button 
-                                onClick={() => handleDeleteTenant(tenant.id, tenant.name)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteTenant(tenant.id, tenant.name);
+                                }}
                                 className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-xl transition-all active:scale-90"
                                 title="Delete Tenant"
                               >
@@ -776,6 +820,184 @@ export default function AdminDashboard() {
                 {isCreating ? 'Creating...' : 'Create Tenant'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Actions Modal */}
+      {showActionsModal && selectedTenant && (
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4 transition-opacity duration-300"
+          onClick={() => setShowActionsModal(false)}
+        >
+          <div 
+            className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-normal text-gray-900">Tenant Actions</h3>
+              <button 
+                onClick={() => setShowActionsModal(false)}
+                className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <Plus className="w-6 h-6 rotate-45" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                <div className="flex items-center gap-4 mb-3">
+                  <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white text-lg font-normal shadow-lg shadow-blue-100">
+                    {selectedTenant.name.charAt(0)}
+                  </div>
+                  <div>
+                    <h4 className="font-normal text-gray-900 leading-tight">{selectedTenant.name}</h4>
+                    <p className="text-xs text-gray-400 mt-0.5">{selectedTenant.email}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <span className={`px-2 py-0.5 text-[9px] font-normal rounded-lg border leading-none ${
+                    selectedTenant.plan?.toUpperCase() === 'PRO' 
+                      ? 'bg-purple-100 text-purple-700 border-purple-200' 
+                      : 'bg-blue-100 text-blue-700 border-blue-200'
+                  }`}>
+                    {selectedTenant.plan}
+                  </span>
+                  <span className={`px-2 py-0.5 text-[9px] font-normal rounded-lg border leading-none ${
+                    selectedTenant.plan_status?.toUpperCase() === 'ACTIVE' 
+                      ? 'bg-green-100 text-green-700 border-green-200' 
+                      : 'bg-red-100 text-red-700 border-red-200'
+                  }`}>
+                    {selectedTenant.plan_status}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="space-y-2.5">
+                <button 
+                  onClick={() => {
+                    handleUpdatePlan(selectedTenant.id, 'BUSINESS');
+                    setShowActionsModal(false);
+                  }}
+                  disabled={selectedTenant.plan?.toUpperCase() === 'BUSINESS'}
+                  className="w-full text-left px-5 py-3 border border-blue-100 bg-blue-50/10 text-blue-700 rounded-2xl hover:bg-blue-50 transition-all font-normal text-sm active:scale-95 disabled:opacity-50 flex items-center justify-between group"
+                >
+                  <span>Upgrade to Business (₹999)</span>
+                  <Zap className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+                <button 
+                  onClick={() => {
+                    handleUpdatePlan(selectedTenant.id, 'PRO');
+                    setShowActionsModal(false);
+                  }}
+                  disabled={selectedTenant.plan?.toUpperCase() === 'PRO'}
+                  className="w-full text-left px-5 py-3 border border-purple-100 bg-purple-50/10 text-purple-700 rounded-2xl hover:bg-purple-50 transition-all font-normal text-sm active:scale-95 disabled:opacity-50 flex items-center justify-between group"
+                >
+                  <span>Upgrade to Pro (₹499)</span>
+                  <Zap className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+                <button 
+                  onClick={() => {
+                    handleUpdatePlan(selectedTenant.id, 'FREE');
+                    setShowActionsModal(false);
+                  }}
+                  disabled={selectedTenant.plan?.toUpperCase() === 'FREE'}
+                  className="w-full text-left px-5 py-3 border border-gray-100 rounded-2xl hover:bg-gray-50 transition-all text-gray-600 font-normal text-sm active:scale-95 disabled:opacity-50 flex items-center justify-between"
+                >
+                  Downgrade to Free
+                </button>
+                <button 
+                  onClick={() => {
+                    handleToggleStatus(selectedTenant.id, selectedTenant.plan_status || 'ACTIVE');
+                    setShowActionsModal(false);
+                  }}
+                  className="w-full text-left px-5 py-3 border border-gray-100 rounded-2xl hover:bg-gray-50 transition-all text-gray-700 font-normal text-sm active:scale-95 flex items-center justify-between"
+                >
+                  <span>{selectedTenant.plan_status?.toUpperCase() === 'ACTIVE' ? 'Suspend Account' : 'Activate Account'}</span>
+                  <Power className="w-4 h-4 opacity-40" />
+                </button>
+                <button className="w-full text-left px-5 py-3 border border-gray-100 rounded-2xl hover:bg-gray-50 transition-all text-gray-700 font-normal text-sm active:scale-95">
+                  Send Notification
+                </button>
+                <button 
+                  onClick={() => handleDeleteTenant(selectedTenant.id, selectedTenant.name)}
+                  className="w-full text-left px-5 py-3 border border-red-100 text-red-600 rounded-2xl hover:bg-red-50 transition-all font-normal text-sm active:scale-95 flex items-center justify-between group"
+                >
+                  <span>Delete Tenant</span>
+                  <Trash2 className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
+                </button>
+              </div>
+            </div>
+            <div className="mt-8">
+              <button
+                onClick={() => setShowActionsModal(false)}
+                className="w-full bg-gray-100 text-gray-800 py-3 rounded-2xl hover:bg-gray-200 transition-colors font-normal text-sm active:scale-95"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Success Modal */}
+      {showSuccessModal && lastCreatedTenant && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-[32px] max-w-md w-full p-8 shadow-2xl animate-in zoom-in duration-200 border border-gray-100">
+            <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center mb-6 mx-auto border border-green-100">
+              <Check className="w-8 h-8 text-green-600" />
+            </div>
+            
+            <h2 className="text-2xl font-normal text-gray-900 mb-2 text-center">Tenant Initialized</h2>
+            <p className="text-sm text-gray-500 text-center mb-8 font-normal">Business infrastructure provisioned successfully.</p>
+            
+            <div className="space-y-4 mb-8">
+              <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 relative group">
+                <p className="text-[10px] uppercase text-gray-400 font-normal tracking-widest mb-1">Access URL</p>
+                <p className="text-sm font-normal text-blue-600 break-all">{lastCreatedTenant.url}</p>
+              </div>
+              
+              <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 relative group">
+                <p className="text-[10px] uppercase text-gray-400 font-normal tracking-widest mb-1">Administrator Email</p>
+                <p className="text-sm font-normal text-gray-900">{lastCreatedTenant.email}</p>
+              </div>
+
+              <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 relative group">
+                <p className="text-[10px] uppercase text-gray-400 font-normal tracking-widest mb-1">Secure Password</p>
+                <p className="text-sm font-mono font-normal text-gray-900 tracking-wider">{lastCreatedTenant.password}</p>
+                <button 
+                  onClick={() => {
+                    const text = `Business: ${lastCreatedTenant.name}\nURL: ${lastCreatedTenant.url}\nEmail: ${lastCreatedTenant.email}\nPassword: ${lastCreatedTenant.password}`;
+                    navigator.clipboard.writeText(text);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2.5 bg-white border border-gray-100 rounded-xl hover:border-blue-200 hover:text-blue-600 transition-all shadow-sm active:scale-90"
+                  title="Copy All Details"
+                >
+                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <button 
+                onClick={() => {
+                  const message = encodeURIComponent(`*PrintFlow Welcome*\n\nYour business portal is ready!\n\n*Business:* ${lastCreatedTenant.name}\n*Portal:* ${lastCreatedTenant.url}\n*Email:* ${lastCreatedTenant.email}\n*Password:* ${lastCreatedTenant.password}\n\nPlease login and change your password.`);
+                  window.open(`https://wa.me/?text=${message}`, '_blank');
+                }}
+                className="bg-[#25D366] text-white py-3.5 rounded-2xl text-sm font-normal hover:bg-[#20bd5a] transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm"
+              >
+                Share via WhatsApp
+              </button>
+              <button 
+                onClick={() => setShowSuccessModal(false)}
+                className="bg-gray-900 text-white py-3.5 rounded-2xl text-sm font-normal hover:bg-gray-800 transition-all active:scale-95 shadow-sm"
+              >
+                Finish
+              </button>
+            </div>
+            {copied && (
+              <p className="text-[10px] text-green-600 text-center mt-4 font-normal animate-pulse">✓ Details copied to clipboard</p>
+            )}
           </div>
         </div>
       )}

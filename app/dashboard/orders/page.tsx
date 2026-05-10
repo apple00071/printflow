@@ -84,14 +84,20 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-4">
-        <Link 
-          href="/dashboard/orders/new" 
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 text-sm font-medium w-full sm:w-auto justify-center"
-        >
-          <Plus className="w-4 h-4" />
-          <span>{t("New Order", "కొత్త ఆర్డర్")}</span>
-        </Link>
+      <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900 uppercase tracking-tighter">{t("Order Management", "ఆర్డర్ల నిర్వహణ")}</h1>
+          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">{t("Track and process customer requests", "కస్టమర్ అభ్యర్థనలను ట్రాక్ చేయండి")}</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <Link 
+            href="/dashboard/orders/new" 
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all shadow-sm text-[10px] font-semibold uppercase tracking-widest"
+          >
+            <Plus className="w-4 h-4" />
+            <span>{t("New Order", "కొత్త ఆర్డర్")}</span>
+          </Link>
+        </div>
       </div>
 
       {/* Filters & Search */}

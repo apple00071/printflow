@@ -118,35 +118,41 @@ export default function InventoryPage() {
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t("Inventory", "ఇన్వెంటరీ", "इन्वेंटरी")}</h1>
-          <p className="text-sm text-gray-500">{t("Track your paper, ink and other stock levels", "మీ స్టాక్ వివరాలను మేనేజ్ చేయండి", "अपना स्टॉक मैनेज करें")}</p>
+          <h1 className="text-xl font-semibold text-gray-900 uppercase tracking-tighter">{t("Inventory", "ఇన్వెంటరీ", "इन्वेंटरी")}</h1>
+          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">{t("Track your paper, ink and other stock levels", "మీ స్టాక్ వివరాలను మేనేజ్ చేయండి", "अपना स्टॉक मैनेज करें")}</p>
         </div>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 text-sm font-medium"
-        >
-          <Plus className="w-5 h-5" />
-          {t("Add New Item", "కొత్త వస్తువును జోడించండి", "नई सामग्री जोड़ें")}
-        </button>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all shadow-sm text-[10px] font-semibold uppercase tracking-widest"
+          >
+            <Plus className="w-5 h-5" />
+            {t("Add New Item", "కొత్త వస్తువును జోడించండి", "नई सामग्री जोड़ें")}
+          </button>
+        </div>
       </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-            <div className={`p-3 w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${lowStockItems.length > 0 ? 'bg-orange/10 text-orange' : 'bg-green-100 text-green-600'}`}>
+         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+            <div className={`p-3 rounded-xl flex items-center justify-center ${lowStockItems.length > 0 ? 'bg-orange-500/10 text-orange-600' : 'bg-green-500/10 text-green-600'}`}>
                 <AlertTriangle className="w-6 h-6" />
             </div>
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-1">{t("Low Stock Alerts", "తక్కువ స్టాక్ హెచ్చరికలు", "स्टॉक कम होने की चेतावनी")}</p>
-            <p className="text-2xl font-bold">{lowStockItems.length}</p>
+            <div>
+              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">{t("Low Stock Alerts", "తక్కువ స్టాక్ హెచ్చరికలు", "स्टॉक कम होने की चेतावनी")}</p>
+              <p className="text-2xl font-semibold text-gray-900">{lowStockItems.length}</p>
+            </div>
          </div>
-         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-            <div className="p-3 w-12 h-12 rounded-xl flex items-center justify-center mb-4 bg-blue-50 text-blue-600">
+         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+            <div className="p-3 rounded-xl flex items-center justify-center bg-blue-500/10 text-blue-600">
                 <Package className="w-6 h-6" />
             </div>
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-1">{t("Total Items", "మొత్తం వస్తువులు", "మొత్తం సాహిత్యం")}</p>
-            <p className="text-2xl font-bold">{items.length}</p>
+            <div>
+              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">{t("Total Items", "మొత్తం వస్తువులు", "మొత్తం సాహిత్యం")}</p>
+              <p className="text-2xl font-semibold text-gray-900">{items.length}</p>
+            </div>
          </div>
       </div>
 
@@ -166,7 +172,7 @@ export default function InventoryPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-gray-100 text-[10px] uppercase tracking-widest text-gray-400 font-mono">
+              <tr className="border-b border-gray-100 text-[10px] uppercase tracking-widest text-gray-400 font-semibold">
                 <th className="px-6 py-4">{t("Item Name", "పేరు", "नाम")}</th>
                 <th className="px-6 py-4">{t("Stock Level", "స్టాక్ స్థాయి", "स्टॉक लेवल")}</th>
                 <th className="px-6 py-4">{t("Unit", "యూనిట్", "यूनिट")}</th>

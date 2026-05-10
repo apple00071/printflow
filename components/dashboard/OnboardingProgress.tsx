@@ -72,14 +72,6 @@ export default function OnboardingProgress() {
             isCompleted: !!tenant.logo_url && !!tenant.city
           },
           {
-            id: "first-customer",
-            title: "Add First Customer",
-            subtitle: "Start building your database",
-            icon: Users,
-            href: "/dashboard/customers",
-            isCompleted: (customerCount || 0) > 0
-          },
-          {
             id: "first-order",
             title: "Create First Order",
             subtitle: "Generate your first job card",

@@ -18,9 +18,10 @@ import {
   Store,
   Upload,
   Image as ImageIcon,
-  X
+  X,
+  Plus
 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
@@ -29,16 +30,27 @@ import ProfileSettings from "@/components/dashboard/ProfileSettings";
 import { formatDate } from "@/lib/utils/format";
 import Script from "next/script";
 import { updateTenantDetails } from "@/lib/supabase/actions";
+import { useSearchParams } from "next/navigation";
 
-export default function SettingsPage() {
+function SettingsContent() {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState("business");
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab") || "business";
+  const [activeTab, setActiveTab] = useState(initialTab);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   const tabs = [
     { id: "business", label: t("Business Details", "బిజినెస్ వివరాలు"), icon: Settings },
     { id: "qr", label: t("QR Storefront", "QR స్టోర్‌ఫ్రంట్"), icon: QrCode },
     { id: "subscription", label: t("Subscription", "సబ్‌స్క్రిప్షన్"), icon: Hash },
+    { id: "team", label: t("Team Management", "టీమ్ మేనేజ్‌మెంట్"), icon: Users },
     { id: "profile", label: t("My Profile", "నా ప్రొఫైల్"), icon: User },
   ];
 
@@ -157,7 +169,42 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Dynamic Header based on Active Tab */}
+      <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900 uppercase tracking-tighter">
+            {activeTab === 'team' ? t("Team Management", "టీమ్ మేనేజ్‌మెంట్") :
+             activeTab === 'qr' ? t("QR Storefront", "QR స్టోర్‌ఫ్రంట్") :
+             activeTab === 'subscription' ? t("Subscription", "సబ్‌స్క్రిప్షన్") :
+             activeTab === 'profile' ? t("My Profile", "నా ప్రొఫైల్") :
+             t("Business Settings", "బిజినెస్ సెట్టింగులు")}
+          </h1>
+          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">
+            {activeTab === 'team' ? t("Manage your team and permissions", "మీ బృందాన్ని మరియు అనుమతులను నిర్వహించండి") :
+             activeTab === 'qr' ? t("Configure your digital shop link", "మీ డిజిటల్ షాప్ లింక్‌ను కాన్ఫిగర్ చేయండి") :
+             activeTab === 'subscription' ? t("Manage your plan and billing", "మీ ప్లాన్ మరియు బిల్లింగ్ నిర్వహించండి") :
+             activeTab === 'profile' ? t("Update your personal information", "మీ వ్యక్తిగత సమాచారాన్ని నవీకరించండి") :
+             t("Configure your shop and preferences", "మీ షాప్ మరియు ప్రాధాన్యతలను కాన్ఫిగర్ చేయండి")}
+          </p>
+        </div>
+        {activeTab === 'team' && (
+           <button className="bg-primary text-white px-5 py-2.5 rounded-xl text-[10px] font-semibold uppercase tracking-widest flex items-center gap-2 hover:bg-primary/90 active:scale-[0.97] transition-all shadow-sm">
+              <Plus className="w-4 h-4" /> {t("Add Member", "సభ్యుడిని జోడించండి")}
+           </button>
+        )}
+        {activeTab === 'business' && (
+           <button 
+             onClick={handleSaveBusinessDetails}
+             disabled={saveLoading}
+             className="bg-blue-500 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 hover:bg-blue-600 active:scale-95 transition-all font-semibold text-[10px] uppercase tracking-widest shadow-sm disabled:opacity-50"
+           >
+              {saveLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {t("Save Changes", "మారపులను సేవ్ చేయండి")}
+           </button>
+        )}
+      </div>
+
       <div className="flex flex-col lg:flex-row gap-8">
          {/* Sidebar Tabs */}
          <div className="w-full lg:w-64 space-y-2">
@@ -180,13 +227,13 @@ export default function SettingsPage() {
          </div>
 
          {/* Settings Content Area */}
-         <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+         <div className="flex-1 space-y-6">
             {activeTab === "qr" && (
-              <div className="p-8 space-y-10">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-8 space-y-10">
                  <div className="border-b border-gray-100 pb-6 flex items-center justify-between">
                     <div className="space-y-1">
-                       <h2 className="text-xl font-semibold text-gray-900 uppercase tracking-tighter">{t("Counter QR Storefront", "కౌంటర్ QR స్టోర్‌ఫ్రంట్")}</h2>
-                       <p className="text-[10px] text-gray-400 uppercase tracking-widest">{t("Let customers order by scanning a code", "ఖాతాదారులు కోడ్‌ని స్కాన్ చేయడం ద్వారా ఆర్డర్ చేయనివ్వండి")}</p>
+                       <h3 className="text-xs font-bold text-gray-900 uppercase tracking-widest">{t("Storefront Access", "స్టోర్‌ఫ్రంట్ యాక్సెస్")}</h3>
+                       <p className="text-[10px] text-gray-400 font-medium">{t("Let customers order by scanning a code", "ఖాతాదారులు కోడ్‌ని స్కాన్ చేయడం ద్వారా ఆర్డర్ చేయనివ్వండి")}</p>
                     </div>
                     <div className="bg-green-500/10 text-green-600 px-3 py-1 rounded-full flex items-center gap-1.5 animate-pulse">
                        <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
@@ -278,21 +325,7 @@ export default function SettingsPage() {
             )}
 
             {activeTab === "business" && (
-              <div className="p-8 space-y-10">
-                <div className="flex items-center justify-between border-b border-gray-100 pb-6">
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-900 tracking-tighter">{t("Business Details", "బిజినెస్ వివరాలు")}</h2>
-                    <p className="text-xs text-gray-400 uppercase tracking-widest mt-1">Manage your shop&apos;s core identity</p>
-                  </div>
-                  <button 
-                    onClick={handleSaveBusinessDetails}
-                    disabled={saveLoading}
-                    className="bg-blue-500 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 hover:bg-blue-600 active:scale-95 transition-all font-semibold text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/10 disabled:opacity-50"
-                  >
-                     {saveLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                     {t("Save Changes", "మారపులను సేవ్ చేయండి")}
-                  </button>
-                </div>
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-8 space-y-10">
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                    {/* Logo Upload Section */}
@@ -406,12 +439,8 @@ export default function SettingsPage() {
             )}
 
             {activeTab === "subscription" && (
-              <div className="p-8 space-y-8">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-8 space-y-8">
                  <Script src="https://checkout.razorpay.com/v1/checkout.js" />
-                 <div className="border-b border-gray-100 pb-6">
-                    <h2 className="text-xl font-semibold text-gray-900 uppercase tracking-tighter">{t("Subscription & Usage", "సబ్‌స్క్రిప్షన్ వివరాలు")}</h2>
-                    <p className="text-xs text-gray-400 uppercase tracking-widest">{t("Manage your plan and billing", "మీ ప్లాన్ మరియు బిల్లింగ్ వివరాలు")}</p>
-                 </div>
 
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Current Plan Card */}
@@ -514,10 +543,45 @@ export default function SettingsPage() {
             )}
 
             {activeTab === "team" && (
-              <div className="p-8 space-y-8">
-                 <div className="border-b border-gray-100 pb-6">
-                    <h2 className="text-xl font-normal text-gray-900 uppercase tracking-tighter">{t("Team Management", "టీమ్ మేనేజ్‌మెంట్")}</h2>
-                    <p className="text-xs text-gray-400 uppercase tracking-widest">{t("Manage your team members and their permissions", "మీ టీమ్ సభ్యులు మరియు వారి అనుమతులను నిర్వహించండి")}</p>
+              <div className="space-y-6">
+                 {/* Team Stats */}
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+                       <div className="bg-blue-500/10 p-3 rounded-xl text-blue-600">
+                          <Users className="w-6 h-6" />
+                       </div>
+                       <div>
+                          <p className="text-[10px] uppercase font-medium text-gray-400 tracking-widest mb-1">{t("Total Members", "మొత్తం సభ్యులు")}</p>
+                          <p className="text-2xl font-semibold text-gray-900">1</p>
+                       </div>
+                    </div>
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+                       <div className="bg-green-500/10 p-3 rounded-xl text-green-600">
+                          <Shield className="w-6 h-6" />
+                       </div>
+                       <div>
+                          <p className="text-[10px] uppercase font-medium text-gray-400 tracking-widest mb-1">{t("Active Members", "యాక్టివ్ సభ్యులు")}</p>
+                          <p className="text-2xl font-semibold text-gray-900">1</p>
+                       </div>
+                    </div>
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+                       <div className="bg-yellow-500/10 p-3 rounded-xl text-yellow-600">
+                          <Users className="w-6 h-6" />
+                       </div>
+                       <div>
+                          <p className="text-[10px] uppercase font-medium text-gray-400 tracking-widest mb-1">{t("Pending Invites", "పెండింగ్ ఆహ్వానాలు")}</p>
+                          <p className="text-2xl font-semibold text-gray-900">0</p>
+                       </div>
+                    </div>
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+                       <div className="bg-purple-500/10 p-3 rounded-xl text-purple-600">
+                          <Shield className="w-6 h-6" />
+                       </div>
+                       <div>
+                          <p className="text-[10px] uppercase font-medium text-gray-400 tracking-widest mb-1">{t("Admins", "అడ్మిన్లు")}</p>
+                          <p className="text-2xl font-semibold text-gray-900">1</p>
+                       </div>
+                    </div>
                  </div>
 
                  <div className="space-y-6">
@@ -595,7 +659,7 @@ export default function SettingsPage() {
             )}
 
             {activeTab === "profile" && (
-               <div className="p-8">
+               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-8">
                  <ProfileSettings />
                </div>
             )}
@@ -612,5 +676,17 @@ export default function SettingsPage() {
          </div>
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-200" />
+      </div>
+    }>
+      <SettingsContent />
+    </Suspense>
   );
 }

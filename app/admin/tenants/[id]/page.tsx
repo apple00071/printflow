@@ -15,7 +15,8 @@ import {
   Clock,
   ExternalLink,
   Activity,
-  ChevronRight
+  ChevronRight,
+  Plus
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -48,6 +49,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [showPurgeConfirm, setShowPurgeConfirm] = useState(false);
+  const [showPlanModal, setShowPlanModal] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -95,6 +97,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
       });
 
       if (response.ok) {
+        setShowPlanModal(false);
         await refreshTenantDetails();
       } else {
         alert('Failed to update plan');
@@ -137,7 +140,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
       });
 
       if (response.ok) {
-        router.push("/admin/tenants");
+        router.push("/admin");
       } else {
         alert('Failed to purge tenant data');
       }
@@ -170,28 +173,34 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Top Banner / Header */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-30">
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-30 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-4 w-full sm:w-auto">
+          <div className="py-5 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-5 w-full sm:w-auto">
               <Link 
-                href="/admin/tenants" 
-                className="p-2 hover:bg-gray-50 rounded-xl transition-all border border-transparent hover:border-gray-100"
+                href="/admin" 
+                className="p-2.5 hover:bg-gray-50 rounded-2xl transition-all border border-gray-100 hover:border-gray-200 shadow-sm"
               >
                 <ArrowLeft className="w-5 h-5 text-gray-500" />
               </Link>
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-normal text-gray-900 truncate">{tenant.name}</h1>
-                  <span className={`px-2 py-0.5 text-[9px] font-normal rounded-lg border ${
-                    tenant.plan === 'PRO' 
-                      ? 'bg-purple-100 text-purple-800 border-purple-200' 
-                      : 'bg-blue-100 text-blue-800 border-blue-200'
+                <div className="flex items-center gap-3 mb-0.5">
+                  <h1 className="text-2xl font-normal text-gray-900 truncate tracking-tight">{tenant.name}</h1>
+                  <span className={`px-2.5 py-1 text-[10px] font-normal rounded-xl border shadow-sm ${
+                    tenant.plan === 'BUSINESS'
+                      ? 'bg-blue-600 text-white border-blue-500'
+                      : tenant.plan === 'PRO' 
+                        ? 'bg-purple-100 text-purple-800 border-purple-200' 
+                        : 'bg-blue-50 text-blue-800 border-blue-100'
                   }`}>
                     {tenant.subscription_tier || tenant.plan}
                   </span>
                 </div>
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-normal">Tenant Details & Governance</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-normal">Governance Engine</p>
+                  <span className="w-1 h-1 rounded-full bg-gray-200"></span>
+                  <p className="text-[10px] text-blue-500 font-normal">ID: {tenant.id.split('-')[0].toUpperCase()}</p>
+                </div>
               </div>
             </div>
 
@@ -199,7 +208,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
               <button 
                 onClick={() => handleUpdateStatus(tenant.plan_status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE')}
                 disabled={updating}
-                className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-normal transition-all border ${
+                className={`flex-1 sm:flex-none px-5 py-2.5 rounded-2xl text-xs font-normal transition-all border shadow-sm ${
                   tenant.plan_status === 'ACTIVE'
                     ? 'bg-white text-red-600 border-red-100 hover:bg-red-50'
                     : 'bg-green-600 text-white border-green-500 hover:bg-green-700'
@@ -208,11 +217,12 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
                 {tenant.plan_status === 'ACTIVE' ? 'Suspend Access' : 'Restore Access'}
               </button>
               <button 
-                onClick={() => handleUpdatePlan((tenant.subscription_tier || tenant.plan) === 'PRO' ? 'FREE' : 'PRO')}
+                onClick={() => setShowPlanModal(true)}
                 disabled={updating}
-                className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-normal hover:bg-blue-700 transition-all border border-blue-500 shadow-sm active:scale-95 disabled:opacity-50"
+                className="flex-1 sm:flex-none px-5 py-2.5 bg-blue-600 text-white rounded-2xl text-xs font-normal hover:bg-blue-700 transition-all border border-blue-500 shadow-lg shadow-blue-100 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {(tenant.subscription_tier || tenant.plan) === 'PRO' ? 'Downgrade to FREE' : 'Upgrade to PRO'}
+                <Zap className="w-4 h-4" />
+                Change Plan
               </button>
             </div>
           </div>
@@ -409,6 +419,82 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
           </div>
         </div>
       </div>
+
+      {/* Change Plan Modal */}
+      {showPlanModal && (
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4 transition-opacity duration-300"
+          onClick={() => setShowPlanModal(false)}
+        >
+          <div 
+            className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-normal text-gray-900">Change Subscription</h3>
+              <button 
+                onClick={() => setShowPlanModal(false)}
+                className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <Plus className="w-6 h-6 rotate-45" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <button 
+                onClick={() => handleUpdatePlan('BUSINESS')}
+                disabled={tenant.plan === 'BUSINESS' || updating}
+                className={`w-full text-left px-5 py-4 border rounded-2xl transition-all font-normal text-sm active:scale-95 disabled:opacity-50 flex items-center justify-between group ${
+                  tenant.plan === 'BUSINESS' ? 'bg-blue-600 border-blue-600 text-white' : 'border-blue-100 bg-blue-50/10 text-blue-700 hover:bg-blue-50'
+                }`}
+              >
+                <div>
+                  <p className="font-normal">Business Plan (₹999)</p>
+                  <p className={`text-[10px] ${tenant.plan === 'BUSINESS' ? 'opacity-80' : 'text-blue-400'}`}>Full Enterprise Governance</p>
+                </div>
+                <Zap className="w-5 h-5 opacity-40" />
+              </button>
+
+              <button 
+                onClick={() => handleUpdatePlan('PRO')}
+                disabled={tenant.plan === 'PRO' || updating}
+                className={`w-full text-left px-5 py-4 border rounded-2xl transition-all font-normal text-sm active:scale-95 disabled:opacity-50 flex items-center justify-between group ${
+                  tenant.plan === 'PRO' ? 'bg-purple-600 border-purple-600 text-white' : 'border-purple-100 bg-purple-50/10 text-purple-700 hover:bg-purple-50'
+                }`}
+              >
+                <div>
+                  <p className="font-normal">Pro Plan (₹499)</p>
+                  <p className={`text-[10px] ${tenant.plan === 'PRO' ? 'opacity-80' : 'text-purple-400'}`}>Professional Business License</p>
+                </div>
+                <Zap className="w-5 h-5 opacity-40" />
+              </button>
+
+              <button 
+                onClick={() => handleUpdatePlan('FREE')}
+                disabled={tenant.plan === 'FREE' || updating}
+                className={`w-full text-left px-5 py-4 border rounded-2xl transition-all font-normal text-sm active:scale-95 disabled:opacity-50 flex items-center justify-between group ${
+                  tenant.plan === 'FREE' ? 'bg-gray-600 border-gray-600 text-white' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <div>
+                  <p className="font-normal">Free Plan (₹0)</p>
+                  <p className={`text-[10px] ${tenant.plan === 'FREE' ? 'opacity-80' : 'text-gray-400'}`}>Standard Trial Tier</p>
+                </div>
+                <Clock className="w-5 h-5 opacity-40" />
+              </button>
+            </div>
+
+            <div className="mt-8">
+              <button
+                onClick={() => setShowPlanModal(false)}
+                className="w-full bg-gray-100 text-gray-800 py-3 rounded-2xl hover:bg-gray-200 transition-colors font-normal text-sm active:scale-95"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Purge Confirmation Modal */}
       {showPurgeConfirm && (

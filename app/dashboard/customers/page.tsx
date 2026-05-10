@@ -113,33 +113,41 @@ export default function CustomersPage() {
 
   return (
     <div className="space-y-8">
+      {/* Header */}
+      <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900 uppercase tracking-tighter">{t("Customer Management", "కస్టమర్ల నిర్వహణ")}</h1>
+          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">{t("View and manage your customer database", "మీ కస్టమర్ డేటాబేస్ను చూడండి మరియు నిర్వహించండి")}</p>
+        </div>
+      </div>
+
       {/* Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="bg-blue-500 p-3 rounded-lg text-white">
+          <div className="bg-blue-500/10 p-3 rounded-xl text-blue-600">
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm text-gray-500 ">{t("Total Customers", "కస్టమర్లు")}</p>
-            <p className="text-2xl  text-gray-900">{stats.totalCustomers}</p>
+            <p className="text-[10px] uppercase font-medium text-gray-400 tracking-widest mb-1">{t("Total Customers", "కస్టమర్లు")}</p>
+            <p className="text-2xl font-semibold text-gray-900">{stats.totalCustomers}</p>
           </div>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="bg-green-500 p-3 rounded-lg text-white">
+          <div className="bg-green-500/10 p-3 rounded-xl text-green-600">
             <TrendingUp className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm text-gray-500 ">{t("Business Value", "వ్యాపారం")}</p>
-            <p className="text-2xl  text-gray-900">{formatCurrency(stats.totalBusiness)}</p>
+            <p className="text-[10px] uppercase font-medium text-gray-400 tracking-widest mb-1">{t("Business Value", "వ్యాపారం")}</p>
+            <p className="text-2xl font-semibold text-gray-900">{formatCurrency(stats.totalBusiness)}</p>
           </div>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="bg-red-500 p-3 rounded-lg text-white">
+          <div className="bg-red-500/10 p-3 rounded-xl text-red-600">
             <AlertCircle className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm text-gray-500 ">{t("Total Outstanding", "బకాయిలు")}</p>
-            <p className="text-2xl  text-gray-900 ">{formatCurrency(stats.totalOutstanding)}</p>
+            <p className="text-[10px] uppercase font-medium text-gray-400 tracking-widest mb-1">{t("Total Outstanding", "బకాయిలు")}</p>
+            <p className="text-2xl font-semibold text-gray-900">{formatCurrency(stats.totalOutstanding)}</p>
           </div>
         </div>
       </div>

@@ -125,29 +125,31 @@ export default function ExpensesPage() {
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t("Expenses", "ఖర్చులు", "खर्चे")}</h1>
-          <p className="text-sm text-gray-500">{t("Track and manage your shop operational costs", "మీ షాప్ ఖర్చులను ట్రాక్ చేయండి", "अपनी दुकान के खर्चों को ट्रैक करें")}</p>
+          <h1 className="text-xl font-semibold text-gray-900 uppercase tracking-tighter">{t("Expenses", "ఖర్చులు", "खर्चे")}</h1>
+          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">{t("Track and manage your shop operational costs", "మీ షాప్ ఖర్చులను ట్రాక్ చేయండి", "अपनी दुकान के खर्चों को ट्रैक करें")}</p>
         </div>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 text-sm font-medium"
-        >
-          <Plus className="w-4 h-4" />
-          {t("Add Expense", "ఖర్చును జోడించండి", "खर्चा जोड़ें")}
-        </button>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all shadow-sm text-[10px] font-semibold uppercase tracking-widest"
+          >
+            <Plus className="w-4 h-4" />
+            {t("Add Expense", "ఖర్చును జోడించండి", "खर्चा जोड़ें")}
+          </button>
+        </div>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="bg-red-50 p-3 rounded-xl text-red-600">
+          <div className="bg-red-500/10 p-3 rounded-xl text-red-600">
              <Wallet className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs uppercase font-medium text-gray-400 tracking-widest mb-1">{t("Total Spent", "మొత్తం ఖర్చు", "कुल खर्च")}</p>
-            <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalSpent)}</p>
+            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">{t("Total Spent", "మొత్తం ఖర్చు", "कुल खर्च")}</p>
+            <p className="text-2xl font-semibold text-gray-900">{formatCurrency(totalSpent)}</p>
           </div>
         </div>
         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
@@ -192,7 +194,7 @@ export default function ExpensesPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-gray-100 text-[10px] uppercase tracking-widest text-gray-400 font-medium">
+              <tr className="border-b border-gray-100 text-[10px] uppercase tracking-widest text-gray-400 font-semibold">
                 <th className="px-6 py-4">{t("Date", "తేదీ", "तारीख")}</th>
                 <th className="px-6 py-4">{t("Category", "రకం", "कैटेगरी")}</th>
                 <th className="px-6 py-4">{t("Description", "వివరాలు", "विवरण")}</th>

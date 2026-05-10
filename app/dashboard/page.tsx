@@ -7,7 +7,9 @@ import {
   Clock,
   Loader2,
   Search,
-  ClipboardList
+  ClipboardList,
+  Settings,
+  Wallet
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/utils/format";
@@ -182,10 +184,10 @@ export default function DashboardPage() {
               </div>
            )}
            <div>
-              <h1 className="text-2xl font-bold text-gray-900 leading-tight tracking-tight">
+              <h1 className="text-2xl font-semibold text-gray-900 leading-tight tracking-tight">
                  {tenantInfo?.name || "PrintFlow"}
               </h1>
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">
+              <p className="text-[11px] text-gray-400 font-medium uppercase tracking-[0.2em]">
                  {t("Print Shop Management", "ప్రింట్ షాప్ మేనేజ్‌మెంట్", "प्रिंट शॉप प्रबंधन")}
               </p>
            </div>
@@ -193,12 +195,12 @@ export default function DashboardPage() {
 
         <div className="flex items-center gap-4">
            <div className="text-center px-4 py-1 border-x border-gray-100">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("Jobs", "పనులు", "कार्य")}</p>
-              <p className="text-lg font-bold text-gray-900">{tenantInfo?.orders_this_month || 0}</p>
+              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">{t("Jobs", "పనులు", "कार्य")}</p>
+              <p className="text-lg font-semibold text-gray-900">{tenantInfo?.orders_this_month || 0}</p>
            </div>
            <div className="text-center px-4 py-1">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("Today", "ఈరోజు", "आज")}</p>
-              <p className="text-sm font-bold text-gray-600">{new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}</p>
+              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">{t("Today", "ఈరోజు", "आज")}</p>
+              <p className="text-sm font-semibold text-gray-600">{new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}</p>
            </div>
         </div>
       </div>
@@ -211,7 +213,7 @@ export default function DashboardPage() {
                {tenantInfo?.orders_this_month || 0} {t("jobs this month on Free Plan (UTC)", "ఈ నెల పనులు ఫ్రీ ప్లాన్‌లో ఉన్నాయి", "इस महीने के कार्य फ्री प्लान पर हैं")}
             </p>
          </div>
-         <Link href="/dashboard/billing" className="text-[10px] font-bold text-blue-600 uppercase tracking-widest hover:underline">
+         <Link href="/dashboard/settings?tab=subscription" className="text-[10px] font-semibold text-blue-600 uppercase tracking-widest hover:underline">
             {t("View plans", "ప్లాన్‌లు చూడండి", "प्लान देखें")}
          </Link>
       </div>
@@ -220,9 +222,9 @@ export default function DashboardPage() {
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
          {[
             { label: t("Dashboard", "డాష్బోర్డ్", "डैशबोर्ड"), href: "/dashboard", active: true },
+            { label: t("Jobs", "పనులు", "कार्य"), href: "/dashboard/orders" },
             { label: t("Quotes", "కొటేషన్లు", "कोटेशन"), href: "/dashboard/quotations" },
-            { label: t("Ledger", "లెడ్జర్", "लेजर"), href: "/dashboard/orders" },
-            { label: t("Statements", "స్టేట్‌మెంట్స్", "स्टेटमेंट"), href: "/dashboard/billing" },
+            { label: t("Ledger", "లెడ్జర్", "लेजर"), href: "/dashboard/billing" },
             { label: t("Customers", "కస్టమర్లు", "ग्राहक"), href: "/dashboard/customers" },
             { label: t("Settings", "సెట్టింగులు", "सेटिंग्स"), href: "/dashboard/settings" },
          ].map((pill) => (
@@ -230,7 +232,7 @@ export default function DashboardPage() {
                key={pill.href} 
                href={pill.href}
                className={cn(
-                  "px-5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border",
+                  "px-5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all border",
                   pill.active 
                      ? "bg-[#e2f2ed] text-[#10b981] border-[#d1e9e0]" 
                      : "bg-white text-gray-500 border-gray-100 hover:bg-gray-50"
@@ -257,8 +259,8 @@ export default function DashboardPage() {
                    <stat.icon className="w-5 h-5" />
                  </div>
                  <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{stat.label}</p>
-                    <p className="text-lg font-bold text-gray-900 tracking-tight">{stat.value}</p>
+                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-0.5">{stat.label}</p>
+                    <p className="text-lg font-semibold text-gray-900 tracking-tight">{stat.value}</p>
                  </div>
                </div>
              ))}
@@ -269,7 +271,7 @@ export default function DashboardPage() {
         <div className="lg:col-span-8 space-y-6">
            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8">
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-xl font-bold text-gray-900">{t("Recent jobs", "ఇటీవలి పనులు", "हाल के कार्य")}</h2>
+                <h2 className="text-xl font-semibold text-gray-900">{t("Recent jobs", "ఇటీవలి పనులు", "हाल के कार्य")}</h2>
                 <div className="flex items-center gap-2">
                    <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400" />
@@ -294,17 +296,17 @@ export default function DashboardPage() {
                    <table className="w-full text-left">
                       <thead>
                          <tr className="border-b border-gray-50">
-                            <th className="pb-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("Customer", "కస్టమర్", "ग्राहक")}</th>
-                            <th className="pb-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("Product", "ఉత్పత్తి", "उत्पाद")}</th>
-                            <th className="pb-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("Status", "స్థితి", "स्थिति")}</th>
-                            <th className="pb-4 text-right text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("Amount", "మొత్తం", "मात्रा")}</th>
+                            <th className="pb-4 text-[10px] font-medium text-gray-400 uppercase tracking-widest">{t("Customer", "కస్టమర్", "ग्राहक")}</th>
+                            <th className="pb-4 text-[10px] font-medium text-gray-400 uppercase tracking-widest">{t("Product", "ఉత్పత్తి", "उत्पाद")}</th>
+                            <th className="pb-4 text-[10px] font-medium text-gray-400 uppercase tracking-widest">{t("Status", "స్థితి", "स्थिति")}</th>
+                            <th className="pb-4 text-right text-[10px] font-medium text-gray-400 uppercase tracking-widest">{t("Amount", "మొత్తం", "मात्रा")}</th>
                          </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
                          {recentOrders.map((order) => (
                             <tr key={order.id} className="group hover:bg-gray-50/50 transition-all cursor-pointer" onClick={() => router.push(`/dashboard/orders/${order.id}`)}>
                                <td className="py-4">
-                                  <p className="text-sm font-bold text-gray-900 group-hover:text-primary transition-colors">{order.customers?.name}</p>
+                                  <p className="text-sm font-semibold text-gray-900 group-hover:text-primary transition-colors">{order.customers?.name}</p>
                                   <p className="text-[10px] font-mono text-gray-400 uppercase">{order.friendly_id || `#${order.id.split('-')[0]}`}</p>
                                </td>
                                <td className="py-4">
@@ -312,7 +314,7 @@ export default function DashboardPage() {
                                </td>
                                <td className="py-4">
                                   <span className={cn(
-                                     "px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter",
+                                     "px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-tighter",
                                      order.status === 'DELIVERED' ? "bg-green-100 text-green-700" :
                                      order.status === 'READY' ? "bg-blue-100 text-blue-700" :
                                      "bg-orange/10 text-orange"
@@ -321,7 +323,7 @@ export default function DashboardPage() {
                                   </span>
                                </td>
                                <td className="py-4 text-right">
-                                  <p className="text-sm font-bold text-gray-900">{formatCurrency(order.total_amount)}</p>
+                                  <p className="text-sm font-semibold text-gray-900">{formatCurrency(order.total_amount)}</p>
                                </td>
                             </tr>
                          ))}
@@ -331,8 +333,8 @@ export default function DashboardPage() {
               )}
               
               <div className="mt-8 pt-6 border-t border-gray-50 flex justify-center">
-                 <Link href="/dashboard/orders" className="text-xs font-bold text-primary hover:underline uppercase tracking-widest">
-                    {t("View Full Ledger", "పూర్తిగా చూడండి", "पूरा लेजर देखें")}
+                 <Link href="/dashboard/orders" className="text-xs font-semibold text-primary hover:underline uppercase tracking-widest">
+                    {t("View All Jobs", "అన్ని పనులు చూడండి", "सभी कार्य देखें")}
                  </Link>
               </div>
            </div>
@@ -342,16 +344,16 @@ export default function DashboardPage() {
       {/* Secondary Analytics Section */}
       <div className="pt-10 border-t border-gray-100">
          <div className="mb-8">
-            <h2 className="text-xl font-bold text-[#1e3a5f]">{t("Business Performance", "వ్యాపార పనితీరు", "व्यवसाय प्रदर्शन")}</h2>
-            <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">{t("Insights and trends for your shop", "మీ షాప్ కోసం అంతర్దృష్టులు", "आपकी दुकान के लिए अंतर्दृष्टि और रुझान")}</p>
+            <h2 className="text-xl font-semibold text-[#1e3a5f]">{t("Business Performance", "వ్యాపార పనితీరు", "व्यवसाय प्रदर्शन")}</h2>
+            <p className="text-xs text-gray-400 uppercase tracking-widest font-medium">{t("Insights and trends for your shop", "మీ షాప్ కోసం అంతర్దృష్టులు", "आपकी दुकान के लिए अंतर्दृष्टि और रुझान")}</p>
          </div>
 
          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
            {/* Revenue Trend */}
            <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm h-[400px]">
              <div className="flex items-center justify-between mb-8">
-                <h3 className="text-lg font-bold text-gray-900">{t("Revenue Trend", "ఆదాయం సరళి", "आय का रुझान")}</h3>
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Last 6 Months</span>
+                <h3 className="text-lg font-semibold text-gray-900">{t("Revenue Trend", "ఆదాయం సరళి", "आय का रुझान")}</h3>
+                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">Last 6 Months</span>
              </div>
              {loading ? (
                <div className="flex flex-col items-center justify-center h-[280px]">
@@ -366,7 +368,7 @@ export default function DashboardPage() {
 
            {/* Job Types */}
            <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm h-[400px]">
-             <h3 className="text-lg font-bold text-gray-900 mb-8">{t("Revenue by Product", "ఆర్డర్ రకాలు", "उत्पाद के अनुसार आय")}</h3>
+             <h3 className="text-lg font-semibold text-gray-900 mb-8">{t("Revenue by Product", "ఆర్డర్ రకాలు", "उत्पाद के अनुसार आय")}</h3>
              {loading ? (
                  <div className="flex flex-col items-center justify-center h-[280px]">
                      <Loader2 className="w-8 h-8 animate-spin text-gray-200" />

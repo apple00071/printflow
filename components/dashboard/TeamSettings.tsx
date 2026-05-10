@@ -27,7 +27,11 @@ interface TeamMember {
   last_login?: string;
 }
 
-export default function TeamSettings() {
+interface TeamSettingsProps {
+  hideHeader?: boolean;
+}
+
+export default function TeamSettings({ hideHeader = false }: TeamSettingsProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { t } = useLanguage();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -296,67 +300,61 @@ export default function TeamSettings() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-normal text-gray-900">Team Management</h3>
-          <p className="text-gray-600">Manage your team members and their permissions</p>
+      {!hideHeader && (
+        <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900 uppercase tracking-tighter">{t("Team Management", "టీమ్ మేనేజ్‌మెంట్")}</h1>
+            <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">{t("Manage your team members and their permissions", "మీ టీమ్ సభ్యులు మరియు వారి అనుమతులను నిర్వహించండి")}</p>
+          </div>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all shadow-sm text-[10px] font-semibold uppercase tracking-widest"
+          >
+            <Plus className="w-4 h-4" />
+            {t("Add Member", "సభ్యుడిని జోడించండి")}
+          </button>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-        >
-          <Plus className="w-4 h-4" />
-          Add Member
-        </button>
-      </div>
+      )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-100 p-3 rounded-lg">
-              <Users className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Total Members</p>
-              <p className="text-2xl font-normal text-gray-900">{teamMembers.length}</p>
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+          <div className="bg-blue-500/10 p-3 rounded-xl text-blue-600">
+            <Users className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[10px] uppercase font-medium text-gray-400 tracking-widest mb-1">{t("Total Members", "మొత్తం సభ్యులు")}</p>
+            <p className="text-2xl font-semibold text-gray-900">{teamMembers.length}</p>
           </div>
         </div>
         
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="bg-green-100 p-3 rounded-lg">
-              <Shield className="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Active Members</p>
-              <p className="text-2xl font-normal text-gray-900">{activeMembers}</p>
-            </div>
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+          <div className="bg-green-500/10 p-3 rounded-xl text-green-600">
+            <Shield className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[10px] uppercase font-medium text-gray-400 tracking-widest mb-1">{t("Active Members", "యాక్టివ్ సభ్యులు")}</p>
+            <p className="text-2xl font-semibold text-gray-900">{activeMembers}</p>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="bg-yellow-100 p-3 rounded-lg">
-              <Users className="w-6 h-6 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Pending Invites</p>
-              <p className="text-2xl font-normal text-gray-900">{pendingMembers}</p>
-            </div>
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+          <div className="bg-yellow-500/10 p-3 rounded-xl text-yellow-600">
+            <Users className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[10px] uppercase font-medium text-gray-400 tracking-widest mb-1">{t("Pending Invites", "పెండింగ్ ఆహ్వానాలు")}</p>
+            <p className="text-2xl font-semibold text-gray-900">{pendingMembers}</p>
           </div>
         </div>
         
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="bg-purple-100 p-3 rounded-lg">
-              <Users className="w-6 h-6 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Admins</p>
-              <p className="text-2xl font-normal text-gray-900">{adminCount}</p>
-            </div>
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+          <div className="bg-purple-500/10 p-3 rounded-xl text-purple-600">
+            <Users className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[10px] uppercase font-medium text-gray-400 tracking-widest mb-1">{t("Admins", "అడ్మిన్లు")}</p>
+            <p className="text-2xl font-semibold text-gray-900">{adminCount}</p>
           </div>
         </div>
       </div>

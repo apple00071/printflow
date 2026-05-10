@@ -34,7 +34,7 @@ export async function POST(req: Request) {
           .from('tenants')
           .update({ 
             plan: 'PRO',
-            plan_status: 'ACTIVE',
+            subscription_status: 'ACTIVE',
             razorpay_sub_id: subscription.id,
             subscription_end_date: new Date(subscription.current_end * 1000).toISOString()
           })
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
         await supabase
           .from('tenants')
           .update({ 
-            plan_status: 'INACTIVE',
+            subscription_status: 'INACTIVE',
           })
           .eq('id', tenantId);
       }

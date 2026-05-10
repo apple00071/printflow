@@ -115,9 +115,9 @@ export default function BillingPage() {
   ];
 
   const statCards = [
-    { label: t("Total Revenue (Advances)", "మొత్తం రాబడి (అడ్వాన్స్)"), value: stats.totalRevenue, color: "bg-green-500", icon: TrendingUp },
-    { label: t("Outstanding Balance", "మొత్తం బకాయిలు"), value: stats.outstandingBalance, color: "bg-red-500", icon: Clock },
-    { label: t("Active Pending Payments", "పెండింగ్ చెల్లింపులు"), value: stats.pendingPayments, color: "bg-orange", icon: Receipt, isCount: true },
+    { label: t("Total Revenue", "మొత్తం రాబడి"), value: stats.totalRevenue, color: "text-green-600", bgColor: "bg-green-500/10", icon: TrendingUp },
+    { label: t("Outstanding Balance", "మొత్తం బకాయిలు"), value: stats.outstandingBalance, color: "text-red-600", bgColor: "bg-red-500/10", icon: Clock },
+    { label: t("Pending Payments", "పెండింగ్ చెల్లింపులు"), value: stats.pendingPayments, color: "text-orange-600", bgColor: "bg-orange-500/10", icon: Receipt, isCount: true },
   ];
 
   return (
@@ -140,7 +140,7 @@ export default function BillingPage() {
               </button>
               <div className="relative">
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="bg-orange-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">PRO Feature</span>
+                  <span className="bg-orange-500 text-white text-[10px] font-semibold px-3 py-1 rounded-full uppercase tracking-widest">PRO Feature</span>
                 </div>
                 <div className="flex items-start gap-4">
                   <div className="p-3 bg-orange-50 rounded-2xl">
@@ -194,7 +194,7 @@ export default function BillingPage() {
                 </div>
               </div>
               <Link
-                href="/dashboard/settings"
+                href="/dashboard/settings?tab=subscription"
                 onClick={() => setShowUpgradeModal(false)}
                 className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3.5 rounded-2xl text-sm font-semibold uppercase tracking-widest shadow-lg shadow-orange-200 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
               >
@@ -217,22 +217,22 @@ export default function BillingPage() {
       <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div>
           <h1 className="text-xl font-semibold text-gray-900 uppercase tracking-tighter">{t("Billing & Finance", "బిల్లింగ్ మరియు ఫైనాన్స్")}</h1>
-          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">{t("Revenue & Tax Management", "రాబడి మరియు పన్ను నిర్వహణ")}</p>
+          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">{t("Manage your business finances and plans", "మీ వ్యాపార ఆర్థిక మరియు ప్రణాళికలను నిర్వహించండి")}</p>
         </div>
         <div className="flex items-center gap-3">
           {/* GST Reports — intercepts for FREE users */}
           <button
             onClick={handleGSTClick}
-            className="relative bg-gray-50 text-gray-900 border border-gray-100 px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 hover:bg-gray-100 active:scale-[0.97] transition-all"
+            className="relative bg-gray-50 text-gray-900 border border-gray-100 px-5 py-2.5 rounded-xl text-[10px] font-semibold uppercase tracking-widest flex items-center gap-2 hover:bg-gray-100 active:scale-[0.97] transition-all"
           >
             <TrendingUp className="w-4 h-4 text-primary" /> {t("GST Reports", "GST నివేదికలు")}
             {!isPaidPlan && (
-              <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-widest shadow-sm border border-white">PRO</span>
+              <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-[8px] font-semibold px-1.5 py-0.5 rounded-full uppercase tracking-widest shadow-sm border border-white">PRO</span>
             )}
           </button>
           <button 
             onClick={() => setIsPaymentModalOpen(true)}
-            className="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 hover:bg-primary/90 active:scale-[0.97] transition-all shadow-sm"
+            className="bg-primary text-white px-5 py-2.5 rounded-xl text-[10px] font-semibold uppercase tracking-widest flex items-center gap-2 hover:bg-primary/90 active:scale-[0.97] transition-all shadow-sm"
           >
             <Plus className="w-4 h-4" /> {t("New Transaction", "కొత్త లావాదేవీ")}
           </button>
@@ -247,17 +247,17 @@ export default function BillingPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {statCards.map((stat) => (
-            <div key={stat.label} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-               <div className={`${stat.color} p-3 rounded-lg text-white`}>
-                  <stat.icon className="w-6 h-6" />
-               </div>
-               <div>
-                  <p className="text-sm font-medium text-gray-500">{stat.label}</p>
-                  <p className="text-xl font-semibold text-gray-900 tracking-tight">
-                    {stat.isCount ? stat.value : formatCurrency(stat.value)}
-                  </p>
-               </div>
+          {statCards.map((stat, i) => (
+            <div key={i} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+              <div className={`${stat.bgColor} ${stat.color} p-3 rounded-xl`}>
+                <stat.icon className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-[10px] uppercase font-medium text-gray-400 tracking-widest mb-1">{stat.label}</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {stat.isCount ? stat.value : formatCurrency(stat.value as number)}
+                </p>
+              </div>
             </div>
           ))}
         </div>

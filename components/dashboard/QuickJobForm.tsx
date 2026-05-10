@@ -113,8 +113,8 @@ export default function QuickJobForm() {
       
       <div className="flex items-center gap-3 mb-6">
         <div>
-          <h3 className="text-lg font-bold text-gray-900 tracking-tight">{t("Quick Add Job", "త్వరిత పని చేరిక", "त्वरित कार्य जोड़ें")}</h3>
-          <p className="text-[10px] text-gray-400 uppercase font-semibold tracking-widest">{t("Capture the run first", "ముందుగా పనిని నమోదు చేయండి", "पहले कार्य कैप्चर करें")}</p>
+          <h3 className="text-lg font-semibold text-gray-900 tracking-tight">{t("Quick Add Job", "త్వరిత పని చేరిక", "त्वरित कार्य जोड़ें")}</h3>
+          <p className="text-[10px] text-gray-400 uppercase font-medium tracking-widest">{t("Capture the run first", "ముందుగా పనిని నమోదు చేయండి", "पहले कार्य कैप्चर करें")}</p>
         </div>
       </div>
 
@@ -123,7 +123,7 @@ export default function QuickJobForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Phone Field */}
           <div className="relative">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">{t("Phone Number", "ఫోన్ నంబర్", "फ़ोन नंबर")}</label>
+            <label className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1.5 block">{t("Phone Number", "ఫోన్ నంబర్", "फ़ोन नंबर")}</label>
             <div className="relative group">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-primary transition-colors" />
               <input 
@@ -141,13 +141,13 @@ export default function QuickJobForm() {
                     setActiveSearchField('phone');
                   }
                 }}
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:bg-white focus:ring-2 focus:ring-primary/10 outline-none transition-all font-bold"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:bg-white focus:ring-2 focus:ring-primary/10 outline-none transition-all font-semibold"
               />
             </div>
 
             {showSuggestions && activeSearchField === 'phone' && suggestions.length > 0 && (
               <div className="absolute z-50 left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                <div className="p-2 bg-gray-50/50 border-b border-gray-100 text-[9px] text-gray-400 uppercase font-bold tracking-widest px-4">{t("Recent Customers", "ఇటీవలి కస్టమర్లు")}</div>
+                <div className="p-2 bg-gray-50/50 border-b border-gray-100 text-[9px] text-gray-400 uppercase font-medium tracking-widest px-4">{t("Recent Customers", "ఇటీవలి కస్టమర్లు")}</div>
                 {suggestions.map((customer) => (
                   <button
                     key={customer.id}
@@ -156,7 +156,7 @@ export default function QuickJobForm() {
                     className="w-full text-left px-4 py-3 hover:bg-primary/5 transition-colors flex items-center justify-between group"
                   >
                     <div>
-                      <div className="text-sm font-bold text-gray-900 group-hover:text-primary">{customer.name}</div>
+                      <div className="text-sm font-semibold text-gray-900 group-hover:text-primary">{customer.name}</div>
                       <div className="text-[10px] text-gray-400">{customer.phone}</div>
                     </div>
                     <Check className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -168,7 +168,7 @@ export default function QuickJobForm() {
 
           {/* Name Field */}
           <div className="relative">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">{t("Customer Name", "కస్టమర్ పేరు", "ग्राहक का नाम")}</label>
+            <label className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1.5 block">{t("Customer Name", "కస్టమర్ పేరు", "ग्राहक का नाम")}</label>
             <div className="relative group">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-primary transition-colors" />
               <input 
@@ -186,13 +186,13 @@ export default function QuickJobForm() {
                     setActiveSearchField('name');
                   }
                 }}
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:bg-white focus:ring-2 focus:ring-primary/10 outline-none transition-all font-bold"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:bg-white focus:ring-2 focus:ring-primary/10 outline-none transition-all font-semibold"
               />
             </div>
 
             {showSuggestions && activeSearchField === 'name' && suggestions.length > 0 && (
               <div className="absolute z-50 left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                <div className="p-2 bg-gray-50/50 border-b border-gray-100 text-[9px] text-gray-400 uppercase font-bold tracking-widest px-4">{t("Recent Customers", "ఇటీవలి కస్టమర్లు")}</div>
+                <div className="p-2 bg-gray-50/50 border-b border-gray-100 text-[9px] text-gray-400 uppercase font-medium tracking-widest px-4">{t("Recent Customers", "ఇటీవలి కస్టమర్లు")}</div>
                 {suggestions.map((customer) => (
                   <button
                     key={customer.id}
@@ -201,7 +201,7 @@ export default function QuickJobForm() {
                     className="w-full text-left px-4 py-3 hover:bg-primary/5 transition-colors flex items-center justify-between group"
                   >
                     <div>
-                      <div className="text-sm font-bold text-gray-900 group-hover:text-primary">{customer.name}</div>
+                      <div className="text-sm font-semibold text-gray-900 group-hover:text-primary">{customer.name}</div>
                       <div className="text-[10px] text-gray-400">{customer.phone}</div>
                     </div>
                     <Check className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -214,7 +214,7 @@ export default function QuickJobForm() {
 
         {/* Product Selection (Chips) */}
         <div className="space-y-3">
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">{t("Select Product", "ఉత్పత్తిని ఎంచుకోండి", "उत्पाद चुनें")}</label>
+          <label className="text-[10px] font-medium text-gray-400 uppercase tracking-widest block">{t("Select Product", "ఉత్పత్తిని ఎంచుకోండి", "उत्पाद चुनें")}</label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {jobTypes.map((type) => (
               <button
@@ -222,7 +222,7 @@ export default function QuickJobForm() {
                 type="button"
                 onClick={() => setFormData({ ...formData, jobType: type.id })}
                 className={cn(
-                  "px-3 py-2.5 rounded-xl text-xs font-bold transition-all border text-center",
+                  "px-3 py-2.5 rounded-xl text-xs font-semibold transition-all border text-center",
                   formData.jobType === type.id
                     ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
                     : "bg-gray-50 text-gray-600 border-gray-100 hover:bg-white hover:border-gray-200"
@@ -242,7 +242,7 @@ export default function QuickJobForm() {
                 placeholder={t("Enter product name...", "ఉత్పత్తి పేరు నమోదు చేయండి...", "उत्पाद का नाम दर्ज करें...")}
                 value={formData.customJobType}
                 onChange={(e) => setFormData({...formData, customJobType: e.target.value})}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-primary/20 rounded-2xl text-sm focus:bg-white focus:ring-2 focus:ring-primary/10 outline-none transition-all font-bold placeholder:font-normal"
+                className="w-full px-4 py-2.5 bg-gray-50 border border-primary/20 rounded-2xl text-sm focus:bg-white focus:ring-2 focus:ring-primary/10 outline-none transition-all font-semibold placeholder:font-normal"
                 autoFocus
               />
             </div>
@@ -252,7 +252,7 @@ export default function QuickJobForm() {
         {/* Amount Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">{t("Amount (₹)", "మొత్తం (₹)", "राशि (₹)")}</label>
+            <label className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1.5 block">{t("Amount (₹)", "మొత్తం (₹)", "राशि (₹)")}</label>
             <div className="relative group">
               <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-primary transition-colors" />
               <input 
@@ -266,7 +266,7 @@ export default function QuickJobForm() {
           </div>
 
           <div>
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">{t("Advance (₹)", "అడ్వాన్స్ (₹)", "अग्रिम (₹)")}</label>
+            <label className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1.5 block">{t("Advance (₹)", "అడ్వాన్స్ (₹)", "अग्रिम (₹)")}</label>
             <input 
               type="number"
               placeholder="0"
@@ -280,7 +280,7 @@ export default function QuickJobForm() {
         <button 
           type="submit"
           disabled={loading}
-          className="w-full py-4 bg-primary text-white rounded-2xl font-bold text-sm shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2"
+          className="w-full py-4 bg-primary text-white rounded-2xl font-semibold text-sm shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2"
         >
           {loading ? (
             <Loader2 className="w-5 h-5 animate-spin" />

@@ -70,18 +70,20 @@ export default function QuotationsPage() {
   return (
     <div className="max-w-full mx-auto space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-2xl font-normal text-gray-900">{t("Quotations", "కొటేషన్లు")}</h1>
-          <p className="text-gray-500 text-sm">{t("Manage and track your price estimates", "మీ ధర అంచనాలను నిర్వహించండి")}</p>
+          <h1 className="text-xl font-semibold text-gray-900 uppercase tracking-tighter">{t("Quotations", "కొటేషన్లు")}</h1>
+          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">{t("Manage and track your price estimates", "మీ ధర అంచనాలను నిర్వహించండి")}</p>
         </div>
-        <Link 
-          href="/dashboard/quotations/new"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 text-sm"
-        >
-          <Plus className="w-4 h-4" />
-          {t("New Quotation", "కొత్త కొటేషన్")}
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link 
+            href="/dashboard/quotations/new"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all shadow-sm text-[10px] font-semibold uppercase tracking-widest"
+          >
+            <Plus className="w-4 h-4" />
+            {t("New Quotation", "కొత్త కొటేషన్")}
+          </Link>
+        </div>
       </div>
 
       {/* Filters & Search */}
