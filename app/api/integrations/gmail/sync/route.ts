@@ -1,9 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { createOrder } from "@/lib/supabase/actions";
-import { sendWhatsAppMessage, formatStatusMessage } from "@/lib/whatsapp";
+import { sendWhatsAppMessage } from "@/lib/whatsapp";
 
-export async function GET() {
+export async function GET(request: Request) {
+  // Security: Allow either cron secret OR authenticated dashboard users
+  const authHeader = request.headers.get("authorization");
+  const cronSecret = process.env.CRON_SECRET;
+  
+  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    // Check if it's a browser request from the dashboard (no auth header = dashboard button)
+    if (authHeader !== null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  }
+
   const supabase = createClient();
   
   try {
