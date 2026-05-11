@@ -120,6 +120,45 @@ export default function DashboardLayout({
   const { language, setLanguage, t } = useLanguage();
   const supabase = createClient();
 
+  // ─── Background Gmail Auto-Sync ────────────────────────────────────────────
+  // Runs silently on dashboard load and every 5 minutes if Gmail is connected.
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    const runSync = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Only sync if there is an active Gmail integration
+        const { data: integration } = await supabase
+          .from("tenant_integrations")
+          .select("id")
+          .eq("type", "GMAIL")
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (!integration) return; // No Gmail connected, skip
+
+        // Fire and forget — don't block the UI
+        fetch("/api/integrations/gmail/sync").catch(console.error);
+      } catch (err) {
+        // Silent fail — never crash the dashboard for a background task
+        console.error("Background Gmail sync failed:", err);
+      }
+    };
+
+    // Run immediately on load
+    runSync();
+
+    // Then every 5 minutes
+    intervalId = setInterval(runSync, 5 * 60 * 1000);
+
+    return () => clearInterval(intervalId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // ──────────────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       const isOutsideDesktop = desktopQuickActionRef.current && !desktopQuickActionRef.current.contains(event.target as Node);
