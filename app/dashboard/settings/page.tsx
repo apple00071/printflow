@@ -782,11 +782,7 @@ function SettingsContent() {
 
                               <button 
                                  onClick={() => {
-                                    setLoading(true);
-                                    setTimeout(() => {
-                                       setIsGmailConnected(true);
-                                       setLoading(false);
-                                    }, 1500);
+                                    window.location.href = "/api/auth/google/login";
                                  }}
                                  className="w-full h-14 bg-primary text-white rounded-2xl font-semibold uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 hover:bg-primary/90 transition-all active:scale-95 shadow-xl shadow-primary/20"
                               >
