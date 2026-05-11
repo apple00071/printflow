@@ -1,15 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { createOrder } from "@/lib/supabase/actions";
+import { sendWhatsAppMessage, formatStatusMessage } from "@/lib/whatsapp";
 
 export async function GET() {
   const supabase = createClient();
   
   try {
-    // 1. Fetch all active Gmail integrations
+    // 1. Fetch all active Gmail integrations (include tenant phone for WA notifications)
     const { data: integrations, error: fetchError } = await supabase
       .from("tenant_integrations")
-      .select("*, tenants(name, id_prefix)")
+      .select("*, tenants(name, id_prefix, phone)")
       .eq("type", "GMAIL")
       .eq("is_active", true);
 
@@ -93,22 +94,76 @@ export async function GET() {
           // Simple Extraction Rules
           const qtyMatch = body.match(/Qty:\s*(\d+)/i) || body.match(/Quantity:\s*(\d+)/i);
           const jobMatch = body.match(/Item:\s*([^\n\r]+)/i) || body.match(/Product:\s*([^\n\r]+)/i);
-          const phoneMatch = body.match(/(\d{10})/);
+          const phoneMatch = body.match(/CELL:\s*(\d+)/i) || body.match(/(\d{10})/);
+          
+          const jobType = jobMatch ? jobMatch[1].trim() : subject || "New Order";
+          const customerName = from.split("<")[0].replace(/"/g, "").trim() || "Email Customer";
 
-          if (qtyMatch || jobMatch || subject.toLowerCase().includes("order")) {
+          // 5. Handle Attachments
+          let fileUrl = "";
+          if (message.payload.parts) {
+            const attachmentParts = message.payload.parts.filter((p: any) => p.filename && p.body.attachmentId);
+            
+            for (const part of attachmentParts) {
+              const attachRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msgSummary.id}/attachments/${part.body.attachmentId}`, {
+                headers: { Authorization: `Bearer ${accessToken}` },
+              });
+              const attachmentData = await attachRes.json();
+              
+              if (attachmentData.data) {
+                const buffer = Buffer.from(attachmentData.data, "base64");
+                const fileExt = part.filename.split(".").pop();
+                const filePath = `${integration.tenant_id}/orders/gmail-${Date.now()}.${fileExt}`;
+                
+                const { error: uploadError } = await supabase.storage
+                  .from("printflow-files")
+                  .upload(filePath, buffer, {
+                    contentType: part.mimeType,
+                    upsert: true
+                  });
+
+                if (!uploadError) {
+                  const { data: { publicUrl } } = supabase.storage
+                    .from("printflow-files")
+                    .getPublicUrl(filePath);
+                  fileUrl = publicUrl;
+                  break; // Use the first attachment found
+                }
+              }
+            }
+          }
+
+          const hasPhone = !!(phoneMatch && phoneMatch[1]);
+          const instructions = hasPhone
+            ? `Auto-created from Gmail.\nFrom: ${from}\nSubject: ${subject}\n\n${body.substring(0, 400)}`
+            : `⚠️ NO PHONE FOUND IN EMAIL.\nFrom: ${from}\nSubject: ${subject}\n\n${body.substring(0, 400)}`;
+
+          if (qtyMatch || jobMatch || subject || body.includes("CELL")) {
             // Create Order
-            await createOrder({
-              customerName: from.split("<")[0].trim() || "Email Customer",
-              phone: phoneMatch ? phoneMatch[1] : "",
-              jobType: jobMatch ? jobMatch[1].trim() : subject,
+            const newOrder = await createOrder({
+              customerName: customerName,
+              phone: hasPhone ? phoneMatch![1] : "",
+              jobType: jobType,
               quantity: qtyMatch ? qtyMatch[1] : "1",
-              instructions: `Automatically created from Gmail.\nSubject: ${subject}\n\nContent: ${body.substring(0, 500)}...`,
+              instructions,
               totalAmount: 0,
               advancePaid: 0,
               tenantId: integration.tenant_id,
+              file_url: fileUrl
             });
 
-            // 5. Mark as read (Remove UNREAD label)
+            // 7. Send WhatsApp notification to the TENANT (shop owner)
+            if (integration.tenants.phone) {
+              const orderId = (newOrder as any)?.friendly_id || (newOrder as any)?.id || "New";
+              const shopMsg = `📧 *New Gmail Order!*\n\nCustomer: *${customerName}*\nJob: *${jobType}*\nQty: ${qtyMatch ? qtyMatch[1] : "1"}\n${hasPhone ? `Phone: ${phoneMatch![1]}` : "⚠️ No Phone Number"}\nOrder ID: *${orderId}*\n\nCheck your PrintFlow dashboard to view the full order.`;
+
+              sendWhatsAppMessage({
+                phone: integration.tenants.phone,
+                message: shopMsg,
+              }).catch(console.error);
+            }
+
+            // 8. Mark as read (Remove UNREAD label)
             await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msgSummary.id}/modify`, {
               method: "POST",
               headers: { 
