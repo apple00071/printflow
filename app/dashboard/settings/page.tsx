@@ -741,6 +741,30 @@ function SettingsContent() {
                                     <p className="text-xs font-bold text-gray-900 uppercase">Just now</p>
                                  </div>
                               </div>
+
+                              <button 
+                                 onClick={async () => {
+                                    setLoading(true);
+                                    try {
+                                       const res = await fetch("/api/integrations/gmail/sync");
+                                       const data = await res.json();
+                                       if (data.success) {
+                                          alert("Sync successful! Check your orders list.");
+                                       } else {
+                                          alert("Sync failed: " + data.error);
+                                       }
+                                    } catch (err) {
+                                       alert("Sync failed. Check console.");
+                                    } finally {
+                                       setLoading(false);
+                                    }
+                                 }}
+                                 disabled={loading}
+                                 className="w-full h-12 bg-white border border-gray-200 text-primary rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                              >
+                                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                                 {t("Sync Now", "ఇప్పుడే సింక్ చేయండి")}
+                              </button>
                               
                               <div className="space-y-3">
                                  <div className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl">
