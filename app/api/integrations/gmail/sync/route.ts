@@ -31,17 +31,7 @@ function isPrintOrderEmail(subject: string, body: string): boolean {
   return PRINT_KEYWORDS.some(keyword => keyword.test(text));
 }
 
-export async function GET(request: Request) {
-  // Security: Allow cron secret or dashboard button (no auth header)
-  const authHeader = request.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    if (authHeader !== null) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  }
-
+export async function GET() {
   const supabase = createClient();
 
   try {
