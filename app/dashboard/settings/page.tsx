@@ -742,30 +742,12 @@ function SettingsContent() {
                                  </div>
                               </div>
 
-                              <button 
-                                 onClick={async () => {
-                                    setLoading(true);
-                                    try {
-                                       const res = await fetch("/api/integrations/gmail/sync");
-                                       const data = await res.json();
-                                       if (data.success) {
-                                          alert("Sync successful! Check your orders list.");
-                                       } else {
-                                          alert("Sync failed: " + data.error);
-                                       }
-                                    } catch (err) {
-                                       alert("Sync failed. Check console.");
-                                    } finally {
-                                       setLoading(false);
-                                    }
-                                 }}
-                                 disabled={loading}
-                                 className="w-full h-12 bg-white border border-gray-200 text-primary rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
-                              >
-                                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                                 {t("Sync Now", "ఇప్పుడే సింక్ చేయండి")}
-                              </button>
-                              
+                              <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-100 rounded-xl">
+                                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                 <span className="text-[10px] font-bold text-green-600 uppercase tracking-widest">Auto-Sync Active · Checks every minute</span>
+                              </div>
+
+
                               <div className="space-y-3">
                                  <div className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl">
                                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Auto-Import Orders</span>
