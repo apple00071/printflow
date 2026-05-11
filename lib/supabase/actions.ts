@@ -10,6 +10,7 @@ import { sendWhatsAppMessage, formatStatusMessage } from "@/lib/whatsapp";
 interface OrderData {
   customerName?: string;
   phone?: string;
+  email?: string;
   jobType: string;
   quantity: string;
   paperType?: string;
@@ -37,6 +38,7 @@ interface OrderData {
 interface CustomerData {
   name: string;
   phone: string | null;
+  email?: string | null;
   tenant_id?: string;
 }
 
@@ -91,6 +93,7 @@ export interface Order extends OrderInsertData {
     id: string;
     name: string;
     phone: string | null;
+    email?: string | null;
     gstin?: string | null;
   };
   tenants?: {
@@ -177,11 +180,27 @@ export async function createOrder(data: OrderData) {
     customerId = customer?.id;
   }
 
+  // 1b. If not found by phone, check by email
+  if (!customerId && data.email && data.email.trim() !== "") {
+    let customerQuery = supabase
+      .from("customers")
+      .select("id")
+      .eq("email", data.email.toLowerCase().trim());
+    
+    if (!superAdmin && tenant?.id) {
+      customerQuery = customerQuery.eq("tenant_id", tenant.id);
+    }
+    
+    const { data: customer } = await customerQuery.maybeSingle();
+    customerId = customer?.id;
+  }
+
   // 2. Auto-create customer if not found
   if (!customerId) {
     const customerData: CustomerData = {
-      name: data.customerName || data.phone || "Unknown",
+      name: data.customerName || data.phone || data.email || "Unknown",
       phone: data.phone && data.phone.trim() !== "" ? data.phone : null,
+      email: data.email && data.email.trim() !== "" ? data.email.toLowerCase().trim() : null,
     };
     
     // Only add tenant_id if not super admin

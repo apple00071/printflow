@@ -156,6 +156,7 @@ export async function GET() {
 
           const jobType = jobMatch ? jobMatch[1].trim() : subject || "New Order";
           const customerName = from.split("<")[0].replace(/"/g, "").trim() || "Email Customer";
+          const customerEmail = from.match(/<([^>]+)>/)?.[1] || from.trim();
           const hasPhone = !!(phoneMatch?.[1]);
 
           // Handle Attachments
@@ -191,6 +192,7 @@ export async function GET() {
           const newOrder = await createOrder({
             customerName,
             phone: hasPhone ? phoneMatch![1].replace(/\D/g, "") : "",
+            email: customerEmail,
             jobType,
             quantity: qtyMatch ? qtyMatch[1] : "1",
             instructions,
