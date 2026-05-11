@@ -62,6 +62,22 @@ export async function GET(request: Request) {
       try {
         let accessToken = integration.access_token;
 
+        // ─── SYNC LOCK: Skip if synced within the last 50 seconds ───────────
+        // Prevents duplicate orders when cron-job.org and in-app sync overlap.
+        const lastSynced = integration.updated_at ? new Date(integration.updated_at).getTime() : 0;
+        const secondsSinceSync = (Date.now() - lastSynced) / 1000;
+        if (secondsSinceSync < 50) {
+          results.push({ tenant: integration.tenants.name, skipped: "locked", secondsAgo: Math.round(secondsSinceSync) });
+          continue;
+        }
+
+        // Mark as "syncing now" to lock other concurrent runs
+        await supabase
+          .from("tenant_integrations")
+          .update({ updated_at: new Date().toISOString() })
+          .eq("id", integration.id);
+        // ─────────────────────────────────────────────────────────────────────
+
         // Refresh token if expired
         const isExpired = new Date(integration.token_expiry) <= new Date(Date.now() + 60000);
         if (isExpired && integration.refresh_token) {

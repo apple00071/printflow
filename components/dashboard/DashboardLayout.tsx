@@ -151,8 +151,8 @@ export default function DashboardLayout({
     // Run immediately on load
     runSync();
 
-    // Then every 5 minutes
-    intervalId = setInterval(runSync, 5 * 60 * 1000);
+    // Run immediately on load, then every 2 minutes (cron-job.org handles 1-min primary)
+    intervalId = setInterval(runSync, 2 * 60 * 1000);
 
     return () => clearInterval(intervalId);
   // eslint-disable-next-line react-hooks/exhaustive-deps
