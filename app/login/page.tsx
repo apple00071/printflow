@@ -5,13 +5,14 @@ import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { Eye, EyeOff } from "lucide-react";
 import { Logo } from "@/components/Logo";
+import Link from "next/link";
 
 export default function LoginPage() {
   const { language, setLanguage, t } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<React.ReactNode | null>(null);
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
 
@@ -21,25 +22,65 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      let emailToUse = email;
+      let emailToUse = email.trim();
       
-      // If it doesn't look like an email, treat as username
-      if (!email.includes("@")) {
-        // Special handling for Apple super admin
-        if (email.toLowerCase() === 'apple') {
+      // If it looks like an email, check if it exists in profiles or tenants
+      if (emailToUse.includes("@")) {
+        const usernamePart = emailToUse.split("@")[0];
+        
+        // Check profiles by email OR username
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("id")
+          .or(`email.eq.${emailToUse},username.eq.${usernamePart}`)
+          .maybeSingle();
+
+        if (!profileData) {
+          // If not in profiles, check if it's a tenant contact email
+          const { data: tenantData } = await supabase
+            .from("tenants")
+            .select("id")
+            .eq("email", emailToUse)
+            .maybeSingle();
+
+          if (!tenantData) {
+            setError(
+              <div className="flex flex-col gap-2">
+                <p>{t("Account not found", "ఖాతా కనుగొనబడలేదు")}</p>
+                <Link href="/signup" className="text-primary font-bold hover:underline uppercase text-[10px] tracking-widest mt-1">
+                  {t("Create new account", "కొత్త ఖాతాను సృష్టించండి")} →
+                </Link>
+              </div>
+            );
+            setLoading(false);
+            return;
+          }
+        }
+      } else {
+        // Handling for Username
+        if (emailToUse.toLowerCase() === 'apple') {
           emailToUse = 'apple@admin.com';
         } else {
           const { data, error: profileError } = await supabase
             .from("profiles")
             .select("id")
-            .ilike("username", email)
+            .ilike("username", emailToUse)
             .maybeSingle();
 
           if (profileError || !data) {
-            throw new Error(t("Username not found", "యూజర్ నేమ్ కనుగొనబడలేదు"));
+            setError(
+              <div className="flex flex-col gap-2">
+                <p>{t("Username not found", "యూజర్ నేమ్ కనుగొనబడలేదు")}</p>
+                <Link href="/signup" className="text-primary font-bold hover:underline uppercase text-[10px] tracking-widest mt-1">
+                  {t("Create new account", "కొత్త ఖాతాను సృష్టించండి")} →
+                </Link>
+              </div>
+            );
+            setLoading(false);
+            return;
           }
           
-          emailToUse = `${email.toLowerCase()}@applegraphics.local`;
+          emailToUse = `${emailToUse.toLowerCase()}@applegraphics.local`;
         }
       }
 
@@ -48,7 +89,10 @@ export default function LoginPage() {
         password,
       });
 
-      if (signInError) throw signInError;
+      if (signInError) {
+        // If password is wrong but account exists
+        throw new Error(t("Invalid login credentials", "తప్పుడు వివరాలు"));
+      }
       
       // Check user role to determine redirect
       const { data: { user } } = await supabase.auth.getUser();
@@ -61,10 +105,8 @@ export default function LoginPage() {
         
         // Redirect based on role
         if (profile?.role === 'ADMIN' && !profile?.tenant_id) {
-          // Super admin - redirect to admin dashboard
           window.location.href = "/admin";
         } else {
-          // Regular user/tenant - redirect to regular dashboard
           window.location.href = "/dashboard";
         }
       } else {
@@ -72,7 +114,7 @@ export default function LoginPage() {
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      setError(message || t("Invalid credentials", "తప్పుడు వివరాలు"));
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -166,7 +208,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative flex w-full justify-center rounded-xl bg-orange px-4 py-4 text-sm  text-white hover:bg-orange/90 focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2 disabled:opacity-50 transition-all shadow-lg shadow-orange/20"
+              className="group relative flex w-full justify-center rounded-xl bg-primary px-4 py-4 text-sm text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 transition-all shadow-lg shadow-primary/20 font-semibold uppercase tracking-widest"
             >
               {loading ? (t("Signing in...", "లాగిన్ అవుతోంది...")) : t("Login", "లాగిన్")}
             </button>

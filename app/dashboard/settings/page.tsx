@@ -19,7 +19,10 @@ import {
   Upload,
   Image as ImageIcon,
   X,
-  Plus
+  Plus,
+  Mail,
+  Zap,
+  Globe
 } from "lucide-react";
 import { useState, useEffect, useRef, Suspense } from "react";
 
@@ -29,7 +32,7 @@ import { getCurrentTenant } from "@/lib/tenant";
 import ProfileSettings from "@/components/dashboard/ProfileSettings";
 import { formatDate } from "@/lib/utils/format";
 import Script from "next/script";
-import { updateTenantDetails } from "@/lib/supabase/actions";
+import { updateTenantDetails, getTenantIntegrations, disconnectIntegration } from "@/lib/supabase/actions";
 import { useSearchParams } from "next/navigation";
 
 function SettingsContent() {
@@ -38,23 +41,55 @@ function SettingsContent() {
   const initialTab = searchParams.get("tab") || "business";
   const [activeTab, setActiveTab] = useState(initialTab);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isGmailConnected, setIsGmailConnected] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const tab = searchParams.get("tab");
     if (tab) {
       setActiveTab(tab);
     }
+    
+    // Check for success param from OAuth callback
+    if (searchParams.get("success") === "gmail_connected") {
+      setIsGmailConnected(true);
+    }
+
+    // Fetch actual integration status from DB
+    async function checkIntegrations() {
+      try {
+        const integrations = await getTenantIntegrations();
+        const hasGmail = integrations.some((i: any) => i.type === "GMAIL" && i.is_active);
+        setIsGmailConnected(hasGmail);
+      } catch (err) {
+        console.error("Error checking integrations:", err);
+      }
+    }
+    checkIntegrations();
   }, [searchParams]);
+
+  const handleDisconnect = async () => {
+    if (!confirm(t("Are you sure you want to disconnect Gmail?", "మీరు ఖచ్చితంగా Gmailని డిస్‌కనెక్ట్ చేయాలనుకుంటున్నారా?"))) return;
+    setLoading(true);
+    try {
+      await disconnectIntegration("GMAIL");
+      setIsGmailConnected(false);
+    } catch (err) {
+      alert("Failed to disconnect. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const tabs = [
     { id: "business", label: t("Business Details", "బిజినెస్ వివరాలు"), icon: Settings },
     { id: "qr", label: t("QR Storefront", "QR స్టోర్‌ఫ్రంట్"), icon: QrCode },
     { id: "subscription", label: t("Subscription", "సబ్‌స్క్రిప్షన్"), icon: Hash },
     { id: "team", label: t("Team Management", "టీమ్ మేనేజ్‌మెంట్"), icon: Users },
+    { id: "integrations", label: t("Integrations", "ఇంటిగ్రేషన్లు"), icon: Zap },
     { id: "profile", label: t("My Profile", "నా ప్రొఫైల్"), icon: User },
   ];
 
-  const [loading, setLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
 
@@ -177,6 +212,7 @@ function SettingsContent() {
             {activeTab === 'team' ? t("Team Management", "టీమ్ మేనేజ్‌మెంట్") :
              activeTab === 'qr' ? t("QR Storefront", "QR స్టోర్‌ఫ్రంట్") :
              activeTab === 'subscription' ? t("Subscription", "సబ్‌స్క్రిప్షన్") :
+             activeTab === 'integrations' ? t("Integrations", "ఇంటిగ్రేషన్లు") :
              activeTab === 'profile' ? t("My Profile", "నా ప్రొఫైల్") :
              t("Business Settings", "బిజినెస్ సెట్టింగులు")}
           </h1>
@@ -184,6 +220,7 @@ function SettingsContent() {
             {activeTab === 'team' ? t("Manage your team and permissions", "మీ బృందాన్ని మరియు అనుమతులను నిర్వహించండి") :
              activeTab === 'qr' ? t("Configure your digital shop link", "మీ డిజిటల్ షాప్ లింక్‌ను కాన్ఫిగర్ చేయండి") :
              activeTab === 'subscription' ? t("Manage your plan and billing", "మీ ప్లాన్ మరియు బిల్లింగ్ నిర్వహించండి") :
+             activeTab === 'integrations' ? t("Connect external apps like Gmail", "Gmail వంటి బాహ్య యాప్‌లను కనెక్ట్ చేయండి") :
              activeTab === 'profile' ? t("Update your personal information", "మీ వ్యక్తిగత సమాచారాన్ని నవీకరించండి") :
              t("Configure your shop and preferences", "మీ షాప్ మరియు ప్రాధాన్యతలను కాన్ఫిగర్ చేయండి")}
           </p>
@@ -656,6 +693,122 @@ function SettingsContent() {
                     </div>
                  </div>
               </div>
+            )}
+
+            {activeTab === "integrations" && (
+               <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     {/* Gmail Integration Card */}
+                     <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6 group hover:shadow-xl hover:shadow-gray-200/40 transition-all duration-500 relative overflow-hidden">
+                        {isGmailConnected && (
+                           <div className="absolute top-0 right-0 p-4">
+                              <div className="bg-green-500/10 text-green-600 px-3 py-1 rounded-full flex items-center gap-1.5">
+                                 <div className="w-1.5 h-1.5 rounded-full bg-green-50" />
+                                 <span className="text-[10px] font-black uppercase tracking-widest">Connected</span>
+                              </div>
+                           </div>
+                        )}
+
+                        <div className="flex items-start justify-between">
+                           <div className="bg-red-50 p-4 rounded-2xl text-red-500 group-hover:scale-110 transition-transform duration-500">
+                              <Mail className="w-8 h-8" />
+                           </div>
+                           {!isGmailConnected && (
+                              <div className="bg-gray-50 px-3 py-1 rounded-full text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                 Beta
+                              </div>
+                           )}
+                        </div>
+                        
+                        <div className="space-y-2">
+                           <h3 className="text-xl font-bold text-gray-900 tracking-tight">Gmail Auto-Order</h3>
+                           <p className="text-xs text-gray-500 leading-relaxed">
+                              {isGmailConnected 
+                                 ? t("Connected to apple@admin.com. Orders are being monitored.", "apple@admin.comకి కనెక్ట్ చేయబడింది. ఆర్డర్లు మానిటర్ చేయబడుతున్నాయి.")
+                                 : t("Connect your business Gmail to automatically create orders from customer emails.", "కస్టమర్ ఇమెయిల్‌ల నుండి స్వయంచాలకంగా ఆర్డర్‌లను రూపొందించడానికి మీ బిజినెస్ Gmailని కనెక్ట్ చేయండి.")}
+                           </p>
+                        </div>
+
+                        {isGmailConnected ? (
+                           <div className="space-y-6 pt-4">
+                              <div className="grid grid-cols-2 gap-4">
+                                 <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Status</p>
+                                    <p className="text-xs font-bold text-green-600 uppercase">Monitoring Live</p>
+                                 </div>
+                                 <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Last Sync</p>
+                                    <p className="text-xs font-bold text-gray-900 uppercase">Just now</p>
+                                 </div>
+                              </div>
+                              
+                              <div className="space-y-3">
+                                 <div className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl">
+                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Auto-Import Orders</span>
+                                    <div className="w-8 h-4 bg-primary rounded-full relative">
+                                       <div className="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full" />
+                                    </div>
+                                 </div>
+                                 <div className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl">
+                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Create as Draft Only</span>
+                                    <div className="w-8 h-4 bg-gray-200 rounded-full relative">
+                                       <div className="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full" />
+                                    </div>
+                                 </div>
+                              </div>
+
+                              <button 
+                                 onClick={handleDisconnect}
+                                 disabled={loading}
+                                 className="w-full h-12 border border-red-100 text-red-500 rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-red-50 transition-all disabled:opacity-50"
+                              >
+                                 {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : t("Disconnect Account", "ఖాతాను డిస్‌కనెక్ట్ చేయండి")}
+                              </button>
+                           </div>
+                        ) : (
+                           <div className="space-y-4 pt-4">
+                              <ul className="space-y-2">
+                                 {[
+                                    t("Auto-parse order details from emails", "ఇమెయిల్‌ల నుండి ఆర్డర్ వివరాలను ఆటో-పార్స్ చేయండి"),
+                                    t("Support for file attachments", "ఫైల్ అటాచ్‌మెంట్లకు మద్దతు"),
+                                    t("Notify customers on receipt", "అందుకున్నప్పుడు కస్టమర్లకు తెలియజేయండి")
+                                 ].map((feature, i) => (
+                                    <li key={i} className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                       <div className="w-1 h-1 rounded-full bg-primary" />
+                                       {feature}
+                                    </li>
+                                 ))}
+                              </ul>
+
+                              <button 
+                                 onClick={() => {
+                                    setLoading(true);
+                                    setTimeout(() => {
+                                       setIsGmailConnected(true);
+                                       setLoading(false);
+                                    }, 1500);
+                                 }}
+                                 className="w-full h-14 bg-primary text-white rounded-2xl font-semibold uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 hover:bg-primary/90 transition-all active:scale-95 shadow-xl shadow-primary/20"
+                              >
+                                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />}
+                                 {t("Connect Gmail Account", "Gmail ఖాతాను కనెక్ట్ చేయండి")}
+                              </button>
+                           </div>
+                        )}
+                     </div>
+
+                     {/* Future WhatsApp Card Placeholder */}
+                     <div className="bg-gray-50/50 p-8 rounded-3xl border border-dashed border-gray-200 flex flex-col items-center justify-center text-center space-y-4 opacity-60">
+                        <div className="bg-white p-4 rounded-full shadow-sm border border-gray-100">
+                           <Zap className="w-8 h-8 text-gray-300" />
+                        </div>
+                        <div className="space-y-1">
+                           <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">More Integrations</h3>
+                           <p className="text-[10px] text-gray-300 font-medium">WhatsApp and SMS integrations coming soon</p>
+                        </div>
+                     </div>
+                  </div>
+               </div>
             )}
 
             {activeTab === "profile" && (

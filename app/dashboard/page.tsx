@@ -9,7 +9,8 @@ import {
   Search,
   ClipboardList,
   Settings,
-  Wallet
+  Wallet,
+  ChevronRight
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/utils/format";
@@ -32,6 +33,8 @@ interface StatCard {
   value: string;
   icon: React.ElementType;
   color: string;
+  hexColor: string;
+  href: string;
 }
 
 interface Order {
@@ -114,7 +117,7 @@ export default function DashboardPage() {
 
         // 4. Process Stats & Overdue
         const todayOrders = (dbOrders || []).filter(o => o.created_at.startsWith(today));
-        const pendingCount = (dbOrders || []).filter(o => o.status !== 'DELIVERED').length;
+        const pendingCount = (dbOrders || []).filter(o => o.status !== 'DELIVERED' && o.status !== 'CANCELLED').length;
         const totalBalanceDue = (dbOrders || []).reduce((acc, curr) => acc + Number(curr.balance_due || 0), 0);
         
         const overdue = (dbOrders || []).filter(o => 
@@ -126,9 +129,9 @@ export default function DashboardPage() {
         setOverdueOrders(overdue.slice(0, 3));
 
         setStats([
-          { label: t("Pending Orders", "పెండింగ్ ఆర్డర్లు", "लंबित आदेश"), value: pendingCount.toString(), icon: Clock, color: "bg-orange" },
-          { label: t("Today's Orders", "నేటి ఆర్డర్లు", "आज के आदेश"), value: todayOrders.length.toString(), icon: ShoppingBag, color: "bg-blue-500" },
-          { label: t("Balance Due", "రావాల్సిన బాకీ", "बकाया राशि"), value: formatCurrency(totalBalanceDue), icon: IndianRupee, color: "bg-red-500" },
+          { label: t("Today's Orders", "నేటి ఆర్డర్లు", "आज के आदेश"), value: todayOrders.length.toString(), icon: ClipboardList, color: "bg-blue-600", hexColor: "#2563eb", href: "/dashboard/orders" },
+          { label: t("Pending Orders", "పెండింగ్ ఆర్డర్లు", "लंबित आदेश"), value: pendingCount.toString(), icon: Clock, color: "bg-orange", hexColor: "#f97316", href: "/dashboard/orders" },
+          { label: t("Balance Due", "రావాల్సిన బాకీ", "बकाया राशि"), value: formatCurrency(totalBalanceDue), icon: IndianRupee, color: "bg-red-500", hexColor: "#ef4444", href: "/dashboard/billing" },
         ]);
 
         setRecentOrders((dbOrders || []).slice(0, 8));
@@ -173,51 +176,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 pb-20">
-      {/* Top Professional Header */}
-      <div className="bg-white rounded-3xl border border-gray-100 p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
-        <div className="flex items-center gap-5">
-           {tenantInfo?.logo_url ? (
-              <img src={tenantInfo.logo_url} alt="Logo" className="w-14 h-14 rounded-2xl object-contain border border-gray-100 p-1 bg-gray-50" />
-           ) : (
-              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/5">
-                 <ShoppingBag className="w-7 h-7 text-primary" />
-              </div>
-           )}
-           <div>
-              <h1 className="text-2xl font-semibold text-gray-900 leading-tight tracking-tight">
-                 {tenantInfo?.name || "PrintFlow"}
-              </h1>
-              <p className="text-[11px] text-gray-400 font-medium uppercase tracking-[0.2em]">
-                 {t("Print Shop Management", "ప్రింట్ షాప్ మేనేజ్‌మెంట్", "प्रिंट शॉप प्रबंधन")}
-              </p>
-           </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-           <div className="text-center px-4 py-1 border-x border-gray-100">
-              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">{t("Jobs", "పనులు", "कार्य")}</p>
-              <p className="text-lg font-semibold text-gray-900">{tenantInfo?.orders_this_month || 0}</p>
-           </div>
-           <div className="text-center px-4 py-1">
-              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">{t("Today", "ఈరోజు", "आज")}</p>
-              <p className="text-sm font-semibold text-gray-600">{new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}</p>
-           </div>
-        </div>
-      </div>
-
-      {/* Usage Banner */}
-      <div className="bg-[#f0f9ff] border border-[#bae6fd] rounded-2xl px-6 py-3 flex items-center justify-between">
-         <div className="flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-            <p className="text-xs font-medium text-blue-800">
-               {tenantInfo?.orders_this_month || 0} {t("jobs this month on Free Plan (UTC)", "ఈ నెల పనులు ఫ్రీ ప్లాన్‌లో ఉన్నాయి", "इस महीने के कार्य फ्री प्लान पर हैं")}
-            </p>
-         </div>
-         <Link href="/dashboard/settings?tab=subscription" className="text-[10px] font-semibold text-blue-600 uppercase tracking-widest hover:underline">
-            {t("View plans", "ప్లాన్‌లు చూడండి", "प्लान देखें")}
-         </Link>
-      </div>
-
       {/* Quick Navigation Pills */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
          {[
@@ -244,27 +202,37 @@ export default function DashboardPage() {
       </div>
       
       <OnboardingProgress />
+      
+      {/* High-Level Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {stats.map((stat) => (
+          <Link 
+            key={stat.label} 
+            href={stat.href}
+            className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center justify-between hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-300 group cursor-pointer border-b-2" 
+            style={{ borderBottomColor: stat.hexColor }}
+          >
+            <div className="flex items-center gap-4">
+              <div className={`${stat.color} p-3 rounded-xl text-white shadow-lg shadow-current/20 group-hover:scale-110 transition-transform duration-500`}>
+                <stat.icon className="w-5 h-5" />
+              </div>
+              <div>
+                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5 opacity-80">{stat.label}</p>
+                 <p className="text-xl font-extrabold text-gray-900 tracking-tight">{stat.value}</p>
+              </div>
+            </div>
+            <div className="w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+              <ChevronRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-white transition-colors" />
+            </div>
+          </Link>
+        ))}
+      </div>
 
       {/* Main Functional Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Quick Add */}
         <div className="lg:col-span-4 space-y-6">
            <QuickJobForm />
-           
-           {/* Mini Stats Grid for sidebar */}
-           <div className="grid grid-cols-1 gap-4">
-             {stats.map((stat) => (
-               <div key={stat.label} className="bg-white p-5 rounded-3xl border border-gray-100 flex items-center gap-4 hover:shadow-md transition-all group">
-                 <div className={`${stat.color} p-3 rounded-2xl text-white shadow-lg shadow-current/10 group-hover:scale-110 transition-transform`}>
-                   <stat.icon className="w-5 h-5" />
-                 </div>
-                 <div>
-                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-0.5">{stat.label}</p>
-                    <p className="text-lg font-semibold text-gray-900 tracking-tight">{stat.value}</p>
-                 </div>
-               </div>
-             ))}
-           </div>
         </div>
 
         {/* Right Column: Recent Jobs */}

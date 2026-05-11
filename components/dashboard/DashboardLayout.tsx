@@ -343,7 +343,7 @@ export default function DashboardLayout({
             <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100">
                <button onClick={() => setLanguage("en")} className={cn("px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all", language === "en" ? "bg-white text-primary shadow-sm" : "text-gray-400 hover:text-gray-600")}>EN</button>
                <button onClick={() => setLanguage("te")} className={cn("px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all", language === "te" ? "bg-primary text-white shadow-sm" : "text-gray-400 hover:text-gray-600")}>తె</button>
-               <button onClick={() => setLanguage("hi")} className={cn("px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all", language === "hi" ? "bg-orange text-white shadow-sm" : "text-gray-400 hover:text-gray-600")}>हि</button>
+               <button onClick={() => setLanguage("hi")} className={cn("px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all", language === "hi" ? "bg-primary text-white shadow-sm" : "text-gray-400 hover:text-gray-600")}>हि</button>
             </div>
           </div>
         </header>

@@ -1124,3 +1124,32 @@ export async function createStorefrontOrder(data: OrderData & { slug: string }) 
 
   return { success: true, order };
 }
+
+export async function getTenantIntegrations() {
+  const supabase = createClient();
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant) throw new Error("Unauthorized");
+
+  const { data, error } = await supabase
+    .from("tenant_integrations")
+    .select("*")
+    .eq("tenant_id", tenant.id);
+
+  if (error) return [];
+  return data;
+}
+
+export async function disconnectIntegration(type: string) {
+  const supabase = createClient();
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("tenant_integrations")
+    .delete()
+    .eq("tenant_id", tenant.id)
+    .eq("type", type);
+
+  if (error) throw error;
+  return { success: true };
+}
