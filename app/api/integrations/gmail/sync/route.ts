@@ -3,22 +3,48 @@ import { NextResponse } from "next/server";
 import { createOrder } from "@/lib/supabase/actions";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
 
+// ─── FILTER LAYER 1: Block known marketing/automated senders ───────────────
+const BLOCKED_SENDER_PATTERNS = [
+  /noreply/i, /no-reply/i, /newsletter/i, /notifications?@/i,
+  /mailer@/i, /marketing@/i, /support@youtube/i, /info@youtube/i,
+  /youtube\.com/i, /supabase\.io/i, /pabbly\.com/i, /perplexity/i,
+  /google\.com/i, /linkedin\.com/i, /facebook\.com/i, /twitter\.com/i,
+  /medium\.com/i, /substack\.com/i, /mailchimp/i, /sendgrid/i,
+];
+
+// ─── FILTER LAYER 2: Require at least one print-related keyword ─────────────
+const PRINT_KEYWORDS = [
+  /\bprint/i, /\bcopies\b/i, /\bpaper\b/i, /\bgsm\b/i, /\blaminate/i,
+  /\bartwork\b/i, /\bdesign\b/i, /\bposter\b/i, /\bbanner\b/i,
+  /\bvisiting card/i, /\bbusiness card/i, /\bflyer/i, /\bbrochure/i,
+  /\boffset\b/i, /\bdigital print/i, /\bflex\b/i, /\bvinyl\b/i,
+  /\bsticker/i, /\d+\s*x\s*\d+/i,  // matches "18x12", "18 x 12"
+  /\bcell:/i, /\bqty:/i, /\bquantity:/i,
+];
+
+function isMarketingEmail(from: string): boolean {
+  return BLOCKED_SENDER_PATTERNS.some(pattern => pattern.test(from));
+}
+
+function isPrintOrderEmail(subject: string, body: string): boolean {
+  const text = `${subject} ${body}`;
+  return PRINT_KEYWORDS.some(keyword => keyword.test(text));
+}
+
 export async function GET(request: Request) {
-  // Security: Allow either cron secret OR authenticated dashboard users
+  // Security: Allow cron secret or dashboard button (no auth header)
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
-  
+
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    // Check if it's a browser request from the dashboard (no auth header = dashboard button)
     if (authHeader !== null) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
   }
 
   const supabase = createClient();
-  
+
   try {
-    // 1. Fetch all active Gmail integrations (include tenant phone for WA notifications)
     const { data: integrations, error: fetchError } = await supabase
       .from("tenant_integrations")
       .select("*, tenants(name, id_prefix, phone)")
@@ -35,12 +61,10 @@ export async function GET(request: Request) {
     for (const integration of integrations) {
       try {
         let accessToken = integration.access_token;
-        
-        // 2. Check if token is expired (or close to expiring)
+
+        // Refresh token if expired
         const isExpired = new Date(integration.token_expiry) <= new Date(Date.now() + 60000);
-        
         if (isExpired && integration.refresh_token) {
-          console.log(`Refreshing token for tenant: ${integration.tenant_id}`);
           const refreshRes = await fetch("https://oauth2.googleapis.com/token", {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -51,7 +75,6 @@ export async function GET(request: Request) {
               grant_type: "refresh_token",
             }),
           });
-          
           const newTokens = await refreshRes.json();
           if (newTokens.access_token) {
             accessToken = newTokens.access_token;
@@ -66,129 +89,129 @@ export async function GET(request: Request) {
           }
         }
 
-        // 3. Fetch recent messages
-        // Query: 'is:unread after:2024/01/01' (adjust as needed)
-        const listRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?q=is:unread&maxResults=5`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
+        // ─── FILTER LAYER 1: Only Primary inbox (not Promotions/Social/Updates) ───
+        const gmailQuery = encodeURIComponent("is:unread category:primary");
+        const listRes = await fetch(
+          `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${gmailQuery}&maxResults=10`,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
         const listData = await listRes.json();
 
         if (!listData.messages) {
-          results.push({ tenant: integration.tenants.name, ordersCreated: 0 });
+          results.push({ tenant: integration.tenants.name, ordersCreated: 0, skipped: 0 });
           continue;
         }
 
         let ordersCreated = 0;
+        let skipped = 0;
 
         for (const msgSummary of listData.messages) {
-          const msgRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msgSummary.id}`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          });
+          const msgRes = await fetch(
+            `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msgSummary.id}`,
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+          );
           const message = await msgRes.json();
-          
-          // 4. Parse Message (Basic Logic)
+
           const headers = message.payload.headers;
           const subject = headers.find((h: any) => h.name === "Subject")?.value || "";
           const from = headers.find((h: any) => h.name === "From")?.value || "";
-          
-          // Get body text
+
+          // ─── FILTER LAYER 2: Skip marketing senders (mark as read silently) ──
+          if (isMarketingEmail(from)) {
+            await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msgSummary.id}/modify`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ removeLabelIds: ["UNREAD"] }),
+            });
+            skipped++;
+            continue;
+          }
+
+          // Get email body
           let body = "";
           if (message.payload.parts) {
             const textPart = message.payload.parts.find((p: any) => p.mimeType === "text/plain");
-            if (textPart && textPart.body.data) {
-              body = Buffer.from(textPart.body.data, "base64").toString();
-            }
-          } else if (message.payload.body.data) {
+            if (textPart?.body.data) body = Buffer.from(textPart.body.data, "base64").toString();
+          } else if (message.payload.body?.data) {
             body = Buffer.from(message.payload.body.data, "base64").toString();
           }
 
-          // Simple Extraction Rules
-          const qtyMatch = body.match(/Qty:\s*(\d+)/i) || body.match(/Quantity:\s*(\d+)/i);
+          // ─── FILTER LAYER 3: Must have print-related keywords ────────────────
+          if (!isPrintOrderEmail(subject, body)) {
+            // Not a print order — don't mark as read, just skip
+            skipped++;
+            continue;
+          }
+
+          // ─── Passed all filters — extract order details ──────────────────────
+          const qtyMatch = body.match(/Qty:\s*(\d+)/i) || body.match(/Quantity:\s*(\d+)/i) || body.match(/(\d+)\s*copies/i);
           const jobMatch = body.match(/Item:\s*([^\n\r]+)/i) || body.match(/Product:\s*([^\n\r]+)/i);
-          const phoneMatch = body.match(/CELL:\s*(\d+)/i) || body.match(/(\d{10})/);
-          
+          const phoneMatch = body.match(/CELL:\s*(\+?[\d\s-]{10,})/i) || body.match(/Phone:\s*(\+?[\d\s-]{10,})/i) || body.match(/\b(\d{10})\b/);
+
           const jobType = jobMatch ? jobMatch[1].trim() : subject || "New Order";
           const customerName = from.split("<")[0].replace(/"/g, "").trim() || "Email Customer";
+          const hasPhone = !!(phoneMatch?.[1]);
 
-          // 5. Handle Attachments
+          // Handle Attachments
           let fileUrl = "";
           if (message.payload.parts) {
             const attachmentParts = message.payload.parts.filter((p: any) => p.filename && p.body.attachmentId);
-            
             for (const part of attachmentParts) {
-              const attachRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msgSummary.id}/attachments/${part.body.attachmentId}`, {
-                headers: { Authorization: `Bearer ${accessToken}` },
-              });
+              const attachRes = await fetch(
+                `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msgSummary.id}/attachments/${part.body.attachmentId}`,
+                { headers: { Authorization: `Bearer ${accessToken}` } }
+              );
               const attachmentData = await attachRes.json();
-              
               if (attachmentData.data) {
                 const buffer = Buffer.from(attachmentData.data, "base64");
                 const fileExt = part.filename.split(".").pop();
                 const filePath = `${integration.tenant_id}/orders/gmail-${Date.now()}.${fileExt}`;
-                
                 const { error: uploadError } = await supabase.storage
                   .from("printflow-files")
-                  .upload(filePath, buffer, {
-                    contentType: part.mimeType,
-                    upsert: true
-                  });
-
+                  .upload(filePath, buffer, { contentType: part.mimeType, upsert: true });
                 if (!uploadError) {
-                  const { data: { publicUrl } } = supabase.storage
-                    .from("printflow-files")
-                    .getPublicUrl(filePath);
+                  const { data: { publicUrl } } = supabase.storage.from("printflow-files").getPublicUrl(filePath);
                   fileUrl = publicUrl;
-                  break; // Use the first attachment found
+                  break;
                 }
               }
             }
           }
 
-          const hasPhone = !!(phoneMatch && phoneMatch[1]);
           const instructions = hasPhone
             ? `Auto-created from Gmail.\nFrom: ${from}\nSubject: ${subject}\n\n${body.substring(0, 400)}`
             : `⚠️ NO PHONE FOUND IN EMAIL.\nFrom: ${from}\nSubject: ${subject}\n\n${body.substring(0, 400)}`;
 
-          if (qtyMatch || jobMatch || subject || body.includes("CELL")) {
-            // Create Order
-            const newOrder = await createOrder({
-              customerName: customerName,
-              phone: hasPhone ? phoneMatch![1] : "",
-              jobType: jobType,
-              quantity: qtyMatch ? qtyMatch[1] : "1",
-              instructions,
-              totalAmount: 0,
-              advancePaid: 0,
-              tenantId: integration.tenant_id,
-              file_url: fileUrl
-            });
+          const newOrder = await createOrder({
+            customerName,
+            phone: hasPhone ? phoneMatch![1].replace(/\D/g, "") : "",
+            jobType,
+            quantity: qtyMatch ? qtyMatch[1] : "1",
+            instructions,
+            totalAmount: 0,
+            advancePaid: 0,
+            tenantId: integration.tenant_id,
+            file_url: fileUrl,
+          });
 
-            // 7. Send WhatsApp notification to the TENANT (shop owner)
-            if (integration.tenants.phone) {
-              const orderId = (newOrder as any)?.friendly_id || (newOrder as any)?.id || "New";
-              const shopMsg = `📧 *New Gmail Order!*\n\nCustomer: *${customerName}*\nJob: *${jobType}*\nQty: ${qtyMatch ? qtyMatch[1] : "1"}\n${hasPhone ? `Phone: ${phoneMatch![1]}` : "⚠️ No Phone Number"}\nOrder ID: *${orderId}*\n\nCheck your PrintFlow dashboard to view the full order.`;
-
-              sendWhatsAppMessage({
-                phone: integration.tenants.phone,
-                message: shopMsg,
-              }).catch(console.error);
-            }
-
-            // 8. Mark as read (Remove UNREAD label)
-            await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msgSummary.id}/modify`, {
-              method: "POST",
-              headers: { 
-                Authorization: `Bearer ${accessToken}`,
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({ removeLabelIds: ["UNREAD"] }),
-            });
-
-            ordersCreated++;
+          // WhatsApp notification to tenant
+          if (integration.tenants.phone) {
+            const orderId = (newOrder as any)?.friendly_id || (newOrder as any)?.id || "New";
+            const shopMsg = `📧 *New Gmail Order!*\n\nCustomer: *${customerName}*\nJob: *${jobType}*\nQty: ${qtyMatch ? qtyMatch[1] : "1"}\n${hasPhone ? `Phone: ${phoneMatch![1]}` : "⚠️ No Phone Number"}\nOrder ID: *${orderId}*\n\nCheck your PrintFlow dashboard.`;
+            sendWhatsAppMessage({ phone: integration.tenants.phone, message: shopMsg }).catch(console.error);
           }
+
+          // Mark as read
+          await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msgSummary.id}/modify`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ removeLabelIds: ["UNREAD"] }),
+          });
+
+          ordersCreated++;
         }
 
-        results.push({ tenant: integration.tenants.name, ordersCreated });
+        results.push({ tenant: integration.tenants.name, ordersCreated, skipped });
       } catch (innerError: any) {
         console.error(`Error syncing for ${integration.tenants.name}:`, innerError);
         results.push({ tenant: integration.tenants.name, error: innerError.message });
