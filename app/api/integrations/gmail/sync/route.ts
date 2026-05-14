@@ -20,6 +20,8 @@ const PRINT_KEYWORDS = [
   /\boffset\b/i, /\bdigital print/i, /\bflex\b/i, /\bvinyl\b/i,
   /\bsticker/i, /\d+\s*x\s*\d+/i,  // matches "18x12", "18 x 12"
   /\bcell:/i, /\bqty:/i, /\bquantity:/i,
+  /\battached\b/i, /\battachment\b/i, /\bfile\b/i, /\bpdf\b/i, /\bjpg\b/i, /\bjpeg\b/i, /\bpng\b/i,
+  /\bquotation\b/i, /\bestimate\b/i, /\border\b/i, /\bjob\b/i,
 ];
 
 function isMarketingEmail(from: string): boolean {
@@ -100,18 +102,19 @@ export async function GET(request: Request) {
         }
 
         // ─── Gmail Query ─────────────────────────────────────────────────────
-        let gmailQuery = "category:primary";
+        let gmailQuery = "";
         if (mode === "sync") {
-          gmailQuery += " is:unread";
+          gmailQuery = "category:primary is:unread (print OR cards OR qty OR copies OR gsm OR job OR order)";
         } else {
           const date = new Date();
           date.setDate(date.getDate() - days);
           const dateStr = date.toISOString().split("T")[0].replace(/-/g, "/");
-          gmailQuery += ` after:${dateStr}`;
+          // Broad search across all categories for history
+          gmailQuery = `after:${dateStr} (print OR cards OR qty OR quantity OR copies OR gsm OR artwork OR order OR job OR pdf OR file)`;
         }
 
         const listRes = await fetch(
-          `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(gmailQuery)}&maxResults=${mode === 'sync' ? 10 : 30}`,
+          `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(gmailQuery)}&maxResults=${mode === 'sync' ? 15 : 100}`,
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
         const listData = await listRes.json();

@@ -49,7 +49,6 @@ export default function GmailHistoryScanner() {
       const res = await fetch(`/api/integrations/gmail/sync?mode=history&days=${days}`);
       const data = await res.json();
       if (data.success) {
-        // results is an array of tenant results
         const allPotential = data.results.flatMap((r: any) => r.potentialOrders || []);
         setOrders(allPotential);
       } else {
@@ -65,8 +64,6 @@ export default function GmailHistoryScanner() {
   const importOrder = async (order: PotentialOrder) => {
     setImporting(order.id);
     try {
-      // We'll call a dedicated action or just use the API if we had one for single import.
-      // For now, let's simulate the creation or assume we'll use a server action.
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -84,7 +81,6 @@ export default function GmailHistoryScanner() {
       
       if (res.ok) {
         setOrders(prev => prev.filter(o => o.id !== order.id));
-        alert("Order created successfully!");
       } else {
         alert("Failed to create order.");
       }
@@ -96,108 +92,108 @@ export default function GmailHistoryScanner() {
   };
 
   return (
-    <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-[24px] border border-slate-200/60 shadow-sm overflow-hidden font-sans">
       {/* Header */}
-      <div className="p-8 border-b border-gray-50 bg-gray-50/30">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
-              <History className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 tracking-tight">Gmail History Scanner</h3>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-widest">Import past orders from your inbox</p>
-            </div>
+      <div className="px-6 py-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/30">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200">
+            <History className="w-5 h-5" />
           </div>
+          <div>
+            <h3 className="text-sm font-bold text-slate-800 tracking-tight">Gmail Scanner</h3>
+            <p className="text-[10px] text-slate-400 font-medium uppercase tracking-[0.1em]">Import past orders</p>
+          </div>
+        </div>
 
-          <div className="flex items-center gap-3">
-             <div className="flex bg-white p-1 rounded-xl border border-gray-100 shadow-sm">
-                {[7, 14, 30].map(d => (
-                  <button 
-                    key={d}
-                    onClick={() => setDays(d)}
-                    className={cn(
-                      "px-4 py-2 rounded-lg text-[10px] font-bold transition-all",
-                      days === d ? "bg-primary text-white" : "text-gray-400 hover:text-gray-600"
-                    )}
-                  >
-                    {d} Days
-                  </button>
-                ))}
-             </div>
-             <button 
-               onClick={scanHistory}
-               disabled={loading}
-               className="bg-primary text-white h-12 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50"
-             >
-               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-               Scan Now
-             </button>
-          </div>
+        <div className="flex items-center gap-2">
+           <div className="flex bg-slate-100/50 p-1 rounded-lg border border-slate-200/50">
+              {[7, 14, 30].map(d => (
+                <button 
+                  key={d}
+                  onClick={() => setDays(d)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md text-[10px] font-bold transition-all",
+                    days === d ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                  )}
+                >
+                  {d}d
+                </button>
+              ))}
+           </div>
+           <button 
+             onClick={scanHistory}
+             disabled={loading}
+             className="bg-slate-900 text-white h-9 px-4 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50"
+           >
+             {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
+             Scan
+           </button>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="min-h-[400px]">
+      {/* Content Area */}
+      <div className="min-h-[300px]">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-32 space-y-4">
-            <div className="relative">
-               <div className="w-16 h-16 border-4 border-primary/10 border-t-primary rounded-full animate-spin" />
-               <Mail className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-primary" />
-            </div>
-            <p className="text-sm font-bold text-gray-900 uppercase tracking-widest animate-pulse">Searching your inbox...</p>
+          <div className="flex flex-col items-center justify-center py-24 space-y-3">
+            <Loader2 className="w-6 h-6 text-slate-300 animate-spin" />
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Searching Inbox...</p>
           </div>
         ) : orders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-32 text-center px-8">
-            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-               <Mail className="w-10 h-10 text-gray-200" />
+          <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+            <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+               <Mail className="w-6 h-6 text-slate-200" />
             </div>
-            <h4 className="text-lg font-bold text-gray-900 mb-2">Ready to scan?</h4>
-            <p className="text-sm text-gray-400 max-w-xs mx-auto leading-relaxed">
-              We'll look for emails containing keywords like "print", "qty", or "cards" and help you import them as orders.
+            <p className="text-[11px] text-slate-400 font-medium max-w-[200px] leading-relaxed">
+              Scan your inbox to find past print orders and import them instantly.
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-slate-50">
              {orders.map((order) => (
-                <div key={order.id} className="p-6 hover:bg-gray-50/50 transition-all group">
-                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                      <div className="flex-1 space-y-4">
-                         <div className="flex items-center gap-3">
-                            <span className="text-[10px] font-mono text-gray-400 uppercase">{order.date}</span>
-                            <div className="h-1 w-1 rounded-full bg-gray-200" />
-                            <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{order.customerEmail}</span>
+                <div key={order.id} className="p-4 hover:bg-slate-50/50 transition-colors group">
+                   <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0 space-y-3">
+                         {/* Metadata Row */}
+                         <div className="flex items-center gap-2 text-[9px] font-medium text-slate-400 uppercase tracking-wider">
+                            <Calendar className="w-3 h-3" />
+                            {order.date.split(' ').slice(0, 4).join(' ')}
+                            <span className="text-slate-200">•</span>
+                            <span className="text-slate-500 font-bold lowercase">{order.customerEmail}</span>
                          </div>
                          
-                         <div>
-                            <h4 className="text-base font-bold text-gray-900 group-hover:text-primary transition-colors">{order.subject}</h4>
-                            <p className="text-xs text-gray-500 line-clamp-1 italic mt-1">"{order.snippet}"</p>
+                         {/* Subject/Title */}
+                         <div className="space-y-1">
+                            <h4 className="text-sm font-semibold text-slate-700 truncate leading-none">{order.subject}</h4>
+                            <p className="text-[11px] text-slate-400 line-clamp-1 italic font-medium opacity-80 group-hover:opacity-100 transition-opacity">
+                              "{order.snippet}"
+                            </p>
                          </div>
 
-                         <div className="flex flex-wrap gap-4">
-                            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
-                               <User className="w-3.5 h-3.5 text-gray-400" />
-                               <span className="text-[10px] font-bold text-gray-700">{order.customerName}</span>
+                         {/* Extraction Badges */}
+                         <div className="flex flex-wrap gap-2 pt-1">
+                            <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-md border border-slate-100/50">
+                               <User className="w-2.5 h-2.5 text-slate-400" />
+                               <span className="text-[9px] font-bold text-slate-600 truncate max-w-[80px]">{order.customerName}</span>
                             </div>
-                            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
-                               <Package className="w-3.5 h-3.5 text-gray-400" />
-                               <span className="text-[10px] font-bold text-gray-700">{order.jobType}</span>
+                            <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-md border border-slate-100/50">
+                               <Package className="w-2.5 h-2.5 text-slate-400" />
+                               <span className="text-[9px] font-bold text-slate-600 truncate max-w-[120px]">{order.jobType}</span>
                             </div>
-                            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
-                               <Hash className="w-3.5 h-3.5 text-gray-400" />
-                               <span className="text-[10px] font-bold text-gray-700">{order.quantity} Qty</span>
+                            <div className="flex items-center gap-1.5 bg-slate-100/50 px-2 py-1 rounded-md border border-slate-200/30">
+                               <Hash className="w-2.5 h-2.5 text-slate-400" />
+                               <span className="text-[9px] font-black text-slate-800">{order.quantity} Qty</span>
                             </div>
                          </div>
                       </div>
 
-                      <div className="flex items-center gap-3 shrink-0">
+                      <div className="shrink-0 flex flex-col items-end gap-2">
                          <button 
                            onClick={() => importOrder(order)}
                            disabled={!!importing}
-                           className="bg-slate-900 text-white h-12 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50"
+                           className="h-10 px-4 bg-slate-900 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50 shadow-sm"
                          >
-                           {importing === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                           Create Order
+                           {importing === order.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                           Import
                          </button>
                       </div>
                    </div>
@@ -207,15 +203,16 @@ export default function GmailHistoryScanner() {
         )}
       </div>
 
-      {/* Footer */}
+      {/* Footer Area */}
       {orders.length > 0 && (
-        <div className="p-6 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-              Found {orders.length} potential orders in the last {days} days
-           </p>
+        <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
+           <div className="flex items-center gap-2 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+              <CheckCircle2 className="w-3 h-3 text-green-500" />
+              Found {orders.length} orders
+           </div>
            <button 
              onClick={() => setOrders([])}
-             className="text-[10px] font-bold text-gray-400 hover:text-red-500 uppercase tracking-widest transition-colors"
+             className="text-[9px] font-bold text-slate-400 hover:text-slate-900 uppercase tracking-widest transition-colors"
            >
              Clear Results
            </button>
