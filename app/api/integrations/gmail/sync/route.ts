@@ -31,7 +31,10 @@ function isPrintOrderEmail(subject: string, body: string): boolean {
   return PRINT_KEYWORDS.some(keyword => keyword.test(text));
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const mode = searchParams.get("mode") || "sync"; // 'sync' (automatic) or 'history' (manual review)
+  const days = parseInt(searchParams.get("days") || "7");
   const supabase = createClient();
 
   try {
@@ -52,20 +55,21 @@ export async function GET() {
       try {
         let accessToken = integration.access_token;
 
-        // ─── SYNC LOCK: Skip if synced within the last 50 seconds ───────────
-        // Prevents duplicate orders when cron-job.org and in-app sync overlap.
-        const lastSynced = integration.updated_at ? new Date(integration.updated_at).getTime() : 0;
-        const secondsSinceSync = (Date.now() - lastSynced) / 1000;
-        if (secondsSinceSync < 50) {
-          results.push({ tenant: integration.tenants.name, skipped: "locked", secondsAgo: Math.round(secondsSinceSync) });
-          continue;
-        }
+        // ─── SYNC LOCK (Only for automatic 'sync' mode) ──────────────────────
+        if (mode === "sync") {
+          const lastSynced = integration.updated_at ? new Date(integration.updated_at).getTime() : 0;
+          const secondsSinceSync = (Date.now() - lastSynced) / 1000;
+          if (secondsSinceSync < 50) {
+            results.push({ tenant: integration.tenants.name, skipped: "locked", secondsAgo: Math.round(secondsSinceSync) });
+            continue;
+          }
 
-        // Mark as "syncing now" to lock other concurrent runs
-        await supabase
-          .from("tenant_integrations")
-          .update({ updated_at: new Date().toISOString() })
-          .eq("id", integration.id);
+          // Mark as "syncing now"
+          await supabase
+            .from("tenant_integrations")
+            .update({ updated_at: new Date().toISOString() })
+            .eq("id", integration.id);
+        }
         // ─────────────────────────────────────────────────────────────────────
 
         // Refresh token if expired
@@ -95,21 +99,30 @@ export async function GET() {
           }
         }
 
-        // ─── FILTER LAYER 1: Only Primary inbox (not Promotions/Social/Updates) ───
-        const gmailQuery = encodeURIComponent("is:unread category:primary");
+        // ─── Gmail Query ─────────────────────────────────────────────────────
+        let gmailQuery = "category:primary";
+        if (mode === "sync") {
+          gmailQuery += " is:unread";
+        } else {
+          const date = new Date();
+          date.setDate(date.getDate() - days);
+          const dateStr = date.toISOString().split("T")[0].replace(/-/g, "/");
+          gmailQuery += ` after:${dateStr}`;
+        }
+
         const listRes = await fetch(
-          `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${gmailQuery}&maxResults=10`,
+          `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(gmailQuery)}&maxResults=${mode === 'sync' ? 10 : 30}`,
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
         const listData = await listRes.json();
 
         if (!listData.messages) {
-          results.push({ tenant: integration.tenants.name, ordersCreated: 0, skipped: 0 });
+          results.push({ tenant: integration.tenants.name, count: 0 });
           continue;
         }
 
+        const potentialOrders = [];
         let ordersCreated = 0;
-        let skipped = 0;
 
         for (const msgSummary of listData.messages) {
           const msgRes = await fetch(
@@ -121,19 +134,19 @@ export async function GET() {
           const headers = message.payload.headers;
           const subject = headers.find((h: any) => h.name === "Subject")?.value || "";
           const from = headers.find((h: any) => h.name === "From")?.value || "";
+          const date = headers.find((h: any) => h.name === "Date")?.value || "";
 
-          // ─── FILTER LAYER 2: Skip marketing senders (mark as read silently) ──
           if (isMarketingEmail(from)) {
-            await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msgSummary.id}/modify`, {
-              method: "POST",
-              headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-              body: JSON.stringify({ removeLabelIds: ["UNREAD"] }),
-            });
-            skipped++;
+            if (mode === "sync") {
+              await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msgSummary.id}/modify`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ removeLabelIds: ["UNREAD"] }),
+              });
+            }
             continue;
           }
 
-          // Get email body
           let body = "";
           if (message.payload.parts) {
             const textPart = message.payload.parts.find((p: any) => p.mimeType === "text/plain");
@@ -142,14 +155,9 @@ export async function GET() {
             body = Buffer.from(message.payload.body.data, "base64").toString();
           }
 
-          // ─── FILTER LAYER 3: Must have print-related keywords ────────────────
-          if (!isPrintOrderEmail(subject, body)) {
-            // Not a print order — don't mark as read, just skip
-            skipped++;
-            continue;
-          }
+          if (!isPrintOrderEmail(subject, body)) continue;
 
-          // ─── Passed all filters — extract order details ──────────────────────
+          // Extractions
           const qtyMatch = body.match(/Qty:\s*(\d+)/i) || body.match(/Quantity:\s*(\d+)/i) || body.match(/(\d+)\s*copies/i);
           const jobMatch = body.match(/Item:\s*([^\n\r]+)/i) || body.match(/Product:\s*([^\n\r]+)/i);
           const phoneMatch = body.match(/CELL:\s*(\+?[\d\s-]{10,})/i) || body.match(/Phone:\s*(\+?[\d\s-]{10,})/i) || body.match(/\b(\d{10})\b/);
@@ -159,7 +167,23 @@ export async function GET() {
           const customerEmail = from.match(/<([^>]+)>/)?.[1] || from.trim();
           const hasPhone = !!(phoneMatch?.[1]);
 
-          // Handle Attachments
+          if (mode === "history") {
+            potentialOrders.push({
+              id: msgSummary.id,
+              subject,
+              from,
+              date,
+              customerName,
+              customerEmail,
+              phone: hasPhone ? phoneMatch![1].replace(/\D/g, "") : "",
+              jobType,
+              quantity: qtyMatch ? qtyMatch[1] : "1",
+              snippet: message.snippet
+            });
+            continue;
+          }
+
+          // ─── 'sync' mode: Create Order Immediately ─────────────────────────
           let fileUrl = "";
           if (message.payload.parts) {
             const attachmentParts = message.payload.parts.filter((p: any) => p.filename && p.body.attachmentId);
@@ -173,53 +197,45 @@ export async function GET() {
                 const buffer = Buffer.from(attachmentData.data, "base64");
                 const fileExt = part.filename.split(".").pop();
                 const filePath = `${integration.tenant_id}/orders/gmail-${Date.now()}.${fileExt}`;
-                const { error: uploadError } = await supabase.storage
-                  .from("printflow-files")
-                  .upload(filePath, buffer, { contentType: part.mimeType, upsert: true });
-                if (!uploadError) {
-                  const { data: { publicUrl } } = supabase.storage.from("printflow-files").getPublicUrl(filePath);
-                  fileUrl = publicUrl;
-                  break;
-                }
+                await supabase.storage.from("printflow-files").upload(filePath, buffer, { contentType: part.mimeType, upsert: true });
+                const { data: { publicUrl } } = supabase.storage.from("printflow-files").getPublicUrl(filePath);
+                fileUrl = publicUrl;
+                break;
               }
             }
           }
 
-          const instructions = hasPhone
-            ? `Auto-created from Gmail.\nFrom: ${from}\nSubject: ${subject}\n\n${body.substring(0, 400)}`
-            : `⚠️ NO PHONE FOUND IN EMAIL.\nFrom: ${from}\nSubject: ${subject}\n\n${body.substring(0, 400)}`;
-
-          const newOrder = await createOrder({
+          await createOrder({
             customerName,
             phone: hasPhone ? phoneMatch![1].replace(/\D/g, "") : "",
             email: customerEmail,
             jobType,
             quantity: qtyMatch ? qtyMatch[1] : "1",
-            instructions,
+            instructions: `Auto-created from Gmail Sync.\nSubject: ${subject}\n\n${body.substring(0, 300)}`,
             totalAmount: 0,
             advancePaid: 0,
             tenantId: integration.tenant_id,
             file_url: fileUrl,
           });
 
-          // WhatsApp notification to tenant
           if (integration.tenants.phone) {
-            const orderId = (newOrder as any)?.friendly_id || (newOrder as any)?.id || "New";
-            const shopMsg = `📧 *New Gmail Order!*\n\nCustomer: *${customerName}*\nJob: *${jobType}*\nQty: ${qtyMatch ? qtyMatch[1] : "1"}\n${hasPhone ? `Phone: ${phoneMatch![1]}` : "⚠️ No Phone Number"}\nOrder ID: *${orderId}*\n\nCheck your PrintFlow dashboard.`;
+            const shopMsg = `📧 *New Gmail Order!*\n\nCustomer: *${customerName}*\nJob: *${jobType}*\nQty: ${qtyMatch ? qtyMatch[1] : "1"}\nOrder ID: *New*\n\nCheck your PrintFlow dashboard.`;
             sendWhatsAppMessage({ phone: integration.tenants.phone, message: shopMsg }).catch(console.error);
           }
 
-          // Mark as read
           await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msgSummary.id}/modify`, {
             method: "POST",
             headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
             body: JSON.stringify({ removeLabelIds: ["UNREAD"] }),
           });
-
           ordersCreated++;
         }
 
-        results.push({ tenant: integration.tenants.name, ordersCreated, skipped });
+        results.push({ 
+          tenant: integration.tenants.name, 
+          ordersCreated: mode === 'sync' ? ordersCreated : 0,
+          potentialOrders: mode === 'history' ? potentialOrders : []
+        });
       } catch (innerError: any) {
         console.error(`Error syncing for ${integration.tenants.name}:`, innerError);
         results.push({ tenant: integration.tenants.name, error: innerError.message });
