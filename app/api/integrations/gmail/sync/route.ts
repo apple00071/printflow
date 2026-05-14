@@ -3,13 +3,19 @@ import { NextResponse } from "next/server";
 import { createOrder } from "@/lib/supabase/actions";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
 
-// ─── FILTER LAYER 1: Block known marketing/automated senders ───────────────
+// ─── FILTER LAYER 1: Immediate blocks for known noise ──────────────────────
 const BLOCKED_SENDER_PATTERNS = [
-  /noreply/i, /no-reply/i, /newsletter/i, /notifications?@/i,
-  /mailer@/i, /marketing@/i, /support@youtube/i, /info@youtube/i,
-  /youtube\.com/i, /supabase\.io/i, /pabbly\.com/i, /perplexity/i,
-  /google\.com/i, /linkedin\.com/i, /facebook\.com/i, /twitter\.com/i,
-  /medium\.com/i, /substack\.com/i, /mailchimp/i, /sendgrid/i,
+  /noreply/i, /no-reply/i, /newsletter/i, /marketing/i, /promotions/i,
+  /adobe\.com/i, /canva\.com/i, /printexpo/i, /konicaminolta/i,
+  /collections\./i, /reminders/i, /support/i, /notification/i,
+  /facebook/i, /instagram/i, /linkedin/i, /google-noreply/i,
+];
+
+const NEGATIVE_KEYWORDS = [
+  /overdue/i, /payment reminder/i, /invoice #/i, /statement/i,
+  /case logged/i, /service request/i, /ticket #/i, /unsubscribe/i,
+  /leading brands/i, /conference/i, /webinar/i, /tutorial/i,
+  /reset your password/i, /verify your email/i, /otp/i,
 ];
 
 // ─── FILTER LAYER 2: Require at least one print-related keyword ─────────────
@@ -20,12 +26,14 @@ const PRINT_KEYWORDS = [
   /\boffset\b/i, /\bdigital print/i, /\bflex\b/i, /\bvinyl\b/i,
   /\bsticker/i, /\d+\s*x\s*\d+/i,  // matches "18x12", "18 x 12"
   /\bcell:/i, /\bqty:/i, /\bquantity:/i,
-  /\battached\b/i, /\battachment\b/i, /\bfile\b/i, /\bpdf\b/i, /\bjpg\b/i, /\bjpeg\b/i, /\bpng\b/i,
-  /\bquotation\b/i, /\bestimate\b/i, /\border\b/i, /\bjob\b/i,
+  /\battached\b/i, /\battachment\b/i, /\bfile\b/i,
 ];
 
-function isMarketingEmail(from: string): boolean {
-  return BLOCKED_SENDER_PATTERNS.some(pattern => pattern.test(from));
+function isMarketingEmail(from: string, subject: string, body: string): boolean {
+  const text = `${from} ${subject} ${body}`;
+  const senderMatch = BLOCKED_SENDER_PATTERNS.some(pattern => pattern.test(from));
+  const keywordMatch = NEGATIVE_KEYWORDS.some(pattern => pattern.test(text));
+  return senderMatch || keywordMatch;
 }
 
 function isPrintOrderEmail(subject: string, body: string): boolean {
@@ -139,7 +147,16 @@ export async function GET(request: Request) {
           const from = headers.find((h: any) => h.name === "From")?.value || "";
           const date = headers.find((h: any) => h.name === "Date")?.value || "";
 
-          if (isMarketingEmail(from)) {
+          let body = "";
+          if (message.payload.parts) {
+            const textPart = message.payload.parts.find((p: any) => p.mimeType === "text/plain");
+            if (textPart?.body.data) body = Buffer.from(textPart.body.data, "base64").toString();
+          } else if (message.payload.body?.data) {
+            body = Buffer.from(message.payload.body.data, "base64").toString();
+          }
+
+          // ─── FILTER: Marketing & Noise ─────────────────────────────────────
+          if (isMarketingEmail(from, subject, body)) {
             if (mode === "sync") {
               await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msgSummary.id}/modify`, {
                 method: "POST",
@@ -148,14 +165,6 @@ export async function GET(request: Request) {
               });
             }
             continue;
-          }
-
-          let body = "";
-          if (message.payload.parts) {
-            const textPart = message.payload.parts.find((p: any) => p.mimeType === "text/plain");
-            if (textPart?.body.data) body = Buffer.from(textPart.body.data, "base64").toString();
-          } else if (message.payload.body?.data) {
-            body = Buffer.from(message.payload.body.data, "base64").toString();
           }
 
           if (!isPrintOrderEmail(subject, body)) continue;
