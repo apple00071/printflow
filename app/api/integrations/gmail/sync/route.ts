@@ -20,11 +20,12 @@ const NEGATIVE_KEYWORDS = [
 
 // ─── FILTER LAYER 2: Require at least one print-related keyword ─────────────
 const PRINT_KEYWORDS = [
-  /\bprint/i, /\bcopies\b/i, /\bpaper\b/i, /\bgsm\b/i, /\blaminate/i,
+  /\bprint/i, /\bcopies\b/i, /\bpaper\b/i, /\bgsm\b/i, /\blaminate/i, /\blamination/i,
   /\bartwork\b/i, /\bdesign\b/i, /\bposter\b/i, /\bbanner\b/i,
   /\bvisiting card/i, /\bbusiness card/i, /\bflyer/i, /\bbrochure/i,
-  /\boffset\b/i, /\bdigital print/i, /\bflex\b/i, /\bvinyl\b/i,
-  /\bsticker/i, /\d+\s*x\s*\d+/i,  // matches "18x12", "18 x 12"
+  /\boffset\b/i, /\bdigital print/i, /\bflex\b/i, /\bvinyl\b/i, /\bvnyl\b/i,
+  /\bsticker/i, /\d+\s*[x\*]\s*\d+/i,  // matches "18x12", "18*12", "18 x 12"
+  /\bbord/i, /\bboard/i, /\bglass\b/i,
   /\bcell:/i, /\bqty:/i, /\bquantity:/i,
   /\battached\b/i, /\battachment\b/i, /\bfile\b/i,
 ];
@@ -113,13 +114,13 @@ export async function GET(request: Request) {
         // ─── Gmail Query ─────────────────────────────────────────────────────
         let gmailQuery = "";
         if (mode === "sync") {
-          gmailQuery = "category:primary is:unread (print OR cards OR qty OR copies OR gsm OR job OR order)";
+          gmailQuery = "category:primary is:unread (print OR cards OR qty OR copies OR gsm OR job OR order OR vnyl OR vinyl OR bords OR boards OR lamination OR glass)";
         } else {
           const date = new Date();
           date.setDate(date.getDate() - days);
           const dateStr = date.toISOString().split("T")[0].replace(/-/g, "/");
           // Broad search across all categories for history
-          gmailQuery = `after:${dateStr} (print OR cards OR qty OR quantity OR copies OR gsm OR artwork OR order OR job OR pdf OR file)`;
+          gmailQuery = `after:${dateStr} (print OR cards OR qty OR quantity OR copies OR gsm OR artwork OR order OR job OR pdf OR file OR vnyl OR vinyl OR bords OR boards OR lamination OR glass)`;
         }
 
         const listRes = await fetch(
