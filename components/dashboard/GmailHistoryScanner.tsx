@@ -158,7 +158,7 @@ export default function GmailHistoryScanner() {
            <button 
              onClick={scanHistory}
              disabled={loading}
-             className="bg-[#f97316] text-white h-9 px-4 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-[#ea580c] transition-colors disabled:opacity-50"
+             className="bg-[#1e3a5f] text-white h-9 px-4 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-[#162a44] transition-colors disabled:opacity-50"
            >
              {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
              Scan
@@ -169,7 +169,7 @@ export default function GmailHistoryScanner() {
       <div className="min-h-[240px]">
         {!isGmailConnected ? (
           <div className="flex flex-col items-center justify-center py-16 text-center px-6">
-            <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-[#f97316] mb-4">
+            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-[#1e3a5f] mb-4">
                <LinkIcon className="w-6 h-6" />
             </div>
             <h4 className="text-sm font-semibold text-slate-900 mb-1">Gmail Integration Required</h4>
@@ -222,7 +222,7 @@ export default function GmailHistoryScanner() {
                       <button 
                         onClick={() => importOrder(order)}
                         disabled={!!importing}
-                        className="h-10 px-4 bg-[#f97316] text-white rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-[#ea580c] transition-colors disabled:opacity-50"
+                        className="h-10 px-4 bg-[#1e3a5f] text-white rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-[#162a44] transition-colors disabled:opacity-50"
                       >
                         {importing === order.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
                         Import
