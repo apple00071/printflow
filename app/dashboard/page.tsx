@@ -12,7 +12,8 @@ import {
   TrendingUp,
   ArrowUpRight,
   Sparkles,
-  Zap
+  Zap,
+  Plus
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/utils/format";
