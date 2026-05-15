@@ -108,6 +108,7 @@ export default function GmailHistoryScanner() {
           instructions: `Imported via History Scanner.\nSubject: ${order.subject}`,
           totalAmount: 0,
           advancePaid: 0,
+          gmail_message_id: order.id,
         })
       });
       

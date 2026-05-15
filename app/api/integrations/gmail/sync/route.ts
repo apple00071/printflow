@@ -157,6 +157,15 @@ export async function GET(request: Request) {
             body = Buffer.from(message.payload.body.data, "base64").toString();
           }
 
+          // ─── CHECK: Already Imported? ──────────────────────────────────────
+          const { data: existing } = await supabase
+            .from("orders")
+            .select("id")
+            .eq("gmail_message_id", msgSummary.id)
+            .maybeSingle();
+
+          if (existing) continue;
+
           // ─── FILTER: Marketing & Noise ─────────────────────────────────────
           if (isMarketingEmail(from, subject, body)) {
             if (mode === "sync") {
@@ -230,6 +239,7 @@ export async function GET(request: Request) {
             advancePaid: 0,
             tenantId: integration.tenant_id,
             file_url: fileUrl,
+            gmail_message_id: msgSummary.id,
           });
 
           if (integration.tenants.phone) {

@@ -33,6 +33,7 @@ interface OrderData {
   tenantId?: string;
   inventory_id?: string;
   material_units_per_order?: number;
+  gmail_message_id?: string;
 }
 
 interface CustomerData {
@@ -75,6 +76,7 @@ interface OrderInsertData {
   inventory_id?: string | null;
   material_units_per_order?: number;
   friendly_id?: string | null;
+  gmail_message_id?: string | null;
 }
 
 export interface Order extends OrderInsertData {
@@ -289,6 +291,7 @@ export async function createOrder(data: OrderData) {
     inventory_id: data.inventory_id || null,
     material_units_per_order: data.material_units_per_order || 1,
     friendly_id: friendly_id,
+    gmail_message_id: data.gmail_message_id || null,
   };
   
   // Only add tenant_id if not super admin
