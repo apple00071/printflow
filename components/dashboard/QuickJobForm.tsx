@@ -9,7 +9,13 @@ import {
   Check,
   Zap,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  LayoutGrid,
+  CreditCard,
+  Plus,
+  Maximize,
+  Hash,
+  Layers
 } from "lucide-react";
 import { searchCustomers, createOrder } from "@/lib/supabase/actions";
 import { useLanguage } from "@/lib/context/LanguageContext";
@@ -32,6 +38,8 @@ export default function QuickJobForm() {
     totalAmount: 0,
     advancePaid: 0,
     quantity: "1",
+    size: "",
+    isDoubleSided: false,
     instructions: ""
   });
 
@@ -83,6 +91,7 @@ export default function QuickJobForm() {
       await createOrder({
         ...formData,
         jobType: formData.jobType === "Other" ? formData.customJobType || "Other" : formData.jobType,
+        instructions: `${formData.isDoubleSided ? "Back-to-Back (Double Sided)" : "Single Sided"}. Size: ${formData.size || 'Standard'}. ${formData.instructions}`,
         deliveryDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
       });
       showToast(t("Production started", "ప్రొడక్షన్ మొదలైంది"), "success");
@@ -94,6 +103,8 @@ export default function QuickJobForm() {
         totalAmount: 0,
         advancePaid: 0,
         quantity: "1",
+        size: "",
+        isDoubleSided: false,
         instructions: ""
       });
       window.location.reload();
@@ -106,155 +117,202 @@ export default function QuickJobForm() {
 
   return (
     <div className="relative group/form">
-      {/* Decorative Glow */}
-      <div className="absolute -inset-1 bg-gradient-to-r from-orange-100 to-blue-100 rounded-[32px] blur opacity-25 group-hover/form:opacity-50 transition duration-1000"></div>
-      
-      <div className="relative bg-white/90 backdrop-blur-2xl rounded-[28px] border border-slate-200/60 p-8 shadow-[0_8px_40px_rgba(0,0,0,0.04)] overflow-visible">
+      <div className="relative bg-white rounded-[24px] border border-slate-200/60 p-5 flex flex-col">
         {toast && <Toast toast={toast} onDismiss={dismissToast} />}
         
-        <div className="flex items-center gap-4 mb-10">
-          <div className="w-10 h-10 bg-[#1e3a5f] rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-100">
-             <Zap className="w-5 h-5 fill-white" />
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-[#1e3a5f] rounded-lg flex items-center justify-center text-white">
+               <Zap className="w-4 h-4 fill-white" />
+            </div>
+            <div>
+              <h3 className="text-xs font-bold text-[#1e3a5f] tracking-tight uppercase leading-none">{t("Rapid Ingest", "త్వరిత చేరిక")}</h3>
+              <p className="text-[8px] text-slate-400 font-bold uppercase tracking-[0.1em] mt-0.5">{t("Production Entry", "పని నమోదు")}</p>
+            </div>
           </div>
-          <div className="space-y-0.5">
-            <h3 className="text-base font-bold text-[#1e3a5f] tracking-tight uppercase leading-none">{t("Rapid Ingest", "త్వరిత చేరిక")}</h3>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">{t("Capturing Production Data", "పని నమోదు")}</p>
-          </div>
+          <Sparkles className="w-4 h-4 text-slate-200" />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="space-y-6">
-            <div className="space-y-4">
-              {/* Phone Field */}
-              <div className="relative">
-                <div className="relative group/input">
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within/input:text-[#1e3a5f] transition-colors" />
-                  <input 
-                    type="tel"
-                    required
-                    placeholder="Phone"
-                    value={formData.phone}
-                    onChange={(e) => {
-                      setFormData({...formData, phone: e.target.value});
-                      handleCustomerSearch(e.target.value, 'phone');
-                    }}
-                    className="w-full pl-12 pr-4 h-14 bg-slate-50/50 border border-slate-100 rounded-2xl text-[13px] font-bold focus:bg-white focus:ring-1 focus:ring-[#1e3a5f]/10 focus:border-[#1e3a5f]/20 outline-none transition-all placeholder:text-slate-300"
-                  />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Customer Info (Row 1) */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="relative group/input">
+              <input 
+                type="tel"
+                required
+                placeholder="Phone"
+                value={formData.phone}
+                onChange={(e) => {
+                  setFormData({...formData, phone: e.target.value});
+                  handleCustomerSearch(e.target.value, 'phone');
+                }}
+                className="w-full px-3.5 h-10 bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-bold text-[#1e3a5f] focus:bg-white focus:border-[#1e3a5f]/20 outline-none transition-all placeholder:text-slate-300"
+              />
+              {showSuggestions && activeSearchField === 'phone' && suggestions.length > 0 && (
+                <div className="absolute z-[100] left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xl">
+                  {suggestions.map((customer) => (
+                    <button
+                      key={customer.id}
+                      type="button"
+                      onClick={() => selectCustomer(customer)}
+                      className="w-full text-left px-4 py-3 hover:bg-[#1e3a5f] hover:text-white transition-all flex items-center justify-between group"
+                    >
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-tight">{customer.name}</div>
+                        <div className="text-[9px] opacity-60 font-medium">{customer.phone}</div>
+                      </div>
+                      <Check className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
+                  ))}
                 </div>
-
-                {showSuggestions && activeSearchField === 'phone' && suggestions.length > 0 && (
-                  <div className="absolute z-[100] left-0 right-0 top-full mt-2 bg-white/80 backdrop-blur-xl border border-slate-200/60 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
-                    {suggestions.map((customer) => (
-                      <button
-                        key={customer.id}
-                        type="button"
-                        onClick={() => selectCustomer(customer)}
-                        className="w-full text-left px-5 py-4 hover:bg-[#1e3a5f] hover:text-white transition-all flex items-center justify-between group"
-                      >
-                        <div>
-                          <div className="text-xs font-bold uppercase tracking-tight">{customer.name}</div>
-                          <div className="text-[10px] opacity-60 font-medium tracking-widest">{customer.phone}</div>
-                        </div>
-                        <Check className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Name Field */}
-              <div className="relative">
-                <div className="relative group/input">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within/input:text-[#1e3a5f] transition-colors" />
-                  <input 
-                    type="text"
-                    required
-                    placeholder="Customer Name"
-                    value={formData.customerName}
-                    onChange={(e) => {
-                      setFormData({...formData, customerName: e.target.value});
-                      handleCustomerSearch(e.target.value, 'name');
-                    }}
-                    className="w-full pl-12 pr-4 h-14 bg-slate-50/50 border border-slate-100 rounded-2xl text-[13px] font-bold focus:bg-white focus:ring-1 focus:ring-[#1e3a5f]/10 focus:border-[#1e3a5f]/20 outline-none transition-all placeholder:text-slate-300"
-                  />
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* Product Chips */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{t("Product Stream", "ఉత్పత్తి")}</p>
-                 <Sparkles className="w-3 h-3 text-slate-200" />
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {jobTypes.map((type) => (
-                  <button
-                    key={type.id}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, jobType: type.id })}
-                    className={cn(
-                      "px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all duration-300 border",
-                      formData.jobType === type.id
-                        ? "bg-[#1e3a5f] text-white border-[#1e3a5f] shadow-lg shadow-blue-50"
-                        : "bg-white text-slate-400 border-slate-100 hover:border-[#1e3a5f]/10 hover:text-slate-600"
-                    )}
-                  >
-                    {type.label}
-                  </button>
-                ))}
-              </div>
+            <div className="relative group/input">
+              <input 
+                type="text"
+                required
+                placeholder="Name"
+                value={formData.customerName}
+                onChange={(e) => {
+                  setFormData({...formData, customerName: e.target.value});
+                  handleCustomerSearch(e.target.value, 'name');
+                }}
+                className="w-full px-3.5 h-10 bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-bold text-[#1e3a5f] focus:bg-white focus:border-[#1e3a5f]/20 outline-none transition-all placeholder:text-slate-300"
+              />
             </div>
+          </div>
 
-            {/* Financials */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t("Total", "మొత్తం")}</p>
-                <div className="relative">
-                  <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-300" />
+          {/* Production Specs (Row 2 - New) */}
+          <div className="grid grid-cols-3 gap-2.5">
+            <div className="relative group/input">
+              <div className="absolute left-2 top-1/2 -translate-y-1/2">
+                <Hash className="w-3 h-3 text-slate-300" />
+              </div>
+              <input 
+                type="number"
+                placeholder="Qty"
+                value={formData.quantity}
+                onChange={(e) => setFormData({...formData, quantity: e.target.value})}
+                className="w-full pl-6 pr-2 h-9 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-bold text-[#1e3a5f] focus:bg-white focus:border-[#1e3a5f]/20 outline-none transition-all"
+              />
+            </div>
+            <div className="relative group/input">
+              <div className="absolute left-2 top-1/2 -translate-y-1/2">
+                <Maximize className="w-3 h-3 text-slate-300" />
+              </div>
+              <input 
+                type="text"
+                placeholder="Size"
+                value={formData.size}
+                onChange={(e) => setFormData({...formData, size: e.target.value})}
+                className="w-full pl-6 pr-2 h-9 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-bold text-[#1e3a5f] focus:bg-white focus:border-[#1e3a5f]/20 outline-none transition-all"
+              />
+            </div>
+            <div className="flex bg-slate-50 border border-slate-100 rounded-lg p-0.5">
+               <button 
+                  type="button"
+                  onClick={() => setFormData({...formData, isDoubleSided: false})}
+                  className={cn(
+                    "flex-1 text-[8px] font-bold uppercase rounded-md transition-all",
+                    !formData.isDoubleSided ? "bg-white text-[#1e3a5f] shadow-sm" : "text-slate-400"
+                  )}
+               >
+                 Single
+               </button>
+               <button 
+                  type="button"
+                  onClick={() => setFormData({...formData, isDoubleSided: true})}
+                  className={cn(
+                    "flex-1 text-[8px] font-bold uppercase rounded-md transition-all",
+                    formData.isDoubleSided ? "bg-[#1e3a5f] text-white shadow-sm" : "text-slate-400"
+                  )}
+               >
+                 B&B
+               </button>
+            </div>
+          </div>
+
+          {/* Compact Product Stream */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-[8px] font-bold text-slate-400 uppercase tracking-widest px-1">
+              <LayoutGrid className="w-2.5 h-2.5" />
+              {t("Product Stream", "ఉత్పత్తి")}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {jobTypes.map((type) => (
+                <button
+                  key={type.id}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, jobType: type.id })}
+                  className={cn(
+                    "px-2.5 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border",
+                    formData.jobType === type.id
+                      ? "bg-[#1e3a5f] text-white border-[#1e3a5f]"
+                      : "bg-white text-slate-400 border-slate-100 hover:border-slate-300"
+                  )}
+                >
+                  {type.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Harmonious Financial Bar */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-[7px] font-bold text-slate-400 uppercase tracking-tight">{t("Total", "మొత్తం")}</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-bold text-[#1e3a5f]">₹</span>
                   <input 
                     type="number"
                     value={formData.totalAmount || ""}
                     onChange={(e) => setFormData({...formData, totalAmount: parseFloat(e.target.value) || 0})}
-                    className="w-full pl-10 pr-4 h-12 bg-slate-50/50 border border-slate-100 rounded-xl text-xs font-bold focus:bg-white outline-none"
+                    className="w-full bg-transparent text-xs font-bold text-[#1e3a5f] outline-none placeholder:text-slate-200"
+                    placeholder="0"
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t("Advance", "అడ్వాన్స్")}</p>
-                <input 
-                  type="number"
-                  value={formData.advancePaid || ""}
-                  onChange={(e) => setFormData({...formData, advancePaid: parseFloat(e.target.value) || 0})}
-                  className="w-full px-4 h-12 bg-slate-50/50 border border-slate-100 rounded-xl text-xs font-bold text-green-600 focus:bg-white outline-none"
-                />
+              <CreditCard className="w-2.5 h-2.5 text-slate-300" />
+            </div>
+            <div className="bg-green-50/30 border border-green-100 rounded-xl px-3 py-2 flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-[7px] font-bold text-green-600/50 uppercase tracking-tight">{t("Advance", "అడ్వాన్స్")}</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-bold text-green-600">₹</span>
+                  <input 
+                    type="number"
+                    value={formData.advancePaid || ""}
+                    onChange={(e) => setFormData({...formData, advancePaid: parseFloat(e.target.value) || 0})}
+                    className="w-full bg-transparent text-xs font-bold text-green-600 outline-none placeholder:text-green-100"
+                    placeholder="0"
+                  />
+                </div>
               </div>
+              <Plus className="w-2.5 h-2.5 text-green-200" />
             </div>
           </div>
 
           <button 
             type="submit"
             disabled={loading}
-            className="group relative w-full h-16 bg-[#f97316] text-white rounded-[20px] font-bold text-[11px] uppercase tracking-[0.3em] overflow-hidden transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 shadow-md shadow-orange-100"
+            className="group relative w-full h-11 overflow-hidden rounded-xl active:scale-95 transition-all disabled:opacity-50"
           >
-            <div className="relative flex items-center justify-center gap-3">
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+            <div className="absolute inset-0 bg-[#f97316] hover:bg-[#ea580c] transition-colors"></div>
+            <div className="relative flex items-center justify-center gap-2 text-white">
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
                 <>
-                  {t("Execute Order", "ఆర్డర్ సృష్టించు")}
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <span className="font-bold text-[10px] uppercase tracking-[0.2em] ml-2">
+                    {t("Execute Order", "ఆర్డర్ సృష్టించు")}
+                  </span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                 </>
               )}
             </div>
           </button>
         </form>
       </div>
-
-      {showSuggestions && (
-        <div 
-          className="fixed inset-0 z-[90] bg-transparent" 
-          onClick={() => setShowSuggestions(false)}
-        />
-      )}
     </div>
   );
 }

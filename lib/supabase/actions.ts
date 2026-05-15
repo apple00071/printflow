@@ -1017,6 +1017,9 @@ export async function updateTenantDetails(data: { name?: string, city?: string, 
   const tenant = await getCurrentTenant(supabase);
   if (!tenant) throw new Error("Unauthorized");
 
+  const oldPrefix = tenant.id_prefix;
+  const newPrefix = data.id_prefix;
+
   const { data: updatedTenant, error } = await supabase
     .from("tenants")
     .update(data)
@@ -1025,6 +1028,21 @@ export async function updateTenantDetails(data: { name?: string, city?: string, 
     .single();
 
   if (error) throw error;
+
+  // If the prefix has changed or is being set for the first time, sync all existing order friendly_ids
+  if (newPrefix && newPrefix !== oldPrefix) {
+    // We use a regex replacement: replace anything before the first hyphen with the new prefix
+    const { error: syncError } = await supabase.rpc('sync_order_prefixes', {
+      p_tenant_id: tenant.id,
+      p_new_prefix: newPrefix
+    });
+
+    if (syncError) {
+      console.error("Failed to sync legacy order prefixes:", syncError);
+      // We don't throw here to avoid failing the whole save, but we log it
+    }
+  }
+
   return updatedTenant;
 }
 

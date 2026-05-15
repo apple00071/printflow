@@ -84,15 +84,15 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-slate-200/60">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900 uppercase tracking-tighter">{t("Order Management", "ఆర్డర్ల నిర్వహణ")}</h1>
-          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">{t("Track and process customer requests", "కస్టమర్ అభ్యర్థనలను ట్రాక్ చేయండి")}</p>
+          <h1 className="text-xl font-semibold text-[#1e3a5f] uppercase tracking-tight">{t("Order Management", "ఆర్డర్ల నిర్వహణ")}</h1>
+          <p className="text-[10px] text-slate-400 uppercase tracking-widest font-medium">{t("Track and process production requests", "ఉత్పత్తి అభ్యర్థనలను ట్రాక్ చేయండి")}</p>
         </div>
         <div className="flex items-center gap-4">
           <Link 
             href="/dashboard/orders/new" 
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all shadow-sm text-[10px] font-semibold uppercase tracking-widest"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#f97316] text-white rounded-lg hover:bg-[#ea580c] transition-all text-xs font-semibold uppercase"
           >
             <Plus className="w-4 h-4" />
             <span>{t("New Order", "కొత్త ఆర్డర్")}</span>
@@ -101,7 +101,7 @@ export default function OrdersPage() {
       </div>
 
       {/* Filters & Search */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 items-center">
+      <div className="bg-white p-4 rounded-xl border border-gray-100 flex flex-col md:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -127,7 +127,7 @@ export default function OrdersPage() {
       </div>
 
       {/* Orders Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-h-[400px]">
+      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden min-h-[400px]">
         {loading ? (
           <div className="flex flex-col items-center justify-center p-20 text-gray-400">
              <Loader2 className="w-10 h-10 animate-spin mb-4" />
@@ -157,7 +157,7 @@ export default function OrdersPage() {
              {statusFilter === "ALL" && !searchQuery && (
                <Link
                  href="/dashboard/orders/new"
-                 className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+                 className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary/90 transition-colors"
                >
                  <Plus className="w-4 h-4" />
                  {t("Create your first order", "మొదటి ఆర్డర్ సృష్టించండి")}
@@ -266,7 +266,7 @@ export default function OrdersPage() {
                            <p className="text-sm font-semibold text-gray-900">{formatCurrency(order.total_with_gst || order.total_amount)}</p>
                            {((order.total_with_gst || order.total_amount) - order.advance_paid) > 0 && (
                              <p className="text-[10px] text-red-500 font-semibold uppercase">
-                               Due: {formatCurrency((order.total_with_gst || order.total_amount) - order.advance_paid)}
+                                Due: {formatCurrency((order.total_with_gst || order.total_amount) - order.advance_paid)}
                              </p>
                            )}
                         </div>
@@ -280,4 +280,3 @@ export default function OrdersPage() {
     </div>
   );
 }
-

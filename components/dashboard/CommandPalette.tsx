@@ -46,13 +46,19 @@ export default function CommandPalette({
       const tenant = await getCurrentTenant(supabase);
       if (!tenant) return;
 
-      // Search Orders
+      // Search Orders (Improved partial matching across ID and Customer Name)
       const { data: orders } = await supabase
         .from("orders")
-        .select("id, friendly_id, customers(name)")
+        .select(`
+          id, 
+          friendly_id, 
+          customers!inner (
+            name
+          )
+        `)
         .eq("tenant_id", tenant.id)
-        .or(`friendly_id.ilike.%${searchQuery}%,id.ilike.%${searchQuery}%`)
-        .limit(3);
+        .or(`friendly_id.ilike.%${searchQuery}%,customers.name.ilike.%${searchQuery}%`)
+        .limit(10);
 
       // Search Customers
       const { data: customers } = await supabase
@@ -60,16 +66,21 @@ export default function CommandPalette({
         .select("id, name, phone")
         .eq("tenant_id", tenant.id)
         .or(`name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`)
-        .limit(3);
+        .limit(5);
 
       const combined: SearchResult[] = [
-        ...(orders || []).map(o => ({
-          id: o.id,
-          type: "order" as const,
-          title: o.friendly_id || `Order #${o.id.slice(0, 8)}`,
-          subtitle: `Customer: ${Array.isArray(o.customers) ? (o.customers as unknown as Record<string, string>[])[0]?.name : (o.customers as unknown as Record<string, string>)?.name || "Unknown"}`,
-          href: `/dashboard/orders/${o.id}`
-        })),
+        ...(orders || []).map(o => {
+          // Handle nested customer object reliably
+          const customerName = (o.customers as any)?.name || "Unknown Customer";
+          
+          return {
+            id: o.id,
+            type: "order" as const,
+            title: o.friendly_id || `Order #${o.id.slice(0, 8)}`,
+            subtitle: `Customer: ${customerName}`,
+            href: `/dashboard/orders/${o.id}`
+          };
+        }),
         ...(customers || []).map(c => ({
           id: c.id,
           type: "customer" as const,

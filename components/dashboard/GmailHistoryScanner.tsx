@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   History, 
   Search, 
@@ -13,8 +13,12 @@ import {
   Loader2,
   Plus,
   ArrowUpRight,
-  Inbox
+  Inbox,
+  Settings,
+  Link as LinkIcon
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -36,12 +40,44 @@ interface PotentialOrder {
 }
 
 export default function GmailHistoryScanner() {
+  const router = useRouter();
+  const supabase = createClient();
   const [days, setDays] = useState(7);
   const [loading, setLoading] = useState(false);
+  const [checkingIntegration, setCheckingIntegration] = useState(true);
+  const [isGmailConnected, setIsGmailConnected] = useState(false);
   const [orders, setOrders] = useState<PotentialOrder[]>([]);
   const [importing, setImporting] = useState<string | null>(null);
 
+  useEffect(() => {
+    const checkIntegration = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data } = await supabase
+          .from("tenant_integrations")
+          .select("id")
+          .eq("type", "GMAIL")
+          .eq("is_active", true)
+          .maybeSingle();
+
+        setIsGmailConnected(!!data);
+      } catch (err) {
+        console.error("Integration check failed:", err);
+      } finally {
+        setCheckingIntegration(false);
+      }
+    };
+    checkIntegration();
+  }, [supabase]);
+
   const scanHistory = async () => {
+    if (!isGmailConnected) {
+      router.push('/dashboard/settings?tab=integrations');
+      return;
+    }
+    
     setLoading(true);
     try {
       const res = await fetch(`/api/integrations/gmail/sync?mode=history&days=${days}`);
@@ -85,8 +121,16 @@ export default function GmailHistoryScanner() {
     }
   };
 
+  if (checkingIntegration) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200/60 p-12 flex flex-col items-center justify-center">
+        <Loader2 className="w-5 h-5 animate-spin text-slate-200" />
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
       <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/30">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white">
@@ -103,7 +147,7 @@ export default function GmailHistoryScanner() {
                   onClick={() => setDays(d)}
                   className={cn(
                     "px-3 py-1 rounded-md text-[11px] font-bold transition-all",
-                    days === d ? "bg-slate-900 text-white shadow-sm" : "text-slate-400 hover:text-slate-600"
+                    days === d ? "bg-slate-900 text-white" : "text-slate-400 hover:text-slate-600"
                   )}
                 >
                   {d}d
@@ -113,7 +157,7 @@ export default function GmailHistoryScanner() {
            <button 
              onClick={scanHistory}
              disabled={loading}
-             className="bg-[#f97316] text-white h-9 px-4 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-[#ea580c] transition-colors disabled:opacity-50 shadow-sm"
+             className="bg-[#f97316] text-white h-9 px-4 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-[#ea580c] transition-colors disabled:opacity-50"
            >
              {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
              Scan
@@ -122,7 +166,22 @@ export default function GmailHistoryScanner() {
       </div>
 
       <div className="min-h-[240px]">
-        {loading ? (
+        {!isGmailConnected ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center px-6">
+            <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-[#f97316] mb-4">
+               <LinkIcon className="w-6 h-6" />
+            </div>
+            <h4 className="text-sm font-semibold text-slate-900 mb-1">Gmail Integration Required</h4>
+            <p className="text-xs text-slate-500 mb-6 max-w-[280px]">Connect your business Gmail account to automatically scan and import orders from your inbox.</p>
+            <button 
+              onClick={() => router.push('/dashboard/settings?tab=integrations')}
+              className="bg-[#1e3a5f] text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-[#162a44] transition-all"
+            >
+              <Settings className="w-3.5 h-3.5" />
+              Connect Gmail
+            </button>
+          </div>
+        ) : loading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="w-6 h-6 text-slate-200 animate-spin" />
             <p className="mt-2 text-[11px] font-medium text-slate-400 uppercase tracking-wider">Searching Inbox...</p>
@@ -162,7 +221,7 @@ export default function GmailHistoryScanner() {
                       <button 
                         onClick={() => importOrder(order)}
                         disabled={!!importing}
-                        className="h-10 px-4 bg-[#f97316] text-white rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-[#ea580c] transition-colors disabled:opacity-50 shadow-sm"
+                        className="h-10 px-4 bg-[#f97316] text-white rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-[#ea580c] transition-colors disabled:opacity-50"
                       >
                         {importing === order.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
                         Import

@@ -169,7 +169,7 @@ export default function DashboardPage() {
         <div className="flex items-center gap-3">
           <button 
             onClick={() => router.push('/dashboard/orders/new')} 
-            className="h-10 px-4 bg-[#f97316] text-white rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-[#ea580c] transition-colors shadow-sm"
+            className="h-10 px-5 bg-[#f97316] text-white rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-[#ea580c] transition-all hover:scale-105 active:scale-95"
           >
             <Plus className="w-4 h-4" />
             {t("New Order", "కొత్త ఆర్డర్")}
@@ -179,13 +179,13 @@ export default function DashboardPage() {
 
       <OnboardingProgress />
 
-      {/* Summary Stats */}
+      {/* Summary Stats (Removed shadow-sm) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {stats.map((stat) => (
           <Link 
             key={stat.label} 
             href={stat.href}
-            className="p-6 bg-white rounded-2xl border border-slate-200/60 shadow-sm hover:border-[#1e3a5f]/20 transition-all group"
+            className="p-6 bg-white rounded-2xl border border-slate-200/60 hover:border-[#1e3a5f]/20 transition-all group"
           >
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-[#1e3a5f] group-hover:bg-[#1e3a5f] group-hover:text-white transition-all">
@@ -201,12 +201,12 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Pipeline */}
+        {/* Main Pipeline (Removed shadow-sm) */}
         <div className="lg:col-span-2 space-y-8">
           
           <GmailHistoryScanner />
 
-          <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
             <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
               <h2 className="text-sm font-semibold text-[#1e3a5f] uppercase tracking-wider">{t("Recent Pipeline", "ఇటీవలి పనులు")}</h2>
               <Link href="/dashboard/orders" className="text-xs font-medium text-slate-500 hover:text-[#1e3a5f] flex items-center gap-1">
@@ -254,18 +254,18 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Quick Actions & Side Column */}
+        {/* Quick Actions & Side Column (Removed shadow-sm) */}
         <div className="space-y-8">
            <QuickJobForm />
            
-           <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm">
+           <div className="bg-white rounded-2xl border border-slate-200/60 p-6">
               <h3 className="text-sm font-semibold text-[#1e3a5f] mb-4 uppercase tracking-wider">{t("Revenue Overview", "ఆదాయం")}</h3>
               <div className="h-[240px]">
                  <DashboardCharts data={monthlyTrend} type="line" />
               </div>
            </div>
 
-           <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm">
+           <div className="bg-white rounded-2xl border border-slate-200/60 p-6">
               <h3 className="text-sm font-semibold text-[#1e3a5f] mb-4 uppercase tracking-wider">{t("Product Mix", "ఉత్పత్తి మిశ్రమం")}</h3>
               <div className="h-[240px]">
                  <DashboardCharts data={chartData} type="bar" />

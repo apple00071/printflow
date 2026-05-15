@@ -24,13 +24,8 @@ import {
 import { Logo } from "@/components/Logo";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { cn } from "@/lib/utils";
 import CommandPalette from "./CommandPalette";
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -46,6 +41,7 @@ const navItems = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -75,7 +71,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   return (
-    <div className="min-h-screen bg-[#fcfcfc] flex font-sans text-slate-900">
+    <div className="min-h-screen bg-[#fcfcfc] flex font-sans text-slate-900 overflow-x-hidden">
       <CommandPalette isOpen={isSearchOpen} setIsOpen={setIsSearchOpen} />
 
       {/* Backdrop for mobile */}
@@ -86,57 +82,76 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         />
       )}
 
-      {/* Professional Sidebar */}
+      {/* Auto-Expanding Slim Sidebar (No Shadows) */}
       <aside 
+        onMouseEnter={() => setIsSidebarHovered(true)}
+        onMouseLeave={() => setIsSidebarHovered(false)}
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transition-transform duration-300 ease-in-out transform lg:translate-x-0 lg:static",
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          "fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-200 transition-all duration-300 ease-in-out",
+          (isSidebarHovered || isSidebarOpen) ? "w-48" : "w-0 lg:w-16", 
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
-        <div className="flex flex-col h-full">
-          <div className="h-16 flex items-center px-6 border-b border-slate-100">
-             <Logo variant="dark" size="sm" showText={true} />
-             <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden ml-auto p-2 text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-             </button>
+        <div className="flex flex-col h-full overflow-hidden">
+          {/* Header / Logo */}
+          <div className="h-20 flex items-center shrink-0 overflow-hidden justify-center lg:justify-start lg:px-4">
+             <div className={cn("flex items-center transition-all duration-300", !isSidebarHovered && !isSidebarOpen ? "w-full justify-center" : "w-full justify-start")}>
+                <Logo 
+                  variant="dark" 
+                  size="sm" 
+                  showText={isSidebarHovered || isSidebarOpen} 
+                />
+                <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden ml-auto p-2 text-slate-400 hover:text-slate-600">
+                   <X className="w-5 h-5" />
+                </button>
+             </div>
           </div>
 
-          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+          {/* Navigation (No Shadows) */}
+          <nav className="flex-1 px-2.5 py-4 space-y-1 overflow-y-auto overflow-x-hidden no-scrollbar">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() => setIsSidebarOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                    "flex items-center h-10 rounded-xl transition-all duration-200 group/nav relative px-2.5",
                     isActive 
-                      ? "bg-slate-100 text-slate-900" 
-                      : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                      ? "bg-[#1e3a5f] text-white" 
+                      : "text-slate-500 hover:text-[#1e3a5f] hover:bg-slate-50"
                   )}
                 >
-                  <item.icon className={cn("w-4 h-4", isActive ? "text-slate-900" : "text-slate-400")} />
-                  {t(item.name, item.name)}
+                  <item.icon className={cn("w-5 h-5 shrink-0 transition-all duration-200", isActive ? "text-white" : "text-slate-400 group-hover/nav:text-[#1e3a5f] group-hover/nav:scale-110")} />
+                  <span className={cn("ml-3.5 transition-all duration-300 font-medium text-sm whitespace-nowrap", isSidebarHovered ? "opacity-100" : "opacity-0")}>
+                    {t(item.name, item.name)}
+                  </span>
                 </Link>
               );
             })}
           </nav>
 
-          <div className="p-4 border-t border-slate-100">
+          {/* Footer / Sign Out */}
+          <div className="p-2.5 border-t border-slate-100 shrink-0">
             <button 
               onClick={handleSignOut}
-              className="flex items-center gap-3 w-full px-3 py-2 text-sm font-medium text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="flex items-center h-10 w-full px-2.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all font-medium"
             >
-              <LogOut className="w-4 h-4" />
-              {t("Sign Out", "లాగ్అవుట్")}
+              <LogOut className="w-5 h-5 shrink-0" />
+              <span className={cn("ml-3.5 transition-all duration-300 text-sm whitespace-nowrap", isSidebarHovered ? "opacity-100" : "opacity-0")}>
+                {t("Sign Out", "లాగ్అవుట్")}
+              </span>
             </button>
           </div>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+      <div className={cn(
+        "flex-1 flex flex-col min-w-0 min-h-screen transition-all duration-300 ease-in-out",
+        isSidebarHovered ? "lg:pl-48" : "lg:pl-16",
+        !isSidebarHovered && !isSidebarOpen && "pl-0 lg:pl-16"
+      )}>
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-30">
           <div className="flex items-center gap-4 flex-1">
             <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 text-slate-400 hover:text-slate-600">
@@ -145,7 +160,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             
             <div 
               onClick={() => setIsSearchOpen(true)}
-              className="hidden md:flex items-center gap-3 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-400 cursor-pointer hover:bg-slate-100 transition-colors max-w-md w-full"
+              className="hidden md:flex items-center gap-3 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-400 cursor-pointer hover:bg-slate-100 transition-all max-w-md w-full"
             >
               <Search className="w-4 h-4" />
               <span>Search everything...</span>
@@ -164,7 +179,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       onClick={() => setLanguage(lang as any)}
                       className={cn(
                         "px-3 py-1 rounded-md text-[10px] font-bold uppercase transition-all",
-                        language === lang ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                        language === lang ? "bg-white text-slate-900" : "text-slate-400 hover:text-slate-600"
                       )}
                    >
                       {lang}
@@ -172,9 +187,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 ))}
              </div>
 
-             <button className="relative p-2 text-slate-400 hover:text-slate-900 transition-colors">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-slate-900 rounded-full border-2 border-white"></span>
+             <button className="relative p-2 text-slate-400 hover:text-[#1e3a5f] hover:bg-slate-50 rounded-full transition-all hover:scale-110 group/bell">
+                <Bell className="w-5 h-5 transition-transform group-active/bell:scale-90" />
+                <span className="absolute top-2 right-2 w-2 h-2 bg-[#f97316] rounded-full border-2 border-white"></span>
              </button>
           </div>
         </header>

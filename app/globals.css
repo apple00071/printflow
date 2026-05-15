@@ -21,7 +21,7 @@ body {
 /* Premium Design Layer */
 @layer components {
   .btn-primary {
-    @apply bg-[#f97316] text-white hover:bg-[#ea580c] transition-colors shadow-sm;
+    @apply bg-[#f97316] text-white hover:bg-[#ea580c] transition-colors;
   }
   
   .btn-secondary {
@@ -29,7 +29,7 @@ body {
   }
 
   .premium-card {
-    @apply bg-white border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.02)];
+    @apply bg-white border border-slate-200/60;
   }
   @page {
     size: A4;
@@ -42,57 +42,59 @@ body {
     print-color-adjust: exact !important;
   }
 
-  /* Hide Dashboard Elements Globally */
-  aside, 
-  header, 
-  nav, 
-  footer,
-  .no-print,
-  [role="navigation"],
-  [role="banner"] { 
-    display: none !important; 
-    height: 0 !important;
-    width: 0 !important;
-    overflow: hidden !important;
-    visibility: hidden !important;
-  }
+  @media print {
+    /* Hide Dashboard Elements during Print */
+    aside, 
+    header, 
+    nav, 
+    footer,
+    .no-print,
+    [role="navigation"],
+    [role="banner"] { 
+      display: none !important; 
+      height: 0 !important;
+      width: 0 !important;
+      overflow: hidden !important;
+      visibility: hidden !important;
+    }
 
-  /* Reset Dashboard Layout Margins */
-  .lg\:ml-56, 
-  .lg\:ml-20, 
-  .ml-56, 
-  .ml-20,
-  main { 
-    margin: 0 !important; 
-    padding: 0 !important;
-    margin-left: 0 !important;
-    padding-left: 0 !important;
-  }
+    /* Reset Dashboard Layout Margins during Print */
+    .lg\:ml-56, 
+    .lg\:ml-20, 
+    .ml-56, 
+    .ml-20,
+    main { 
+      margin: 0 !important; 
+      padding: 0 !important;
+      margin-left: 0 !important;
+      padding-left: 0 !important;
+    }
 
-  /* Ensure main content takes full width */
-  main {
-    display: block !important;
-    width: 100% !important;
-  }
+    /* Ensure main content takes full width during Print */
+    main {
+      display: block !important;
+      width: 100% !important;
+    }
 
-  /* Force background to be white in all conditions */
-  .bg-gray-50, 
-  .min-h-screen {
-    background: white !important;
-    min-height: 0 !important;
-    height: auto !important;
-  }
+    /* Force background to be white in all conditions during Print */
+    .bg-gray-50, 
+    .min-h-screen {
+      background: white !important;
+      min-height: 0 !important;
+      height: auto !important;
+    }
 
-  /* Fix for sticky elements during print */
-  .sticky {
-    position: relative !important;
+    /* Fix for sticky elements during print */
+    .sticky {
+      position: relative !important;
+    }
   }
 }
 
 /* Premium Design Layer */
 @layer components {
   .premium-card {
-    @apply bg-white border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.02),0_1px_2px_rgba(0,0,0,0.04)];
+    @apply bg-white border border-slate-200/60;
   }
   
   .subtle-transition {

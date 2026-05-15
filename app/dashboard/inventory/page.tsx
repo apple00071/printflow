@@ -118,18 +118,18 @@ export default function InventoryPage() {
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900 uppercase tracking-tighter">{t("Inventory", "ఇన్వెంటరీ", "इन्वेंटरी")}</h1>
-          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">{t("Track your paper, ink and other stock levels", "మీ స్టాక్ వివరాలను మేనేజ్ చేయండి", "अपना स्टॉक मैनेज करें")}</p>
+          <h1 className="text-xl font-semibold text-[#1e3a5f] uppercase tracking-tight">{t("Inventory", "ఇన్వెంటరీ", "इन्वेंटरी")}</h1>
+          <p className="text-[10px] text-slate-400 uppercase tracking-widest font-medium">{t("Stock Management", "స్టాక్ వివరాలు")}</p>
         </div>
         <div className="flex items-center gap-4">
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all shadow-sm text-[10px] font-semibold uppercase tracking-widest"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#f97316] text-white rounded-lg hover:bg-[#ea580c] transition-all shadow-sm text-xs font-semibold uppercase"
           >
-            <Plus className="w-5 h-5" />
-            {t("Add New Item", "కొత్త వస్తువును జోడించండి", "नई सामग्री जोड़ें")}
+            <Plus className="w-4 h-4" />
+            {t("Add Item", "జోడించండి")}
           </button>
         </div>
       </div>
