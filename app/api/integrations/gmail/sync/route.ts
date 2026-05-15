@@ -36,8 +36,9 @@ function isMarketingEmail(from: string, subject: string, body: string): boolean 
   return senderMatch || keywordMatch;
 }
 
-function isPrintOrderEmail(subject: string, body: string): boolean {
-  const text = `${subject} ${body}`;
+function isPrintOrderEmail(subject: string): boolean {
+  const text = subject.toLowerCase();
+  // Only trigger if these specific words are in the Subject line
   return PRINT_KEYWORDS.some(keyword => keyword.test(text));
 }
 
@@ -167,7 +168,7 @@ export async function GET(request: Request) {
             continue;
           }
 
-          if (!isPrintOrderEmail(subject, body)) continue;
+          if (!isPrintOrderEmail(subject)) continue;
 
           // Extractions
           const qtyMatch = body.match(/Qty:\s*(\d+)/i) || body.match(/Quantity:\s*(\d+)/i) || body.match(/(\d+)\s*copies/i);

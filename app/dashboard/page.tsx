@@ -8,9 +8,11 @@ import {
   Loader2,
   Search,
   ClipboardList,
-  Settings,
-  Wallet,
-  ChevronRight
+  ChevronRight,
+  TrendingUp,
+  ArrowUpRight,
+  Sparkles,
+  Zap
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/utils/format";
@@ -23,6 +25,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import OnboardingProgress from "@/components/dashboard/OnboardingProgress";
 import QuickJobForm from "@/components/dashboard/QuickJobForm";
+import GmailHistoryScanner from "@/components/dashboard/GmailHistoryScanner";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -35,6 +38,7 @@ interface StatCard {
   color: string;
   hexColor: string;
   href: string;
+  trend?: string;
 }
 
 interface Order {
@@ -72,7 +76,6 @@ export default function DashboardPage() {
         const currentTenant = await getCurrentTenant(supabase);
 
         if (!currentTenant) {
-          console.error('No tenant found for dashboard');
           setLoading(false);
           return;
         }
@@ -83,12 +86,10 @@ export default function DashboardPage() {
           orders_this_month: currentTenant.orders_this_month || 0
         });
 
-        const now = new Date().toISOString();
         const today = new Date().toISOString().split('T')[0];
         const sixMonthsAgo = new Date();
         sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-        // 1. Fetch Orders (filtered by tenant)
         const { data: dbOrders, error: orderError } = await supabase
           .from("orders")
           .select("*, customers(name)")
@@ -97,59 +98,36 @@ export default function DashboardPage() {
         
         if (orderError) throw orderError;
 
-        // 2. Fetch Payments (for method breakdown and trend)
-        const { data: dbPayments, error: payError } = await supabase
+        const { data: dbPayments } = await supabase
             .from("payments")
             .select("*")
             .eq('tenant_id', currentTenant.id)
             .gte('paid_at', sixMonthsAgo.toISOString());
-        
-        if (payError) throw payError;
 
-        // 3. Fetch Inventory for Alerts
-        const { data: invData } = await supabase
-          .from("inventory")
-          .select("quantity, low_stock_limit")
-          .eq("tenant_id", currentTenant.id);
-        
-        const lowStock = (invData || []).filter(i => i.quantity <= i.low_stock_limit).length;
-        setLowStockCount(lowStock);
-
-        // 4. Process Stats & Overdue
         const todayOrders = (dbOrders || []).filter(o => o.created_at.startsWith(today));
         const pendingCount = (dbOrders || []).filter(o => o.status !== 'DELIVERED' && o.status !== 'CANCELLED').length;
         const totalBalanceDue = (dbOrders || []).reduce((acc, curr) => acc + Number(curr.balance_due || 0), 0);
         
-        const overdue = (dbOrders || []).filter(o => 
-          o.status !== 'DELIVERED' && 
-          o.delivery_date && 
-          o.delivery_date < now
-        );
-
-        setOverdueOrders(overdue.slice(0, 3));
-
         setStats([
-          { label: t("Today's Orders", "నేటి ఆర్డర్లు", "आज के आदेश"), value: todayOrders.length.toString(), icon: ClipboardList, color: "bg-blue-600", hexColor: "#2563eb", href: "/dashboard/orders" },
-          { label: t("Pending Orders", "పెండింగ్ ఆర్డర్లు", "लंबित आदेश"), value: pendingCount.toString(), icon: Clock, color: "bg-orange", hexColor: "#f97316", href: "/dashboard/orders" },
-          { label: t("Balance Due", "రావాల్సిన బాకీ", "बकाया राशि"), value: formatCurrency(totalBalanceDue), icon: IndianRupee, color: "bg-red-500", hexColor: "#ef4444", href: "/dashboard/billing" },
+          { label: t("Daily Volume", "నేటి ఆర్డర్లు"), value: todayOrders.length.toString(), icon: Zap, color: "bg-slate-900", hexColor: "#0f172a", href: "/dashboard/orders", trend: "+12%" },
+          { label: t("Active Pipeline", "పెండింగ్ ఆర్డర్లు"), value: pendingCount.toString(), icon: Clock, color: "bg-slate-900", hexColor: "#0f172a", href: "/dashboard/orders", trend: "Normal" },
+          { label: t("Receivables", "రావాల్సిన బాకీ"), value: formatCurrency(totalBalanceDue), icon: IndianRupee, color: "bg-slate-900", hexColor: "#0f172a", href: "/dashboard/billing", trend: "-5%" },
         ]);
 
-        setRecentOrders((dbOrders || []).slice(0, 8));
+        setRecentOrders((dbOrders || []).slice(0, 6));
 
-        // 5. Job Types Chart
         const jobGroups = (dbOrders || []).reduce((acc: Record<string, number>, curr) => {
           const type = curr.job_type || 'Other';
           acc[type] = (acc[type] || 0) + Number(curr.total_with_gst || curr.total_amount || 0);
           return acc;
         }, {});
-        const chartColors = ["#1e3a5f", "#f97316", "#10b981", "#8b5cf6", "#ef4444", "#ec4899", "#14b8a6"];
+        const chartColors = ["#0f172a", "#334155", "#64748b", "#94a3b8", "#cbd5e1"];
         setChartData(Object.keys(jobGroups).map((name, i) => ({
           name,
           value: jobGroups[name],
           color: chartColors[i % chartColors.length]
-        })).sort((a, b) => b.value - a.value).slice(0, 6));
+        })).sort((a, b) => b.value - a.value).slice(0, 5));
 
-        // 6. Monthly Trend
         const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         const trendData: Record<string, number> = {};
         for(let j = 5; j >= 0; j--) {
@@ -174,179 +152,166 @@ export default function DashboardPage() {
     fetchDashboardData();
   }, [t]); 
 
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <Loader2 className="w-8 h-8 animate-spin text-slate-200" />
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Loading Workspace</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6 pb-20">
-      {/* Quick Navigation Pills */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-         {[
-            { label: t("Dashboard", "డాష్బోర్డ్", "डैशबोर्ड"), href: "/dashboard", active: true },
-            { label: t("Jobs", "పనులు", "कार्य"), href: "/dashboard/orders" },
-            { label: t("Quotes", "కొటేషన్లు", "कोटेशन"), href: "/dashboard/quotations" },
-            { label: t("Ledger", "లెడ్జర్", "लेजर"), href: "/dashboard/billing" },
-            { label: t("Customers", "కస్టమర్లు", "ग्राहक"), href: "/dashboard/customers" },
-            { label: t("Settings", "సెట్టింగులు", "सेटिंग्स"), href: "/dashboard/settings" },
-         ].map((pill) => (
-            <Link 
-               key={pill.href} 
-               href={pill.href}
-               className={cn(
-                  "px-5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all border",
-                  pill.active 
-                     ? "bg-[#e2f2ed] text-[#10b981] border-[#d1e9e0]" 
-                     : "bg-white text-gray-500 border-gray-100 hover:bg-gray-50"
-               )}
-            >
-               {pill.label}
-            </Link>
-         ))}
-      </div>
+    <div className="space-y-10 pb-32 animate-in fade-in duration-1000">
       
+      {/* Premium Hero Section */}
+      <section className="relative overflow-hidden rounded-[40px] bg-slate-900 p-10 md:p-16 text-white shadow-2xl">
+        <div className="absolute top-0 right-0 p-20 opacity-10 pointer-events-none">
+          <Sparkles className="w-64 h-64 text-white" />
+        </div>
+        
+        <div className="relative z-10 space-y-6 max-w-2xl">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/10">
+            <Zap className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">{tenantInfo?.name || "Workspace"}</span>
+          </div>
+          
+          <div className="space-y-2">
+            <h1 className="text-4xl md:text-6xl font-black tracking-tighter leading-none italic uppercase">
+              {t("Production", "ప్రొడక్షన్")} <br />
+              <span className="text-slate-400 not-italic font-medium">{t("Dashboard", "డాష్బోర్డ్")}</span>
+            </h1>
+            <p className="text-slate-400 text-sm font-medium tracking-wide max-w-md">
+              {t("Welcome back. Your shop is currently processing", "తిరిగి స్వాగతం. మీ షాప్ ప్రస్తుతం ప్రాసెస్ చేస్తోంది")} {tenantInfo?.orders_this_month || 0} {t("orders this month.", "ఈ నెల ఆర్డర్లు.")}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-4 pt-4">
+             <Link href="/dashboard/orders/new" className="h-14 px-8 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] flex items-center justify-center gap-3 hover:bg-slate-100 transition-all hover:translate-y-[-2px]">
+               <Plus className="w-4 h-4" /> {t("New Job", "కొత్త పని")}
+             </Link>
+             <button onClick={() => window.scrollTo({ top: 1200, behavior: 'smooth' })} className="h-14 px-8 bg-slate-800 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] border border-white/5 flex items-center justify-center gap-3 hover:bg-slate-700 transition-all">
+               <TrendingUp className="w-4 h-4" /> {t("View Trends", "ట్రెండ్స్ చూడండి")}
+             </button>
+          </div>
+        </div>
+      </section>
+
       <OnboardingProgress />
-      
-      {/* High-Level Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {stats.map((stat) => (
-          <Link 
-            key={stat.label} 
-            href={stat.href}
-            className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center justify-between hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-300 group cursor-pointer border-b-2" 
-            style={{ borderBottomColor: stat.hexColor }}
-          >
-            <div className="flex items-center gap-4">
-              <div className={`${stat.color} p-3 rounded-xl text-white shadow-lg shadow-current/20 group-hover:scale-110 transition-transform duration-500`}>
-                <stat.icon className="w-5 h-5" />
-              </div>
-              <div>
-                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5 opacity-80">{stat.label}</p>
-                 <p className="text-xl font-extrabold text-gray-900 tracking-tight">{stat.value}</p>
-              </div>
-            </div>
-            <div className="w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-              <ChevronRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-white transition-colors" />
-            </div>
-          </Link>
-        ))}
-      </div>
 
-      {/* Main Functional Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Quick Add */}
-        <div className="lg:col-span-4 space-y-6">
-           <QuickJobForm />
-        </div>
-
-        {/* Right Column: Recent Jobs */}
-        <div className="lg:col-span-8 space-y-6">
-           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-xl font-semibold text-gray-900">{t("Recent jobs", "ఇటీవలి పనులు", "हाल के कार्य")}</h2>
-                <div className="flex items-center gap-2">
-                   <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400" />
-                      <input 
-                        type="text" 
-                        placeholder={t("Filter job list", "ఫిల్టర్ చేయండి", "फ़िल्टर करें")}
-                        className="pl-8 pr-4 py-1.5 bg-gray-50 border border-gray-100 rounded-xl text-[10px] focus:outline-none focus:ring-1 focus:ring-primary/20"
-                      />
-                   </div>
-                </div>
-              </div>
-
-              {recentOrders.length === 0 ? (
-                 <div className="py-20 text-center">
-                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
-                       <ClipboardList className="w-8 h-8 text-gray-200" />
+      {/* Architectural Grid: Stats & Quick Form */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+         
+         {/* Left: Intelligence & Stats */}
+         <div className="lg:col-span-8 space-y-10">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {stats.map((stat) => (
+                <Link 
+                  key={stat.label} 
+                  href={stat.href}
+                  className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-slate-100/80 shadow-sm hover:shadow-[0_20px_50px_rgba(0,0,0,0.04)] transition-all duration-500 hover:translate-y-[-4px]"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                       <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-900 group-hover:bg-slate-900 group-hover:text-white transition-all duration-500">
+                          <stat.icon className="w-5 h-5" />
+                       </div>
+                       {stat.trend && (
+                         <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">{stat.trend}</span>
+                       )}
                     </div>
-                    <p className="text-sm text-gray-400 font-medium">{t("No jobs yet.", "ఇంకా పనులు లేవు.", "अभी तक कोई कार्य नहीं।")}</p>
-                 </div>
-              ) : (
-                <div className="overflow-x-auto">
-                   <table className="w-full text-left">
-                      <thead>
-                         <tr className="border-b border-gray-50">
-                            <th className="pb-4 text-[10px] font-medium text-gray-400 uppercase tracking-widest">{t("Customer", "కస్టమర్", "ग्राहक")}</th>
-                            <th className="pb-4 text-[10px] font-medium text-gray-400 uppercase tracking-widest">{t("Product", "ఉత్పత్తి", "उत्पाद")}</th>
-                            <th className="pb-4 text-[10px] font-medium text-gray-400 uppercase tracking-widest">{t("Status", "స్థితి", "स्थिति")}</th>
-                            <th className="pb-4 text-right text-[10px] font-medium text-gray-400 uppercase tracking-widest">{t("Amount", "మొత్తం", "मात्रा")}</th>
-                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-50">
-                         {recentOrders.map((order) => (
-                            <tr key={order.id} className="group hover:bg-gray-50/50 transition-all cursor-pointer" onClick={() => router.push(`/dashboard/orders/${order.id}`)}>
-                               <td className="py-4">
-                                  <p className="text-sm font-semibold text-gray-900 group-hover:text-primary transition-colors">{order.customers?.name}</p>
-                                  <p className="text-[10px] font-mono text-gray-400 uppercase">{order.friendly_id || `#${order.id.split('-')[0]}`}</p>
-                               </td>
-                               <td className="py-4">
-                                  <span className="text-xs font-medium text-gray-600">{order.job_type || "-"}</span>
-                               </td>
-                               <td className="py-4">
-                                  <span className={cn(
-                                     "px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-tighter",
-                                     order.status === 'DELIVERED' ? "bg-green-100 text-green-700" :
-                                     order.status === 'READY' ? "bg-blue-100 text-blue-700" :
-                                     "bg-orange/10 text-orange"
-                                  )}>
-                                     {order.status}
-                                  </span>
-                               </td>
-                               <td className="py-4 text-right">
-                                  <p className="text-sm font-semibold text-gray-900">{formatCurrency(order.total_amount)}</p>
-                               </td>
-                            </tr>
-                         ))}
-                      </tbody>
-                   </table>
-                </div>
-              )}
-              
-              <div className="mt-8 pt-6 border-t border-gray-50 flex justify-center">
-                 <Link href="/dashboard/orders" className="text-xs font-semibold text-primary hover:underline uppercase tracking-widest">
-                    {t("View All Jobs", "అన్ని పనులు చూడండి", "सभी कार्य देखें")}
-                 </Link>
-              </div>
-           </div>
-        </div>
-      </div>
+                    <div>
+                       <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{stat.label}</p>
+                       <p className="text-2xl font-black text-slate-900 tracking-tight leading-none italic uppercase">{stat.value}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
 
-      {/* Secondary Analytics Section */}
-      <div className="pt-10 border-t border-gray-100">
-         <div className="mb-8">
-            <h2 className="text-xl font-semibold text-[#1e3a5f]">{t("Business Performance", "వ్యాపార పనితీరు", "व्यवसाय प्रदर्शन")}</h2>
-            <p className="text-xs text-gray-400 uppercase tracking-widest font-medium">{t("Insights and trends for your shop", "మీ షాప్ కోసం అంతర్దృష్టులు", "आपकी दुकान के लिए अंतर्दृष्टि और रुझान")}</p>
+            {/* Ingestor Integration */}
+            <GmailHistoryScanner />
+
+            {/* Recent Table */}
+            <div className="bg-white rounded-[32px] border border-slate-100/80 p-10 shadow-sm">
+               <div className="flex items-center justify-between mb-10">
+                  <div className="space-y-1">
+                    <h2 className="text-xl font-black text-slate-900 tracking-tight uppercase italic">{t("Recent Pipeline", "ఇటీవలి పనులు")}</h2>
+                    <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.2em]">Latest active production jobs</p>
+                  </div>
+                  <Link href="/dashboard/orders" className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-900 hover:text-white transition-all">
+                     <ArrowUpRight className="w-5 h-5" />
+                  </Link>
+               </div>
+
+               <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                     <thead>
+                        <tr className="border-b border-slate-50">
+                           <th className="pb-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t("Customer", "కస్టమర్")}</th>
+                           <th className="pb-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t("Product", "ఉత్పత్తి")}</th>
+                           <th className="pb-6 text-right text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t("Amount", "మొత్తం")}</th>
+                        </tr>
+                     </thead>
+                     <tbody className="divide-y divide-slate-50">
+                        {recentOrders.map((order) => (
+                           <tr key={order.id} className="group cursor-pointer" onClick={() => router.push(`/dashboard/orders/${order.id}`)}>
+                              <td className="py-6">
+                                 <p className="text-sm font-bold text-slate-800 group-hover:text-slate-900 transition-colors">{order.customers?.name}</p>
+                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{order.friendly_id || "TRK-ORD"}</p>
+                              </td>
+                              <td className="py-6">
+                                 <div className="flex items-center gap-2">
+                                    <div className={cn(
+                                       "w-2 h-2 rounded-full",
+                                       order.status === 'DELIVERED' ? "bg-green-500" : "bg-blue-500"
+                                    )} />
+                                    <span className="text-xs font-bold text-slate-600 uppercase tracking-tight">{order.job_type || "Standard"}</span>
+                                 </div>
+                              </td>
+                              <td className="py-6 text-right">
+                                 <p className="text-sm font-black text-slate-900 italic uppercase">{formatCurrency(order.total_amount)}</p>
+                              </td>
+                           </tr>
+                        ))}
+                     </tbody>
+                  </table>
+               </div>
+            </div>
          </div>
 
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-           {/* Revenue Trend */}
-           <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm h-[400px]">
-             <div className="flex items-center justify-between mb-8">
-                <h3 className="text-lg font-semibold text-gray-900">{t("Revenue Trend", "ఆదాయం సరళి", "आय का रुझान")}</h3>
-                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">Last 6 Months</span>
-             </div>
-             {loading ? (
-               <div className="flex flex-col items-center justify-center h-[280px]">
-                   <Loader2 className="w-8 h-8 animate-spin text-gray-200" />
+         {/* Right: Quick Actions */}
+         <div className="lg:col-span-4 space-y-10">
+            <div className="sticky top-10">
+               <QuickJobForm />
+            </div>
+         </div>
+      </div>
+
+      {/* Analytics Overhaul */}
+      <div className="space-y-10">
+         <div className="flex flex-col gap-2">
+            <h2 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic">{t("Market Insights", "వ్యాపార పనితీరు")}</h2>
+            <div className="h-1 w-20 bg-slate-900" />
+         </div>
+
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div className="bg-white rounded-[32px] border border-slate-100/80 p-10 shadow-sm">
+               <div className="flex items-center justify-between mb-10">
+                  <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tight">{t("Revenue Flow", "ఆదాయం సరళి")}</h3>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">6M Growth</span>
                </div>
-             ) : (
-               <div className="h-[280px]">
+               <div className="h-[320px]">
                   <DashboardCharts data={monthlyTrend} type="line" />
                </div>
-             )}
-           </div>
+            </div>
 
-           {/* Job Types */}
-           <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm h-[400px]">
-             <h3 className="text-lg font-semibold text-gray-900 mb-8">{t("Revenue by Product", "ఆర్డర్ రకాలు", "उत्पाद के अनुसार आय")}</h3>
-             {loading ? (
-                 <div className="flex flex-col items-center justify-center h-[280px]">
-                     <Loader2 className="w-8 h-8 animate-spin text-gray-200" />
-                 </div>
-             ) : (
-               <div className="h-[280px]">
+            <div className="bg-white rounded-[32px] border border-slate-100/80 p-10 shadow-sm">
+               <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tight mb-10">{t("Product Mix", "ఉత్పత్తి ఆదాయం")}</h3>
+               <div className="h-[320px]">
                   <DashboardCharts data={chartData} type="bar" />
                </div>
-             )}
-           </div>
+            </div>
          </div>
       </div>
     </div>

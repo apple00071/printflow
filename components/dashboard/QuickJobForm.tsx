@@ -4,12 +4,12 @@ import { useState } from "react";
 import { 
   User, 
   Phone, 
-  ClipboardList, 
   IndianRupee, 
-  Search,
-  Plus,
   Loader2,
-  Check
+  Check,
+  Zap,
+  Sparkles,
+  ArrowRight
 } from "lucide-react";
 import { searchCustomers, createOrder } from "@/lib/supabase/actions";
 import { useLanguage } from "@/lib/context/LanguageContext";
@@ -36,12 +36,11 @@ export default function QuickJobForm() {
   });
 
   const jobTypes = [
-    { id: "Business Cards", label: t("Business Cards", "విజిటింగ్ కార్డ్స్") },
-    { id: "Banners", label: t("Banners", "బ్యానర్లు") },
-    { id: "Letterheads", label: t("Letterheads", "లెటర్ హెడ్స్") },
-    { id: "Wedding Cards", label: t("Wedding Cards", "శుభలేఖలు") },
-    { id: "Stickers", label: t("Stickers", "స్టిక్కర్లు") },
-    { id: "Other", label: t("Other", "ఇతర పనులు") },
+    { id: "Business Cards", label: "Business Cards" },
+    { id: "Banners", label: "Banners" },
+    { id: "Wedding Cards", label: "Wedding Cards" },
+    { id: "Stickers", label: "Stickers" },
+    { id: "Other", label: "Other" },
   ];
 
   const [activeSearchField, setActiveSearchField] = useState<'phone' | 'name' | null>(null);
@@ -75,7 +74,7 @@ export default function QuickJobForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.customerName || !formData.jobType) {
-      showToast(t("Please fill in basic details", "దయచేసి కనీస వివరాలు నింపండి"), "error");
+      showToast(t("Basic details required", "వివరాలు అవసరం"), "error");
       return;
     }
 
@@ -84,9 +83,9 @@ export default function QuickJobForm() {
       await createOrder({
         ...formData,
         jobType: formData.jobType === "Other" ? formData.customJobType || "Other" : formData.jobType,
-        deliveryDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], // Default tomorrow
+        deliveryDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
       });
-      showToast(t("Job added successfully", "పని విజయవంతంగా జోడించబడింది"), "success");
+      showToast(t("Production started", "ప్రొడక్షన్ మొదలైంది"), "success");
       setFormData({
         customerName: "",
         phone: "",
@@ -97,203 +96,175 @@ export default function QuickJobForm() {
         quantity: "1",
         instructions: ""
       });
-      // Optionally trigger a refresh of the dashboard data
       window.location.reload();
     } catch (err) {
-      showToast(t("Failed to add job", "పని జోడించడం విఫలమైంది"), "error");
-      console.error(err);
+      showToast("Submission failed", "error");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 overflow-visible">
-      {toast && <Toast toast={toast} onDismiss={dismissToast} />}
+    <div className="relative group/form">
+      {/* Decorative Glow */}
+      <div className="absolute -inset-1 bg-gradient-to-r from-slate-200 to-slate-100 rounded-[32px] blur opacity-25 group-hover/form:opacity-50 transition duration-1000"></div>
       
-      <div className="flex items-center gap-3 mb-6">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 tracking-tight">{t("Quick Add Job", "త్వరిత పని చేరిక", "त्वरित कार्य जोड़ें")}</h3>
-          <p className="text-[10px] text-gray-400 uppercase font-medium tracking-widest">{t("Capture the run first", "ముందుగా పనిని నమోదు చేయండి", "पहले कार्य कैप्चर करें")}</p>
+      <div className="relative bg-white/90 backdrop-blur-2xl rounded-[28px] border border-slate-200/60 p-8 shadow-[0_8px_40px_rgba(0,0,0,0.04)] overflow-visible">
+        {toast && <Toast toast={toast} onDismiss={dismissToast} />}
+        
+        <div className="flex items-center gap-4 mb-10">
+          <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200">
+             <Zap className="w-5 h-5 fill-white" />
+          </div>
+          <div className="space-y-0.5">
+            <h3 className="text-base font-black text-slate-900 tracking-tight uppercase italic leading-none">{t("Rapid Ingest", "త్వరిత చేరిక")}</h3>
+            <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">{t("Capturing Production Data", "పని నమోదు")}</p>
+          </div>
         </div>
+
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="space-y-6">
+            <div className="space-y-4">
+              {/* Phone Field */}
+              <div className="relative">
+                <div className="relative group/input">
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within/input:text-slate-900 transition-colors" />
+                  <input 
+                    type="tel"
+                    required
+                    placeholder="Phone"
+                    value={formData.phone}
+                    onChange={(e) => {
+                      setFormData({...formData, phone: e.target.value});
+                      handleCustomerSearch(e.target.value, 'phone');
+                    }}
+                    className="w-full pl-12 pr-4 h-14 bg-slate-50/50 border border-slate-100 rounded-2xl text-[13px] font-bold focus:bg-white focus:ring-1 focus:ring-slate-900/10 focus:border-slate-900/20 outline-none transition-all placeholder:text-slate-300"
+                  />
+                </div>
+
+                {showSuggestions && activeSearchField === 'phone' && suggestions.length > 0 && (
+                  <div className="absolute z-[100] left-0 right-0 top-full mt-2 bg-white/80 backdrop-blur-xl border border-slate-200/60 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
+                    {suggestions.map((customer) => (
+                      <button
+                        key={customer.id}
+                        type="button"
+                        onClick={() => selectCustomer(customer)}
+                        className="w-full text-left px-5 py-4 hover:bg-slate-900 hover:text-white transition-all flex items-center justify-between group"
+                      >
+                        <div>
+                          <div className="text-xs font-black uppercase tracking-tight">{customer.name}</div>
+                          <div className="text-[10px] opacity-60 font-medium tracking-widest">{customer.phone}</div>
+                        </div>
+                        <Check className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Name Field */}
+              <div className="relative">
+                <div className="relative group/input">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within/input:text-slate-900 transition-colors" />
+                  <input 
+                    type="text"
+                    required
+                    placeholder="Customer Name"
+                    value={formData.customerName}
+                    onChange={(e) => {
+                      setFormData({...formData, customerName: e.target.value});
+                      handleCustomerSearch(e.target.value, 'name');
+                    }}
+                    className="w-full pl-12 pr-4 h-14 bg-slate-50/50 border border-slate-100 rounded-2xl text-[13px] font-bold focus:bg-white focus:ring-1 focus:ring-slate-900/10 focus:border-slate-900/20 outline-none transition-all placeholder:text-slate-300"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Product Chips */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t("Product Stream", "ఉత్పత్తి")}</p>
+                 <Sparkles className="w-3 h-3 text-slate-200" />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {jobTypes.map((type) => (
+                  <button
+                    key={type.id}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, jobType: type.id })}
+                    className={cn(
+                      "px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 border",
+                      formData.jobType === type.id
+                        ? "bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-200"
+                        : "bg-white text-slate-400 border-slate-100 hover:border-slate-900/10 hover:text-slate-600"
+                    )}
+                  >
+                    {type.label}
+                  </button>
+                ))}
+              </div>
+
+              {formData.jobType === "Other" && (
+                <input 
+                  type="text"
+                  required
+                  placeholder="Specific product name..."
+                  value={formData.customJobType}
+                  onChange={(e) => setFormData({...formData, customJobType: e.target.value})}
+                  className="w-full h-12 px-5 bg-slate-50 border border-slate-900/10 rounded-xl text-xs font-bold focus:bg-white focus:ring-1 focus:ring-slate-900/20 outline-none transition-all placeholder:font-medium animate-in fade-in duration-300"
+                  autoFocus
+                />
+              )}
+            </div>
+
+            {/* Financials */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t("Total", "మొత్తం")}</p>
+                <div className="relative">
+                  <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-300" />
+                  <input 
+                    type="number"
+                    value={formData.totalAmount || ""}
+                    onChange={(e) => setFormData({...formData, totalAmount: parseFloat(e.target.value) || 0})}
+                    className="w-full pl-10 pr-4 h-12 bg-slate-50/50 border border-slate-100 rounded-xl text-xs font-black italic focus:bg-white outline-none"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t("Advance", "అడ్వాన్స్")}</p>
+                <input 
+                  type="number"
+                  value={formData.advancePaid || ""}
+                  onChange={(e) => setFormData({...formData, advancePaid: parseFloat(e.target.value) || 0})}
+                  className="w-full px-4 h-12 bg-slate-50/50 border border-slate-100 rounded-xl text-xs font-black italic text-green-600 focus:bg-white outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          <button 
+            type="submit"
+            disabled={loading}
+            className="group relative w-full h-16 bg-slate-900 text-white rounded-[20px] font-black text-[11px] uppercase tracking-[0.3em] overflow-hidden transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative flex items-center justify-center gap-3">
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                <>
+                  {t("Execute Order", "ఆర్డర్ సృష్టించు")}
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
+            </div>
+          </button>
+        </form>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Customer Search & Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Phone Field */}
-          <div className="relative">
-            <label className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1.5 block">{t("Phone Number", "ఫోన్ నంబర్", "फ़ोन नंबर")}</label>
-            <div className="relative group">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-primary transition-colors" />
-              <input 
-                type="tel"
-                required
-                placeholder={t("e.g. 9876543210", "ఉదా: 9876543210", "उदा: 9876543210")}
-                value={formData.phone}
-                onChange={(e) => {
-                  setFormData({...formData, phone: e.target.value});
-                  handleCustomerSearch(e.target.value, 'phone');
-                }}
-                onFocus={() => {
-                  if (formData.phone.length >= 3) {
-                    setShowSuggestions(true);
-                    setActiveSearchField('phone');
-                  }
-                }}
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:bg-white focus:ring-2 focus:ring-primary/10 outline-none transition-all font-semibold"
-              />
-            </div>
-
-            {showSuggestions && activeSearchField === 'phone' && suggestions.length > 0 && (
-              <div className="absolute z-50 left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                <div className="p-2 bg-gray-50/50 border-b border-gray-100 text-[9px] text-gray-400 uppercase font-medium tracking-widest px-4">{t("Recent Customers", "ఇటీవలి కస్టమర్లు")}</div>
-                {suggestions.map((customer) => (
-                  <button
-                    key={customer.id}
-                    type="button"
-                    onClick={() => selectCustomer(customer)}
-                    className="w-full text-left px-4 py-3 hover:bg-primary/5 transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="text-sm font-semibold text-gray-900 group-hover:text-primary">{customer.name}</div>
-                      <div className="text-[10px] text-gray-400">{customer.phone}</div>
-                    </div>
-                    <Check className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Name Field */}
-          <div className="relative">
-            <label className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1.5 block">{t("Customer Name", "కస్టమర్ పేరు", "ग्राहक का नाम")}</label>
-            <div className="relative group">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-primary transition-colors" />
-              <input 
-                type="text"
-                required
-                placeholder={t("Enter name...", "పేరు నమోదు చేయండి...", "नाम दर्ज करें...")}
-                value={formData.customerName}
-                onChange={(e) => {
-                  setFormData({...formData, customerName: e.target.value});
-                  handleCustomerSearch(e.target.value, 'name');
-                }}
-                onFocus={() => {
-                  if (formData.customerName.length >= 3) {
-                    setShowSuggestions(true);
-                    setActiveSearchField('name');
-                  }
-                }}
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:bg-white focus:ring-2 focus:ring-primary/10 outline-none transition-all font-semibold"
-              />
-            </div>
-
-            {showSuggestions && activeSearchField === 'name' && suggestions.length > 0 && (
-              <div className="absolute z-50 left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                <div className="p-2 bg-gray-50/50 border-b border-gray-100 text-[9px] text-gray-400 uppercase font-medium tracking-widest px-4">{t("Recent Customers", "ఇటీవలి కస్టమర్లు")}</div>
-                {suggestions.map((customer) => (
-                  <button
-                    key={customer.id}
-                    type="button"
-                    onClick={() => selectCustomer(customer)}
-                    className="w-full text-left px-4 py-3 hover:bg-primary/5 transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="text-sm font-semibold text-gray-900 group-hover:text-primary">{customer.name}</div>
-                      <div className="text-[10px] text-gray-400">{customer.phone}</div>
-                    </div>
-                    <Check className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Product Selection (Chips) */}
-        <div className="space-y-3">
-          <label className="text-[10px] font-medium text-gray-400 uppercase tracking-widest block">{t("Select Product", "ఉత్పత్తిని ఎంచుకోండి", "उत्पाद चुनें")}</label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {jobTypes.map((type) => (
-              <button
-                key={type.id}
-                type="button"
-                onClick={() => setFormData({ ...formData, jobType: type.id })}
-                className={cn(
-                  "px-3 py-2.5 rounded-xl text-xs font-semibold transition-all border text-center",
-                  formData.jobType === type.id
-                    ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                    : "bg-gray-50 text-gray-600 border-gray-100 hover:bg-white hover:border-gray-200"
-                )}
-              >
-                {type.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Custom Product Input if 'Other' is selected */}
-          {formData.jobType === "Other" && (
-            <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-              <input 
-                type="text"
-                required
-                placeholder={t("Enter product name...", "ఉత్పత్తి పేరు నమోదు చేయండి...", "उत्पाद का नाम दर्ज करें...")}
-                value={formData.customJobType}
-                onChange={(e) => setFormData({...formData, customJobType: e.target.value})}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-primary/20 rounded-2xl text-sm focus:bg-white focus:ring-2 focus:ring-primary/10 outline-none transition-all font-semibold placeholder:font-normal"
-                autoFocus
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Amount Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1.5 block">{t("Amount (₹)", "మొత్తం (₹)", "राशि (₹)")}</label>
-            <div className="relative group">
-              <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-primary transition-colors" />
-              <input 
-                type="number"
-                placeholder="0"
-                value={formData.totalAmount || ""}
-                onChange={(e) => setFormData({...formData, totalAmount: parseFloat(e.target.value) || 0})}
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:bg-white focus:ring-2 focus:ring-primary/10 outline-none transition-all font-medium"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1.5 block">{t("Advance (₹)", "అడ్వాన్స్ (₹)", "अग्रिम (₹)")}</label>
-            <input 
-              type="number"
-              placeholder="0"
-              value={formData.advancePaid || ""}
-              onChange={(e) => setFormData({...formData, advancePaid: parseFloat(e.target.value) || 0})}
-              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:bg-white focus:ring-2 focus:ring-primary/10 outline-none transition-all font-medium text-green-600"
-            />
-          </div>
-        </div>
-
-        <button 
-          type="submit"
-          disabled={loading}
-          className="w-full py-4 bg-primary text-white rounded-2xl font-semibold text-sm shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2"
-        >
-          {loading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            t("Create Job", "పనిని సృష్టించు", "कार्य बनाएँ")
-          )}
-        </button>
-      </form>
-
-      {/* Overlay to close suggestions */}
       {showSuggestions && (
         <div 
-          className="fixed inset-0 z-40 bg-transparent" 
+          className="fixed inset-0 z-[90] bg-transparent" 
           onClick={() => setShowSuggestions(false)}
         />
       )}
