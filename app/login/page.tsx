@@ -223,6 +223,11 @@ export default function LoginPage() {
             </p>
           </div>
         </form>
+
+        <div className="mt-8 flex gap-6 text-[10px] font-black uppercase tracking-widest text-gray-300">
+          <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+          <Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
+        </div>
       </div>
     </div>
   );

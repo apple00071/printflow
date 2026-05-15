@@ -667,8 +667,8 @@ export default function LandingPage() {
           <div className="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
             <p>© {new Date().getFullYear()} PrintFlow. Made for Bharat 🇮🇳</p>
             <div className="flex space-x-6 mt-4 md:mt-0">
-              <a href="#" className="hover:text-[#1e3a5f] transition-colors">Privacy</a>
-              <a href="#" className="hover:text-[#1e3a5f] transition-colors">Terms</a>
+              <Link href="/privacy" className="hover:text-[#1e3a5f] transition-colors">Privacy</Link>
+              <Link href="/terms" className="hover:text-[#1e3a5f] transition-colors">Terms</Link>
             </div>
           </div>
         </div>
