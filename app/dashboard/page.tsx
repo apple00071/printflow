@@ -122,7 +122,7 @@ export default function DashboardPage() {
         setChartData(Object.keys(jobGroups).map((name) => ({
           name,
           value: jobGroups[name],
-          color: "#0f172a"
+          color: "#1e3a5f"
         })).sort((a, b) => b.value - a.value).slice(0, 5));
 
         const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -163,11 +163,14 @@ export default function DashboardPage() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">{t("Dashboard", "డాష్బోర్డ్")}</h1>
+          <h1 className="text-2xl font-semibold text-[#1e3a5f] tracking-tight">{t("Dashboard", "డాష్బోర్డ్")}</h1>
           <p className="text-sm text-slate-500">{t("Welcome back to", "స్వాగతం")} {tenantInfo?.name}</p>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => router.push('/dashboard/orders/new')} className="h-10 px-4 bg-slate-900 text-white rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-slate-800 transition-colors">
+          <button 
+            onClick={() => router.push('/dashboard/orders/new')} 
+            className="h-10 px-4 bg-[#f97316] text-white rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-[#ea580c] transition-colors shadow-sm"
+          >
             <Plus className="w-4 h-4" />
             {t("New Order", "కొత్త ఆర్డర్")}
           </button>
@@ -182,15 +185,15 @@ export default function DashboardPage() {
           <Link 
             key={stat.label} 
             href={stat.href}
-            className="p-6 bg-white rounded-2xl border border-slate-200/60 shadow-sm hover:border-slate-300 transition-all group"
+            className="p-6 bg-white rounded-2xl border border-slate-200/60 shadow-sm hover:border-[#1e3a5f]/20 transition-all group"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-600 group-hover:bg-slate-900 group-hover:text-white transition-all">
+              <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-[#1e3a5f] group-hover:bg-[#1e3a5f] group-hover:text-white transition-all">
                 <stat.icon className="w-5 h-5" />
               </div>
               <div>
                 <p className="text-sm font-medium text-slate-500">{stat.label}</p>
-                <p className="text-xl font-bold text-slate-900 tracking-tight">{stat.value}</p>
+                <p className="text-xl font-bold text-[#1e3a5f] tracking-tight">{stat.value}</p>
               </div>
             </div>
           </Link>
@@ -205,8 +208,8 @@ export default function DashboardPage() {
 
           <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
             <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
-              <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">{t("Recent Pipeline", "ఇటీవలి పనులు")}</h2>
-              <Link href="/dashboard/orders" className="text-xs font-medium text-slate-500 hover:text-slate-900 flex items-center gap-1">
+              <h2 className="text-sm font-semibold text-[#1e3a5f] uppercase tracking-wider">{t("Recent Pipeline", "ఇటీవలి పనులు")}</h2>
+              <Link href="/dashboard/orders" className="text-xs font-medium text-slate-500 hover:text-[#1e3a5f] flex items-center gap-1">
                 View all <ArrowUpRight className="w-3 h-3" />
               </Link>
             </div>
@@ -224,7 +227,7 @@ export default function DashboardPage() {
                   {recentOrders.map((order) => (
                     <tr key={order.id} className="hover:bg-slate-50/50 transition-colors cursor-pointer" onClick={() => router.push(`/dashboard/orders/${order.id}`)}>
                       <td className="px-6 py-4">
-                        <p className="text-sm font-semibold text-slate-900">{order.customers?.name}</p>
+                        <p className="text-sm font-semibold text-[#1e3a5f]">{order.customers?.name}</p>
                         <p className="text-[10px] font-mono text-slate-400 uppercase">{order.friendly_id || `#${order.id.split('-')[0]}`}</p>
                       </td>
                       <td className="px-6 py-4">
@@ -241,7 +244,7 @@ export default function DashboardPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <p className="text-sm font-bold text-slate-900">{formatCurrency(order.total_amount)}</p>
+                        <p className="text-sm font-bold text-[#1e3a5f]">{formatCurrency(order.total_amount)}</p>
                       </td>
                     </tr>
                   ))}
@@ -256,14 +259,14 @@ export default function DashboardPage() {
            <QuickJobForm />
            
            <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm">
-              <h3 className="text-sm font-semibold text-slate-900 mb-4 uppercase tracking-wider">{t("Revenue Overview", "ఆదాయం")}</h3>
+              <h3 className="text-sm font-semibold text-[#1e3a5f] mb-4 uppercase tracking-wider">{t("Revenue Overview", "ఆదాయం")}</h3>
               <div className="h-[240px]">
                  <DashboardCharts data={monthlyTrend} type="line" />
               </div>
            </div>
 
            <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm">
-              <h3 className="text-sm font-semibold text-slate-900 mb-4 uppercase tracking-wider">{t("Product Mix", "ఉత్పత్తి మిశ్రమం")}</h3>
+              <h3 className="text-sm font-semibold text-[#1e3a5f] mb-4 uppercase tracking-wider">{t("Product Mix", "ఉత్పత్తి మిశ్రమం")}</h3>
               <div className="h-[240px]">
                  <DashboardCharts data={chartData} type="bar" />
               </div>

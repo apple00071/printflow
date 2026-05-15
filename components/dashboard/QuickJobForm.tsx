@@ -107,18 +107,18 @@ export default function QuickJobForm() {
   return (
     <div className="relative group/form">
       {/* Decorative Glow */}
-      <div className="absolute -inset-1 bg-gradient-to-r from-slate-200 to-slate-100 rounded-[32px] blur opacity-25 group-hover/form:opacity-50 transition duration-1000"></div>
+      <div className="absolute -inset-1 bg-gradient-to-r from-orange-100 to-blue-100 rounded-[32px] blur opacity-25 group-hover/form:opacity-50 transition duration-1000"></div>
       
       <div className="relative bg-white/90 backdrop-blur-2xl rounded-[28px] border border-slate-200/60 p-8 shadow-[0_8px_40px_rgba(0,0,0,0.04)] overflow-visible">
         {toast && <Toast toast={toast} onDismiss={dismissToast} />}
         
         <div className="flex items-center gap-4 mb-10">
-          <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200">
+          <div className="w-10 h-10 bg-[#1e3a5f] rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-100">
              <Zap className="w-5 h-5 fill-white" />
           </div>
           <div className="space-y-0.5">
-            <h3 className="text-base font-black text-slate-900 tracking-tight uppercase italic leading-none">{t("Rapid Ingest", "త్వరిత చేరిక")}</h3>
-            <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">{t("Capturing Production Data", "పని నమోదు")}</p>
+            <h3 className="text-base font-bold text-[#1e3a5f] tracking-tight uppercase leading-none">{t("Rapid Ingest", "త్వరిత చేరిక")}</h3>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">{t("Capturing Production Data", "పని నమోదు")}</p>
           </div>
         </div>
 
@@ -128,7 +128,7 @@ export default function QuickJobForm() {
               {/* Phone Field */}
               <div className="relative">
                 <div className="relative group/input">
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within/input:text-slate-900 transition-colors" />
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within/input:text-[#1e3a5f] transition-colors" />
                   <input 
                     type="tel"
                     required
@@ -138,7 +138,7 @@ export default function QuickJobForm() {
                       setFormData({...formData, phone: e.target.value});
                       handleCustomerSearch(e.target.value, 'phone');
                     }}
-                    className="w-full pl-12 pr-4 h-14 bg-slate-50/50 border border-slate-100 rounded-2xl text-[13px] font-bold focus:bg-white focus:ring-1 focus:ring-slate-900/10 focus:border-slate-900/20 outline-none transition-all placeholder:text-slate-300"
+                    className="w-full pl-12 pr-4 h-14 bg-slate-50/50 border border-slate-100 rounded-2xl text-[13px] font-bold focus:bg-white focus:ring-1 focus:ring-[#1e3a5f]/10 focus:border-[#1e3a5f]/20 outline-none transition-all placeholder:text-slate-300"
                   />
                 </div>
 
@@ -149,10 +149,10 @@ export default function QuickJobForm() {
                         key={customer.id}
                         type="button"
                         onClick={() => selectCustomer(customer)}
-                        className="w-full text-left px-5 py-4 hover:bg-slate-900 hover:text-white transition-all flex items-center justify-between group"
+                        className="w-full text-left px-5 py-4 hover:bg-[#1e3a5f] hover:text-white transition-all flex items-center justify-between group"
                       >
                         <div>
-                          <div className="text-xs font-black uppercase tracking-tight">{customer.name}</div>
+                          <div className="text-xs font-bold uppercase tracking-tight">{customer.name}</div>
                           <div className="text-[10px] opacity-60 font-medium tracking-widest">{customer.phone}</div>
                         </div>
                         <Check className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -165,7 +165,7 @@ export default function QuickJobForm() {
               {/* Name Field */}
               <div className="relative">
                 <div className="relative group/input">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within/input:text-slate-900 transition-colors" />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within/input:text-[#1e3a5f] transition-colors" />
                   <input 
                     type="text"
                     required
@@ -175,7 +175,7 @@ export default function QuickJobForm() {
                       setFormData({...formData, customerName: e.target.value});
                       handleCustomerSearch(e.target.value, 'name');
                     }}
-                    className="w-full pl-12 pr-4 h-14 bg-slate-50/50 border border-slate-100 rounded-2xl text-[13px] font-bold focus:bg-white focus:ring-1 focus:ring-slate-900/10 focus:border-slate-900/20 outline-none transition-all placeholder:text-slate-300"
+                    className="w-full pl-12 pr-4 h-14 bg-slate-50/50 border border-slate-100 rounded-2xl text-[13px] font-bold focus:bg-white focus:ring-1 focus:ring-[#1e3a5f]/10 focus:border-[#1e3a5f]/20 outline-none transition-all placeholder:text-slate-300"
                   />
                 </div>
               </div>
@@ -184,7 +184,7 @@ export default function QuickJobForm() {
             {/* Product Chips */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t("Product Stream", "ఉత్పత్తి")}</p>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{t("Product Stream", "ఉత్పత్తి")}</p>
                  <Sparkles className="w-3 h-3 text-slate-200" />
               </div>
               <div className="flex flex-wrap gap-2">
@@ -194,51 +194,39 @@ export default function QuickJobForm() {
                     type="button"
                     onClick={() => setFormData({ ...formData, jobType: type.id })}
                     className={cn(
-                      "px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 border",
+                      "px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all duration-300 border",
                       formData.jobType === type.id
-                        ? "bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-200"
-                        : "bg-white text-slate-400 border-slate-100 hover:border-slate-900/10 hover:text-slate-600"
+                        ? "bg-[#1e3a5f] text-white border-[#1e3a5f] shadow-lg shadow-blue-50"
+                        : "bg-white text-slate-400 border-slate-100 hover:border-[#1e3a5f]/10 hover:text-slate-600"
                     )}
                   >
                     {type.label}
                   </button>
                 ))}
               </div>
-
-              {formData.jobType === "Other" && (
-                <input 
-                  type="text"
-                  required
-                  placeholder="Specific product name..."
-                  value={formData.customJobType}
-                  onChange={(e) => setFormData({...formData, customJobType: e.target.value})}
-                  className="w-full h-12 px-5 bg-slate-50 border border-slate-900/10 rounded-xl text-xs font-bold focus:bg-white focus:ring-1 focus:ring-slate-900/20 outline-none transition-all placeholder:font-medium animate-in fade-in duration-300"
-                  autoFocus
-                />
-              )}
             </div>
 
             {/* Financials */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t("Total", "మొత్తం")}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t("Total", "మొత్తం")}</p>
                 <div className="relative">
                   <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-300" />
                   <input 
                     type="number"
                     value={formData.totalAmount || ""}
                     onChange={(e) => setFormData({...formData, totalAmount: parseFloat(e.target.value) || 0})}
-                    className="w-full pl-10 pr-4 h-12 bg-slate-50/50 border border-slate-100 rounded-xl text-xs font-black italic focus:bg-white outline-none"
+                    className="w-full pl-10 pr-4 h-12 bg-slate-50/50 border border-slate-100 rounded-xl text-xs font-bold focus:bg-white outline-none"
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t("Advance", "అడ్వాన్స్")}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t("Advance", "అడ్వాన్స్")}</p>
                 <input 
                   type="number"
                   value={formData.advancePaid || ""}
                   onChange={(e) => setFormData({...formData, advancePaid: parseFloat(e.target.value) || 0})}
-                  className="w-full px-4 h-12 bg-slate-50/50 border border-slate-100 rounded-xl text-xs font-black italic text-green-600 focus:bg-white outline-none"
+                  className="w-full px-4 h-12 bg-slate-50/50 border border-slate-100 rounded-xl text-xs font-bold text-green-600 focus:bg-white outline-none"
                 />
               </div>
             </div>
@@ -247,9 +235,8 @@ export default function QuickJobForm() {
           <button 
             type="submit"
             disabled={loading}
-            className="group relative w-full h-16 bg-slate-900 text-white rounded-[20px] font-black text-[11px] uppercase tracking-[0.3em] overflow-hidden transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+            className="group relative w-full h-16 bg-[#f97316] text-white rounded-[20px] font-bold text-[11px] uppercase tracking-[0.3em] overflow-hidden transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 shadow-md shadow-orange-100"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="relative flex items-center justify-center gap-3">
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                 <>

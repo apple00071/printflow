@@ -4,7 +4,9 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1e3a5f; /* Logo Dark Blue */
+  --primary: #f97316;    /* Logo Orange */
+  --secondary: #1e3a5f;  /* Logo Dark Blue */
   color-scheme: light;
 }
 
@@ -16,14 +18,19 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+/* Premium Design Layer */
+@layer components {
+  .btn-primary {
+    @apply bg-[#f97316] text-white hover:bg-[#ea580c] transition-colors shadow-sm;
   }
-}
+  
+  .btn-secondary {
+    @apply bg-[#1e3a5f] text-white hover:bg-[#162a44] transition-colors;
+  }
 
-/* Global Print Styles */
-@media print {
+  .premium-card {
+    @apply bg-white border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.02)];
+  }
   @page {
     size: A4;
     margin: 5mm;

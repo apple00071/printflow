@@ -113,7 +113,7 @@ export default function GmailHistoryScanner() {
            <button 
              onClick={scanHistory}
              disabled={loading}
-             className="bg-slate-900 text-white h-9 px-4 rounded-lg text-xs font-medium flex items-center gap-2 hover:bg-slate-800 transition-colors disabled:opacity-50"
+             className="bg-[#f97316] text-white h-9 px-4 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-[#ea580c] transition-colors disabled:opacity-50 shadow-sm"
            >
              {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
              Scan
@@ -162,7 +162,7 @@ export default function GmailHistoryScanner() {
                       <button 
                         onClick={() => importOrder(order)}
                         disabled={!!importing}
-                        className="h-10 px-4 bg-slate-900 text-white rounded-lg text-xs font-semibold flex items-center gap-2 hover:bg-slate-800 transition-colors disabled:opacity-50"
+                        className="h-10 px-4 bg-[#f97316] text-white rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-[#ea580c] transition-colors disabled:opacity-50 shadow-sm"
                       >
                         {importing === order.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
                         Import

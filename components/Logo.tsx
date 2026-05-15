@@ -17,7 +17,7 @@ export const Logo: React.FC<LogoProps> = ({
   const isDark = variant === 'dark';
   const primaryColor = isDark ? "text-[#1e3a5f]" : "text-white";
   const accentColor = "text-[#f97316]";
-  const subtextColor = isDark ? "text-gray-500" : "text-white/60";
+  const subtextColor = isDark ? "text-slate-400" : "text-white/60";
 
   // Size configurations
   const sizes = {
@@ -29,7 +29,7 @@ export const Logo: React.FC<LogoProps> = ({
     },
     md: {
       icon: "w-10 h-10",
-      text: "text-2xl",
+      text: "text-xl",
       subtext: "text-[9px]",
       gap: "gap-3"
     },
@@ -45,25 +45,17 @@ export const Logo: React.FC<LogoProps> = ({
 
   return (
     <div className={cn("flex items-center", currentSize.gap, className)}>
-      {/* SVG Icon part */}
-      <div className={cn("relative shrink-0", currentSize.icon)}>
+      {/* Official Recreated Icon part */}
+      <div className={cn("relative shrink-0 flex items-center justify-center", currentSize.icon)}>
         <svg 
           viewBox="0 0 100 100" 
           fill="none" 
           xmlns="http://www.w3.org/2000/svg"
           className="w-full h-full"
         >
-          {/* Brackets [ ] */}
+          {/* Square Bracket [ ] */}
           <path 
-            d="M35 25 H15 V75 H35" 
-            stroke="currentColor" 
-            strokeWidth="10" 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            className={primaryColor}
-          />
-          <path 
-            d="M65 25 H85 V75 H65" 
+            d="M25 20 H12 V80 H25 M75 20 H88 V80 H75" 
             stroke="currentColor" 
             strokeWidth="10" 
             strokeLinecap="round" 
@@ -71,20 +63,29 @@ export const Logo: React.FC<LogoProps> = ({
             className={primaryColor}
           />
           
-          {/* Orange Dot Above */}
+          {/* Dot Above Arrow */}
           <circle 
-            cx="50" 
-            cy="12" 
+            cx="42" 
+            cy="30" 
             r="8" 
             fill="currentColor" 
             className={accentColor} 
           />
           
-          {/* Orange Arrow -> */}
+          {/* Arrow with curve/tail */}
           <path 
-            d="M35 50 H65 M50 35 L65 50 L50 65" 
+            d="M25 60 Q40 60 55 60 M65 60 L78 60 M65 48 L78 60 L65 72" 
             stroke="currentColor" 
-            strokeWidth="10" 
+            strokeWidth="12" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            className={accentColor}
+          />
+          {/* Simpler Arrow Body for accuracy */}
+          <path 
+            d="M30 60 H75 M62 45 L77 60 L62 75" 
+            stroke="currentColor" 
+            strokeWidth="12" 
             strokeLinecap="round" 
             strokeLinejoin="round" 
             className={accentColor}
@@ -94,11 +95,11 @@ export const Logo: React.FC<LogoProps> = ({
 
       {showText && (
         <div className="flex flex-col leading-tight">
-          <div className={cn("flex items-center tracking-tighter uppercase font-medium", currentSize.text)}>
+          <div className={cn("flex items-center tracking-tight uppercase font-bold", currentSize.text)}>
             <span className={primaryColor}>Print</span>
-            <span className={cn("ml-1.5", accentColor)}>Flow</span>
+            <span className={cn("ml-1", accentColor)}>Flow</span>
           </div>
-          <span className={cn("tracking-[0.2em] font-normal uppercase font-sans", currentSize.subtext, subtextColor)}>
+          <span className={cn("tracking-[0.15em] font-bold uppercase text-slate-400", currentSize.subtext)}>
             Print Shop Software
           </span>
         </div>
