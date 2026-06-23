@@ -880,6 +880,7 @@ export async function acceptInvitation(email: string, userId: string, name: stri
       id: userId,
       username: email.split("@")[0].toLowerCase(),
       name: name,
+      phone: invite.phone || null,
       role: invite.role,
       tenant_id: invite.tenant_id,
       status: 'ACTIVE'

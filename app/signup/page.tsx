@@ -15,6 +15,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [businessName, setBusinessName] = useState("");
+  const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -25,6 +26,13 @@ export default function SignupPage() {
     setLoading(true);
     setError(null);
 
+    const cleanPhone = phone.replace(/\D/g, "");
+    if (cleanPhone.length !== 10) {
+      setError(t("Please enter a valid 10-digit mobile number", "దయచేసి సరైన 10 అంకెల మొబైల్ నంబర్‌ను నమోదు చేయండి", "कृपया 10 अंकों का वैध मोबाइल नंबर दर्ज करें"));
+      setLoading(false);
+      return;
+    }
+
     try {
       // 1. Auth Signup
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -33,6 +41,7 @@ export default function SignupPage() {
         options: {
           data: {
             business_name: businessName,
+            phone: cleanPhone,
           }
         }
       });
@@ -50,7 +59,8 @@ export default function SignupPage() {
           plan: "PRO",
           trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
           onboarding_complete: false,
-          email: email
+          email: email,
+          phone: cleanPhone
         })
         .select()
         .single();
@@ -65,7 +75,8 @@ export default function SignupPage() {
           username: email.split("@")[0],
           name: businessName,
           role: "ADMIN",
-          tenant_id: tenant.id
+          tenant_id: tenant.id,
+          phone: cleanPhone
         });
 
       if (profileError) throw profileError;
@@ -137,6 +148,21 @@ export default function SignupPage() {
                 onChange={(e) => setBusinessName(e.target.value)}
                 placeholder={t("e.g. Royal Printers", "ఉదా: రాయల్ ప్రింటర్స్")}
                 className="block w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm transition-all"
+              />
+            </div>
+            <div>
+              <label htmlFor="phone" className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">
+                {t("Phone Number", "ఫోన్ నంబర్", "फ़ोन नंबर")}
+              </label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder={t("10 digit mobile number", "10 అంకెల మొబైల్ నంబర్", "10 अंकों का मोबाइल नंबर")}
+                className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm transition-all"
               />
             </div>
             <div>
