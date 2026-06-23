@@ -14,6 +14,9 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.printflow.co.in"),
+  alternates: {
+    canonical: "/",
+  },
   title: {
     default: "PrintFlow - Printing Business Management",
     template: "%s | PrintFlow"

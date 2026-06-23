@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Shield, Lock, Eye, FileText, ArrowLeft } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description: "Read the PrintFlow Privacy Policy, details on Google OAuth, and how we protect your print shop data.",
+};
 
 export default function PrivacyPolicy() {
   return (

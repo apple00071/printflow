@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Scale, CheckCircle2, AlertCircle, HelpCircle, ArrowLeft } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Terms of Service",
+  description: "Read the Terms of Service for using PrintFlow to manage your printing business.",
+};
 
 export default function TermsOfService() {
   return (
