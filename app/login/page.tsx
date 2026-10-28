@@ -24,62 +24,11 @@ export default function LoginPage() {
     try {
       let emailToUse = email.trim();
       
-      // If it looks like an email, check if it exists in profiles or tenants
-      if (emailToUse.includes("@")) {
-        const usernamePart = emailToUse.split("@")[0];
-        
-        // Check profiles by email OR username
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("id")
-          .or(`email.eq.${emailToUse},username.eq.${usernamePart}`)
-          .maybeSingle();
-
-        if (!profileData) {
-          // If not in profiles, check if it's a tenant contact email
-          const { data: tenantData } = await supabase
-            .from("tenants")
-            .select("id")
-            .eq("email", emailToUse)
-            .maybeSingle();
-
-          if (!tenantData) {
-            setError(
-              <div className="flex flex-col gap-2">
-                <p>{t("Account not found", "ఖాతా కనుగొనబడలేదు")}</p>
-                <Link href="/signup" className="text-primary font-bold hover:underline uppercase text-[10px] tracking-widest mt-1">
-                  {t("Create new account", "కొత్త ఖాతాను సృష్టించండి")} →
-                </Link>
-              </div>
-            );
-            setLoading(false);
-            return;
-          }
-        }
-      } else {
-        // Handling for Username
+      // If entered as a short username without '@', map default domain
+      if (!emailToUse.includes("@")) {
         if (emailToUse.toLowerCase() === 'apple') {
           emailToUse = 'apple@admin.com';
         } else {
-          const { data, error: profileError } = await supabase
-            .from("profiles")
-            .select("id")
-            .ilike("username", emailToUse)
-            .maybeSingle();
-
-          if (profileError || !data) {
-            setError(
-              <div className="flex flex-col gap-2">
-                <p>{t("Username not found", "యూజర్ నేమ్ కనుగొనబడలేదు")}</p>
-                <Link href="/signup" className="text-primary font-bold hover:underline uppercase text-[10px] tracking-widest mt-1">
-                  {t("Create new account", "కొత్త ఖాతాను సృష్టించండి")} →
-                </Link>
-              </div>
-            );
-            setLoading(false);
-            return;
-          }
-          
           emailToUse = `${emailToUse.toLowerCase()}@applegraphics.local`;
         }
       }
@@ -90,8 +39,22 @@ export default function LoginPage() {
       });
 
       if (signInError) {
-        // If password is wrong but account exists
-        throw new Error(t("Invalid login credentials", "తప్పుడు వివరాలు"));
+        if (signInError.message.toLowerCase().includes("invalid login credentials")) {
+          setError(
+            <div className="flex flex-col gap-2">
+              <p>{t("Invalid email or password", "తప్పుడు ఈమెయిల్ లేదా పాస్‌వర్డ్")}</p>
+              <Link href="/signup" className="text-primary font-bold hover:underline uppercase text-[10px] tracking-widest mt-1">
+                {t("Create new account", "కొత్త ఖాతాను సృష్టించండి")} →
+              </Link>
+            </div>
+          );
+        } else if (signInError.message.toLowerCase().includes("email not confirmed")) {
+          setError(t("Please confirm your email address before logging in", "దయచేసి లాగిన్ అవ్వడానికి ముందు మీ ఈమెయిల్‌ను ధృవీకరించండి"));
+        } else {
+          setError(signInError.message);
+        }
+        setLoading(false);
+        return;
       }
       
       // Check user role to determine redirect

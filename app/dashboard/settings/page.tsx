@@ -22,7 +22,8 @@ import {
   Plus,
   Mail,
   Zap,
-  Globe
+  Globe,
+  CheckCircle2
 } from "lucide-react";
 import { useState, useEffect, useRef, Suspense } from "react";
 
@@ -106,6 +107,7 @@ function SettingsContent() {
     subscription_tier?: string;
     plan?: string;
     orders_this_month?: number;
+    trial_ends_at?: string;
     subscription_end_date?: string;
   }
   const [tenant, setTenant] = useState<Tenant | null>(null);
@@ -196,9 +198,12 @@ function SettingsContent() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const rzp = new (window as any).Razorpay(options);
         rzp.open();
+      } else {
+        alert(data.error || "Payment gateway not configured yet. Please configure Razorpay keys in settings.");
       }
     } catch {
       console.error("Upgrade error");
+      alert("Unable to initiate upgrade at this time. Please check network or try again later.");
     } finally {
       setLoading(false);
     }
@@ -480,103 +485,130 @@ function SettingsContent() {
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-8 space-y-8">
                  <Script src="https://checkout.razorpay.com/v1/checkout.js" />
 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Current Plan Card */}
-                    <div className="bg-white p-8 rounded-3xl text-gray-900 shadow-sm border border-gray-100 space-y-6">
-                       <div className="space-y-2">
-                          <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-medium">{t("Current Plan", "ప్రస్తుత ప్లాన్")}</p>
-                          <h3 className="text-3xl font-semibold italic tracking-tighter uppercase text-primary">{(tenant?.subscription_tier || tenant?.plan || 'FREE')}</h3>
-                       </div>
-                       
-                       <div className="space-y-4 pt-4">
-                          <div className="flex justify-between items-end border-b border-gray-50 pb-4">
-                             <div className="space-y-1">
-                                <p className="text-[10px] uppercase text-gray-400 font-medium">{t("Usage this month", "ఈ నెల వినియోగం")}</p>
-                                <p className="text-xl font-medium text-gray-900">{tenant?.orders_this_month || 0} {t("orders", "ఆర్డర్లు")}</p>
-                             </div>
-                             <p className="text-[10px] bg-gray-50 px-2 py-1 rounded font-semibold text-gray-400 uppercase tracking-widest leading-none">
-                                ∞
-                             </p>
-                          </div>
-                          <div className="h-1.5 w-full bg-gray-50 rounded-full overflow-hidden">
-                             <div
-                                className="h-full bg-primary transition-all duration-1000"
-                                style={{ width: '100%' }}
-                             />
-                          </div>
-                       </div>
-                    </div>
+                 {(() => {
+                    const rawTier = (tenant?.subscription_tier || tenant?.plan || 'FREE').toUpperCase().trim();
+                    const isTrialActive = Boolean(
+                      tenant?.trial_ends_at && new Date(tenant.trial_ends_at) > new Date()
+                    );
+                    const isTrialExpired = Boolean(
+                      tenant?.trial_ends_at && new Date(tenant.trial_ends_at) <= new Date()
+                    );
+                    const tier = isTrialActive ? (rawTier === 'BUSINESS' ? 'BUSINESS' : 'PRO') : (isTrialExpired ? 'FREE' : rawTier);
+                    const isFree = tier === 'FREE';
 
-                     {/* Upgrade Options */}
-                     {(() => {
-                        const tier = (tenant?.plan || tenant?.subscription_tier || 'FREE').toUpperCase().trim();
-                        const isFree = tier === 'FREE';
-                        
-                        if (isFree) {
-                           return (
-                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-                                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between space-y-4">
-                                   <div className="space-y-1">
-                                      <h3 className="text-lg font-semibold text-gray-900 uppercase tracking-tighter">Pro Plan</h3>
-                                      <p className="text-[10px] text-gray-400 font-medium tracking-widest leading-relaxed">
-                                         Unlimited orders & reports
-                                      </p>
-                                   </div>
-                                   <div className="space-y-3">
-                                      <div className="flex items-baseline gap-1">
-                                         <span className="text-xl font-semibold text-primary">₹499</span>
-                                         <span className="text-[9px] text-gray-400 font-medium uppercase">/ month</span>
-                                      </div>
-                                      <button 
-                                         onClick={handleUpgrade}
-                                         disabled={loading}
-                                         className="w-full bg-primary text-white py-3 rounded-xl font-semibold uppercase tracking-widest text-[10px] shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
-                                      >
-                                         {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Upgrade to Pro"}
-                                      </button>
-                                   </div>
-                                </div>
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                         {/* Current Plan Card */}
+                         <div className="bg-white p-8 rounded-3xl text-gray-900 shadow-sm border border-gray-100 space-y-6">
+                            <div className="space-y-2">
+                               <div className="flex items-center gap-2">
+                                  <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-medium">{t("Current Plan", "ప్రస్తుత ప్లాన్")}</p>
+                                  {isTrialActive && (
+                                     <span className="bg-orange-50 text-orange-600 border border-orange-200 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest">
+                                        7-Day Trial
+                                     </span>
+                                  )}
+                               </div>
+                               <h3 className="text-3xl font-semibold italic tracking-tighter uppercase text-primary">
+                                  {tier}
+                               </h3>
+                            </div>
+                            
+                            <div className="space-y-4 pt-4">
+                               <div className="flex justify-between items-end border-b border-gray-50 pb-4">
+                                  <div className="space-y-1">
+                                     <p className="text-[10px] uppercase text-gray-400 font-medium">{t("Usage this month", "ఈ నెల వినియోగం")}</p>
+                                     <p className="text-xl font-medium text-gray-900">{tenant?.orders_this_month || 0} {t("orders", "ఆర్డర్లు")}</p>
+                                  </div>
+                                  <p className="text-[10px] bg-gray-50 px-2 py-1 rounded font-semibold text-gray-400 uppercase tracking-widest leading-none">
+                                     ∞
+                                  </p>
+                               </div>
+                               <div className="h-1.5 w-full bg-gray-50 rounded-full overflow-hidden">
+                                  <div
+                                     className="h-full bg-primary transition-all duration-1000"
+                                     style={{ width: '100%' }}
+                                  />
+                               </div>
+                            </div>
+                         </div>
 
-                                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between space-y-4">
-                                   <div className="space-y-1">
-                                      <div className="flex items-center justify-between">
-                                         <h3 className="text-lg font-semibold text-gray-900 uppercase tracking-tighter">Business</h3>
-                                         <span className="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-widest leading-none">Enterprise</span>
-                                      </div>
-                                      <p className="text-[10px] text-gray-400 font-medium tracking-widest leading-relaxed">
-                                         Advanced scaling & support
-                                      </p>
-                                   </div>
-                                   <div className="space-y-3">
-                                      <div className="flex items-baseline gap-1">
-                                         <span className="text-xl font-semibold text-gray-900">₹999</span>
-                                         <span className="text-[9px] text-gray-400 font-medium uppercase">/ month</span>
-                                      </div>
-                                      <button 
-                                         onClick={() => alert("Business plan upgrade via sales. Please contact support.")}
-                                         className="w-full bg-gray-50 text-gray-900 py-3 rounded-xl font-semibold uppercase tracking-widest text-[10px] border border-gray-100 hover:bg-gray-100 active:scale-95 transition-all"
-                                      >
-                                         Contact Support
-                                      </button>
-                                   </div>
-                                </div>
-                             </div>
-                           );
-                        } else {
-                           return (
-                             <div className="bg-green-50 p-8 rounded-3xl border border-green-100 flex flex-col items-center justify-center text-center space-y-4">
-                                <div className="p-4 bg-green-500 rounded-full text-white">
-                                   <Save className="w-8 h-8" />
-                                </div>
-                                <h3 className="text-lg font-semibold text-green-900 uppercase tracking-tight">
-                                   {tier === 'BUSINESS' ? t("You are on Business Plan", "మీరు బిజినెస్ ప్లాన్ లో ఉన్నారు") : t("You are on Pro Plan", "మీరు ప్రో ప్లాన్ లో ఉన్నారు")}
-                                </h3>
-                                <p className="text-xs text-green-600 font-medium tracking-widest">{t("Next billing: ", "తదుపరి బిల్లింగ్: ")} {tenant?.subscription_end_date ? formatDate(tenant.subscription_end_date) : 'N/A'}</p>
-                             </div>
-                           );
-                        }
-                     })()}
-                 </div>
+                         {/* Upgrade Options / Active Status Card */}
+                         {isFree ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                               <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between space-y-4">
+                                  <div className="space-y-1">
+                                     <h3 className="text-lg font-semibold text-gray-900 uppercase tracking-tighter">Pro Plan</h3>
+                                     <p className="text-[10px] text-gray-400 font-medium tracking-widest leading-relaxed">
+                                        Unlimited orders & reports
+                                     </p>
+                                  </div>
+                                  <div className="space-y-3">
+                                     <div className="flex items-baseline gap-1">
+                                        <span className="text-xl font-semibold text-primary">₹499</span>
+                                        <span className="text-[9px] text-gray-400 font-medium uppercase">/ month</span>
+                                     </div>
+                                     <button 
+                                        onClick={handleUpgrade}
+                                        disabled={loading}
+                                        className="w-full bg-primary text-white py-3 rounded-xl font-semibold uppercase tracking-widest text-[10px] shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                                     >
+                                        {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Upgrade to Pro"}
+                                     </button>
+                                  </div>
+                               </div>
+
+                               <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between space-y-4">
+                                  <div className="space-y-1">
+                                     <div className="flex items-center justify-between">
+                                        <h3 className="text-lg font-semibold text-gray-900 uppercase tracking-tighter">Business</h3>
+                                        <span className="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-widest leading-none">Enterprise</span>
+                                     </div>
+                                     <p className="text-[10px] text-gray-400 font-medium tracking-widest leading-relaxed">
+                                        Advanced scaling & support
+                                     </p>
+                                  </div>
+                                  <div className="space-y-3">
+                                     <div className="flex items-baseline gap-1">
+                                        <span className="text-xl font-semibold text-gray-900">₹999</span>
+                                        <span className="text-[9px] text-gray-400 font-medium uppercase">/ month</span>
+                                     </div>
+                                     <button 
+                                        onClick={() => alert("Business plan upgrade via sales. Please contact support.")}
+                                        className="w-full bg-gray-50 text-gray-900 py-3 rounded-xl font-semibold uppercase tracking-widest text-[10px] border border-gray-100 hover:bg-gray-100 active:scale-95 transition-all"
+                                     >
+                                        Contact Support
+                                     </button>
+                                  </div>
+                               </div>
+                            </div>
+                         ) : (
+                            <div className="bg-green-50 p-8 rounded-3xl border border-green-100 flex flex-col items-center justify-center text-center space-y-4">
+                               <div className="p-4 bg-green-500 rounded-full text-white">
+                                  <CheckCircle2 className="w-8 h-8" />
+                               </div>
+                               <h3 className="text-lg font-semibold text-green-900 uppercase tracking-tight">
+                                  {tier === 'BUSINESS' ? t("You are on Business Plan", "మీరు బిజినెస్ ప్లాన్ లో ఉన్నారు") : t("You are on Pro Plan", "మీరు ప్రో ప్లాన్ లో ఉన్నారు")}
+                               </h3>
+                               <p className="text-xs text-green-600 font-medium tracking-widest">
+                                  {isTrialActive
+                                     ? `${t("Trial ends: ", "ట్రయల్ ముగింపు: ")} ${formatDate(tenant!.trial_ends_at!)}`
+                                     : `${t("Next billing: ", "తదుపరి బిల్లింగ్: ")} ${tenant?.subscription_end_date ? formatDate(tenant.subscription_end_date) : 'Active'}`}
+                               </p>
+                               {isTrialActive && (
+                                  <button 
+                                    onClick={handleUpgrade}
+                                    disabled={loading}
+                                    className="mt-2 bg-primary text-white px-5 py-2.5 rounded-xl font-semibold uppercase tracking-widest text-[10px] shadow-sm hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                                  >
+                                    {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Subscribe to Pro (₹499/mo)"}
+                                  </button>
+                               )}
+                            </div>
+                         )}
+                      </div>
+                    );
+                 })()}
               </div>
             )}
 

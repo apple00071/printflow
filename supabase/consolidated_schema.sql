@@ -61,6 +61,7 @@ ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS orders_this_month INT DEFAUL
 ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMPTZ;
 ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS subscription_tier TEXT DEFAULT 'FREE';
 ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'ACTIVE';
+ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 -- 3. Profiles Table (Auth Users Extension)
 CREATE TABLE IF NOT EXISTS public.profiles (
@@ -78,6 +79,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 -- Ensure all profiles columns exist if table was previously created
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'ACTIVE';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 -- Helper function to fetch current tenant id from context
 CREATE OR REPLACE FUNCTION public.get_tenant_id()

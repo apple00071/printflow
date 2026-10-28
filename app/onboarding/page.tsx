@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { validateGSTIN, getStateFromGSTIN, GST_STATE_CODES } from "@/lib/gst";
 import { getCurrentTenant } from "@/lib/tenant";
-
-// STEPS removed as it was unused
+import CustomSelect from "@/components/ui/CustomSelect";
+import { Plus, Trash2 } from "lucide-react";
 
 const COMMON_JOB_TYPES = [
   { label: "Business Cards", hsn: "4901", price: 250 },
@@ -16,12 +16,28 @@ const COMMON_JOB_TYPES = [
   { label: "Letterheads", hsn: "4901", price: 300 }
 ];
 
+const BUSINESS_TYPES = [
+  "Offset Printing",
+  "Digital Printing",
+  "Flex & Signage",
+  "Screen Printing",
+  "Packaging"
+];
+
+// Alphabetically sorted unique list of Indian States & UTs
+const SORTED_INDIAN_STATES = Array.from(new Set(Object.values(GST_STATE_CODES))).sort((a, b) =>
+  a.localeCompare(b)
+);
+
 export default function OnboardingPage() {
   const router = useRouter();
   const supabase = createClient();
   
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const [newProduct, setNewProduct] = useState({ label: "", hsn: "4911", price: 100 });
+
   interface Tenant {
     id: string;
     name: string;
@@ -40,6 +56,31 @@ export default function OnboardingPage() {
     is_gst_registered: false,
     job_types: COMMON_JOB_TYPES.map(jt => ({ ...jt, selected: true }))
   });
+
+  const handleAddProduct = () => {
+    if (!newProduct.label.trim()) return;
+    setFormData(prev => ({
+      ...prev,
+      job_types: [
+        ...prev.job_types,
+        {
+          label: newProduct.label.trim(),
+          hsn: newProduct.hsn.trim() || "4911",
+          price: Number(newProduct.price) || 0,
+          selected: true
+        }
+      ]
+    }));
+    setNewProduct({ label: "", hsn: "4911", price: 100 });
+    setIsAddingProduct(false);
+  };
+
+  const handleRemoveProduct = (indexToRemove: number) => {
+    setFormData(prev => ({
+      ...prev,
+      job_types: prev.job_types.filter((_, idx) => idx !== indexToRemove)
+    }));
+  };
 
   useEffect(() => {
     async function loadTenant() {
@@ -171,31 +212,22 @@ export default function OnboardingPage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Business Type</label>
-                  <select 
-                    value={formData.business_type} 
-                    onChange={e => setFormData({...formData, business_type: e.target.value})}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                  >
-                    <option value="">Select Type</option>
-                    <option value="Offset Printing">Offset Printing</option>
-                    <option value="Digital Printing">Digital Printing</option>
-                    <option value="Flex & Signage">Flex & Signage</option>
-                    <option value="Screen Printing">Screen Printing</option>
-                    <option value="Packaging">Packaging</option>
-                  </select>
+                  <CustomSelect
+                    options={BUSINESS_TYPES}
+                    value={formData.business_type}
+                    onChange={val => setFormData({ ...formData, business_type: val })}
+                    placeholder="Select Business Type"
+                  />
                 </div>
                 <div>
                   <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">State</label>
-                  <select 
-                    value={formData.state} 
-                    onChange={e => setFormData({...formData, state: e.target.value})}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                  >
-                    <option value="">Select State</option>
-                    {Object.entries(GST_STATE_CODES).map(([code, name]) => (
-                      <option key={code} value={name}>{name}</option>
-                    ))}
-                  </select>
+                  <CustomSelect
+                    options={SORTED_INDIAN_STATES}
+                    value={formData.state}
+                    onChange={val => setFormData({ ...formData, state: val })}
+                    placeholder="Select State"
+                    searchable={true}
+                  />
                 </div>
                 <div>
                   <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Phone Number</label>
@@ -283,10 +315,82 @@ export default function OnboardingPage() {
 
           {step === 4 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-normal text-gray-900 leading-tight">Products & Pricing</h2>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-normal text-gray-900 leading-tight">Products & Pricing</h2>
+                  <p className="text-xs text-gray-400 mt-1">Select and configure your products, or add custom ones.</p>
+                </div>
+                {!isAddingProduct && (
+                  <button 
+                    type="button"
+                    onClick={() => setIsAddingProduct(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 text-xs font-medium transition-all shadow-sm"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Product
+                  </button>
+                )}
+              </div>
+
+              {isAddingProduct && (
+                <div className="p-4 rounded-2xl border border-primary/20 bg-primary/[0.02] space-y-3 animate-in fade-in duration-200">
+                  <div className="text-xs font-semibold text-gray-800">Add Custom Product</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-1">
+                      <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Product Name</label>
+                      <input 
+                        type="text"
+                        value={newProduct.label}
+                        onChange={e => setNewProduct({...newProduct, label: e.target.value})}
+                        placeholder="e.g. Bill Books, Brochures"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-primary outline-none bg-white"
+                        autoFocus
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">HSN Code</label>
+                      <input 
+                        type="text"
+                        value={newProduct.hsn}
+                        onChange={e => setNewProduct({...newProduct, hsn: e.target.value})}
+                        placeholder="e.g. 4911"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-primary outline-none bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Base Price (₹)</label>
+                      <input 
+                        type="number"
+                        value={newProduct.price}
+                        onChange={e => setNewProduct({...newProduct, price: Number(e.target.value)})}
+                        placeholder="Price"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-primary outline-none bg-white"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-1">
+                    <button 
+                      type="button"
+                      onClick={() => setIsAddingProduct(false)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={handleAddProduct}
+                      disabled={!newProduct.label.trim()}
+                      className="px-4 py-1.5 rounded-lg text-xs font-medium bg-primary text-white hover:bg-primary/90 disabled:opacity-50 transition-all"
+                    >
+                      Add Product
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-3">
                 {formData.job_types.map((jt, idx) => (
-                  <div key={idx} className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 hover:border-primary/20 transition-all">
+                  <div key={idx} className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 hover:border-primary/20 transition-all bg-white">
                     <input 
                       type="checkbox"
                       checked={jt.selected}
@@ -295,7 +399,7 @@ export default function OnboardingPage() {
                         newJobs[idx].selected = e.target.checked;
                         setFormData({...formData, job_types: newJobs});
                       }}
-                      className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
+                      className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
                     />
                     <div className="flex-1">
                       <p className="text-sm font-normal text-gray-900">{jt.label}</p>
@@ -316,6 +420,14 @@ export default function OnboardingPage() {
                         />
                       </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveProduct(idx)}
+                      title="Remove product"
+                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 ))}
               </div>

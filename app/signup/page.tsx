@@ -57,6 +57,8 @@ export default function SignupPage() {
           name: businessName,
           slug,
           plan: "PRO",
+          subscription_tier: "PRO",
+          subscription_status: "ACTIVE",
           trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
           onboarding_complete: false,
           email: email,
