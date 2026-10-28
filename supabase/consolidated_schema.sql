@@ -39,6 +39,9 @@ CREATE TABLE IF NOT EXISTS public.tenants (
     plan TEXT NOT NULL DEFAULT 'FREE',
     plan_status TEXT NOT NULL DEFAULT 'ACTIVE',
     orders_this_month INT DEFAULT 0,
+    trial_ends_at TIMESTAMPTZ,
+    subscription_tier TEXT DEFAULT 'FREE',
+    subscription_status TEXT DEFAULT 'ACTIVE',
     razorpay_sub_id TEXT,
     language TEXT DEFAULT 'en',
     onboarding_complete BOOLEAN DEFAULT FALSE,
@@ -55,6 +58,9 @@ ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS onboarding_complete BOOLEAN 
 ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'FREE';
 ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS plan_status TEXT DEFAULT 'ACTIVE';
 ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS orders_this_month INT DEFAULT 0;
+ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMPTZ;
+ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS subscription_tier TEXT DEFAULT 'FREE';
+ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'ACTIVE';
 
 -- 3. Profiles Table (Auth Users Extension)
 CREATE TABLE IF NOT EXISTS public.profiles (
@@ -510,6 +516,9 @@ ALTER TABLE public.team_invitations ENABLE ROW LEVEL SECURITY;
 -- Tenants Policies
 DROP POLICY IF EXISTS "own_tenant_only" ON public.tenants;
 CREATE POLICY "own_tenant_only" ON public.tenants FOR ALL USING (id = get_tenant_id());
+
+DROP POLICY IF EXISTS "allow_insert_tenant" ON public.tenants;
+CREATE POLICY "allow_insert_tenant" ON public.tenants FOR INSERT TO authenticated WITH CHECK (true);
 
 DROP POLICY IF EXISTS "public_read_tenant_basics" ON public.tenants;
 CREATE POLICY "public_read_tenant_basics" ON public.tenants FOR SELECT USING (true);
