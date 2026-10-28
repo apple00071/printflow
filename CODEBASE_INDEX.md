@@ -31,10 +31,12 @@
 - [app/shop/[slug]/page.tsx](file:///d:/printflow/app/shop/[slug]/page.tsx): Walk-in self-service storefront order intake page
 - [app/proof/[orderId]/page.tsx](file:///d:/printflow/app/proof/[orderId]/page.tsx): Customer design proof review and approval portal
 - [app/estimate/page.tsx](file:///d:/printflow/app/estimate/page.tsx): Public estimate UI
+- [app/privacy/page.tsx](file:///d:/printflow/app/privacy/page.tsx), [app/terms/page.tsx](file:///d:/printflow/app/terms/page.tsx): Legal & compliance pages with canonical metadata
+- [app/robots.ts](file:///d:/printflow/app/robots.ts), [app/sitemap.ts](file:///d:/printflow/app/sitemap.ts): SEO crawler directives and sitemap
 
 ### 2. Tenant Dashboard Surface
 
-- [app/dashboard/layout.tsx](file:///d:/printflow/app/dashboard/layout.tsx): Wraps all dashboard routes
+- [app/dashboard/layout.tsx](file:///d:/printflow/app/dashboard/layout.tsx): Wraps all dashboard routes (currently in passthrough dev mode)
 - [components/dashboard/DashboardLayout.tsx](file:///d:/printflow/components/dashboard/DashboardLayout.tsx): Sidebar, navigation, language switcher, sign-out, and super-admin shortcuts
 - [app/dashboard/page.tsx](file:///d:/printflow/app/dashboard/page.tsx): Dashboard metrics overview
 - [app/dashboard/orders/*](file:///d:/printflow/app/dashboard/orders/): Order listings, details, creation, and edits
@@ -43,6 +45,7 @@
 - [app/dashboard/billing/*](file:///d:/printflow/app/dashboard/billing/): Billing dashboard, invoices, challan generators, and GST reports
 - [app/dashboard/expenses/page.tsx](file:///d:/printflow/app/dashboard/expenses/page.tsx): Operational costs tracker
 - [app/dashboard/inventory/page.tsx](file:///d:/printflow/app/dashboard/inventory/page.tsx): Raw material stock level manager
+- [app/dashboard/integrations/gmail/page.tsx](file:///d:/printflow/app/dashboard/integrations/gmail/page.tsx): Gmail integration connection and sync controls
 - [app/dashboard/tools/imposer/page.tsx](file:///d:/printflow/app/dashboard/tools/imposer/page.tsx): Interactive PDF booklet/N-up imposition utility
 - [app/dashboard/settings/page.tsx](file:///d:/printflow/app/dashboard/settings/page.tsx): Tenant/business configuration panel
 - [app/dashboard/profile/page.tsx](file:///d:/printflow/app/dashboard/profile/page.tsx), [app/dashboard/team/page.tsx](file:///d:/printflow/app/dashboard/team/page.tsx): Profile and staff team setup pages
@@ -74,12 +77,12 @@
 - [lib/supabase/server.ts](file:///d:/printflow/lib/supabase/server.ts): Server-side SSR client using request cookies
 - [lib/supabase/client.ts](file:///d:/printflow/lib/supabase/client.ts): Browser Supabase client
 - [lib/supabase/admin.ts](file:///d:/printflow/lib/supabase/admin.ts): privileged operations client (uses service role key)
-- [lib/supabase/middleware.ts](file:///d:/printflow/lib/supabase/middleware.ts): Refresh sessions and route-gating
+- [lib/supabase/middleware.ts](file:///d:/printflow/lib/supabase/middleware.ts): Refresh sessions and route-gating *(currently set to passthrough during Supabase transition)*
 
 ### Request Gating
 
 - [middleware.ts](file:///d:/printflow/middleware.ts) delegates to [lib/supabase/middleware.ts](file:///d:/printflow/lib/supabase/middleware.ts)
-- Gated routes (`/dashboard`, `/admin`, `/onboarding`) redirect unauthorized requests
+- Standard gating behavior (when enabled): Gated routes (`/dashboard`, `/admin`, `/onboarding`) redirect unauthorized requests
 - Routing based on profile roles:
   - **Super Admin**: redirects to `/admin`
   - **Tenant Admin / Worker**: redirects to `/dashboard`
