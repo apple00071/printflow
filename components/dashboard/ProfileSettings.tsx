@@ -11,7 +11,7 @@ import {
   Calendar,
   Building
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { getUserProfile, updateUserProfile } from "@/lib/supabase/actions";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { formatDate } from "@/lib/utils/format";
 
@@ -55,40 +55,18 @@ export default function ProfileSettings() {
 
   async function fetchProfile() {
     try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
+      const data = await getUserProfile();
+      if (!data || !data.user) {
         setLoading(false);
         return;
       }
 
-      // Get user profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) throw profileError;
-      setProfile(profileData);
-
-      // Get tenant info if user has tenant
-      if (profileData.tenant_id) {
-        const { data: tenantData, error: tenantError } = await supabase
-          .from('tenants')
-          .select('*')
-          .eq('id', profileData.tenant_id)
-          .single();
-
-        if (!tenantError) {
-          setTenant(tenantData);
-        }
-      }
+      setProfile(data.profile);
+      setTenant(data.tenant);
 
       setFormData({
-        name: profileData.name || '',
-        phone: profileData.phone || ''
+        name: data.profile?.name || '',
+        phone: data.profile?.phone || ''
       });
 
     } catch (error) {
@@ -101,20 +79,10 @@ export default function ProfileSettings() {
   async function handleSave() {
     setSaving(true);
     try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) return;
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          name: formData.name,
-          phone: formData.phone
-        })
-        .eq('id', user.id);
-
-      if (error) throw error;
+      await updateUserProfile({
+        name: formData.name,
+        phone: formData.phone
+      });
 
       setProfile(prev => prev ? { ...prev, ...formData } : null);
       setEditing(false);

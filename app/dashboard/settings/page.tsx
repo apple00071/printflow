@@ -23,8 +23,10 @@ import {
   Mail,
   Zap,
   Globe,
-  CheckCircle2
+  CheckCircle2,
+  ShieldCheck
 } from "lucide-react";
+import Link from "next/link";
 import { useState, useEffect, useRef, Suspense } from "react";
 
 import { useLanguage } from "@/lib/context/LanguageContext";
@@ -111,10 +113,26 @@ function SettingsContent() {
     subscription_end_date?: string;
   }
   const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
     async function fetchSettings() {
       const supabase = createClient();
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role, tenant_id')
+            .eq('id', user.id)
+            .single();
+          if (profile?.role === 'ADMIN' && !profile?.tenant_id) {
+            setIsSuperAdmin(true);
+          }
+        }
+      } catch {
+        // ignore
+      }
       const currentTenant = await getCurrentTenant(supabase);
       setTenant(currentTenant);
     }
@@ -483,9 +501,56 @@ function SettingsContent() {
 
             {activeTab === "subscription" && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-8 space-y-8">
-                 <Script src="https://checkout.razorpay.com/v1/checkout.js" />
+                 {isSuperAdmin ? (
+                   <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-[#1e3a5f] rounded-3xl p-8 text-white space-y-6 shadow-md">
+                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                       <div className="flex items-center gap-4">
+                         <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20 shrink-0">
+                           <ShieldCheck className="w-8 h-8 text-blue-400" />
+                         </div>
+                         <div>
+                           <div className="flex items-center gap-2">
+                             <span className="text-[10px] font-bold uppercase tracking-widest bg-blue-500/20 text-blue-300 border border-blue-400/30 px-2.5 py-0.5 rounded-full">
+                               Platform Owner
+                             </span>
+                           </div>
+                           <h2 className="text-2xl font-bold tracking-tight text-white mt-1">
+                             Super Admin Account
+                           </h2>
+                         </div>
+                       </div>
+                       <Link
+                         href="/admin"
+                         className="inline-flex items-center gap-2 bg-white text-[#1e3a5f] px-5 py-2.5 rounded-xl font-semibold uppercase tracking-wider text-xs hover:bg-blue-50 active:scale-95 transition-all shadow-md self-start sm:self-auto"
+                       >
+                         Manage Tenants & Subscriptions →
+                       </Link>
+                     </div>
 
-                 {(() => {
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-white/10">
+                       <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
+                         <p className="text-[10px] uppercase text-slate-300 tracking-wider">Access Level</p>
+                         <p className="text-lg font-bold text-white mt-0.5">Unlimited Enterprise</p>
+                       </div>
+                       <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
+                         <p className="text-[10px] uppercase text-slate-300 tracking-wider">Monthly Billing</p>
+                         <p className="text-lg font-bold text-emerald-400 mt-0.5">₹0 (Owner Free Forever)</p>
+                       </div>
+                       <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
+                         <p className="text-[10px] uppercase text-slate-300 tracking-wider">Orders Quota</p>
+                         <p className="text-lg font-bold text-white mt-0.5">∞ Unlimited</p>
+                       </div>
+                     </div>
+
+                     <p className="text-xs text-slate-300 leading-relaxed">
+                       As the SaaS Super Admin, you are never charged for subscriptions or subject to plan limits. To view client billing, upgrade/downgrade print shop plans, or create new shops, visit the Super Admin Management portal.
+                     </p>
+                   </div>
+                 ) : (
+                   <>
+                     <Script src="https://checkout.razorpay.com/v1/checkout.js" />
+
+                     {(() => {
                     const rawTier = (tenant?.subscription_tier || tenant?.plan || 'FREE').toUpperCase().trim();
                     const isTrialActive = Boolean(
                       tenant?.trial_ends_at && new Date(tenant.trial_ends_at) > new Date()
@@ -609,6 +674,8 @@ function SettingsContent() {
                       </div>
                     );
                  })()}
+                   </>
+                 )}
               </div>
             )}
 

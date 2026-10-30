@@ -39,7 +39,6 @@ interface OrderData {
 interface CustomerData {
   name: string;
   phone: string | null;
-  email?: string | null;
   tenant_id?: string;
 }
 
@@ -137,16 +136,16 @@ export interface QuotationData {
 export async function createOrder(data: OrderData) {
   const supabase = createClient();
   const superAdmin = await isSuperAdmin(supabase);
+  const client = superAdmin ? createAdminClient() : supabase;
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let tenant: any;
   if (superAdmin) {
-    // Super admin can create orders directly (optionally for a tenant if tenantId is provided)
     if (data.tenantId) {
-      const { data: tenantData } = await supabase.from('tenants').select('*').eq('id', data.tenantId).single();
+      const { data: tenantData } = await client.from('tenants').select('*').eq('id', data.tenantId).single();
       tenant = tenantData;
     } else {
-      tenant = null;
+      tenant = await getCurrentTenant(supabase);
     }
   } else {
     // If not super admin, we either have a session tenant or we are a public user for a specific tenant
@@ -169,25 +168,10 @@ export async function createOrder(data: OrderData) {
   let customerId = null;
   
   if (data.phone && data.phone.trim() !== "") {
-    let customerQuery = supabase
+    let customerQuery = client
       .from("customers")
       .select("id")
       .eq("phone", data.phone);
-    
-    if (!superAdmin && tenant?.id) {
-      customerQuery = customerQuery.eq("tenant_id", tenant.id);
-    }
-    
-    const { data: customer } = await customerQuery.maybeSingle();
-    customerId = customer?.id;
-  }
-
-  // 1b. If not found by phone, check by email
-  if (!customerId && data.email && data.email.trim() !== "") {
-    let customerQuery = supabase
-      .from("customers")
-      .select("id")
-      .eq("email", data.email.toLowerCase().trim());
     
     if (!superAdmin && tenant?.id) {
       customerQuery = customerQuery.eq("tenant_id", tenant.id);
@@ -202,15 +186,13 @@ export async function createOrder(data: OrderData) {
     const customerData: CustomerData = {
       name: data.customerName || data.phone || data.email || "Unknown",
       phone: data.phone && data.phone.trim() !== "" ? data.phone : null,
-      email: data.email && data.email.trim() !== "" ? data.email.toLowerCase().trim() : null,
     };
     
-    // Only add tenant_id if not super admin
-    if (!superAdmin) {
+    if (tenant?.id) {
       customerData.tenant_id = tenant.id;
     }
 
-    const { data: newCustomer, error: newCustomerError } = await supabase
+    const { data: newCustomer, error: newCustomerError } = await client
       .from("customers")
       .insert(customerData)
       .select("id")
@@ -237,9 +219,8 @@ export async function createOrder(data: OrderData) {
 
   // 4. Generate invoice number if GST applied
   let invoice_number = null;
-  if (data.applyGST && !superAdmin) {
-    // Only generate invoice numbers for tenant users, not super admin
-    const { data: invoiceData } = await supabase.rpc('generate_invoice_number', {
+  if (data.applyGST && tenant) {
+    const { data: invoiceData } = await client.rpc('generate_invoice_number', {
       p_tenant_id: tenant.id
     });
     invoice_number = invoiceData;
@@ -247,18 +228,17 @@ export async function createOrder(data: OrderData) {
 
   // 4b. Generate Friendly Order ID
   let friendly_id = null;
-  if (!superAdmin && tenant) {
-    const { data: generatedId, error: rpcError } = await supabase.rpc('generate_simple_order_id', {
+  if (tenant) {
+    const { data: generatedId, error: rpcError } = await client.rpc('generate_simple_order_id', {
       p_tenant_id: tenant.id,
       p_prefix: tenant.id_prefix || 'ORD'
     });
     
     if (rpcError) {
       console.error('Error generating friendly ID:', rpcError);
-      // Fallback or throw a more descriptive error
-      throw new Error(`Failed to generate Order ID: ${rpcError.message}. Please ensure the database migrations have been applied.`);
+    } else {
+      friendly_id = generatedId;
     }
-    friendly_id = generatedId;
   }
 
   // 5. Create Order
@@ -294,12 +274,11 @@ export async function createOrder(data: OrderData) {
     gmail_message_id: data.gmail_message_id || null,
   };
   
-  // Only add tenant_id if not super admin
-  if (!superAdmin) {
+  if (tenant?.id) {
     orderData.tenant_id = tenant.id;
   }
 
-  const { data: order, error: orderError } = await supabase
+  const { data: order, error: orderError } = await client
     .from("orders")
     .insert(orderData)
     .select("id, friendly_id")
@@ -353,8 +332,9 @@ export async function createOrder(data: OrderData) {
 export async function getOrders(filter: { status?: string; search?: string } = {}) {
   const supabase = createClient();
   const superAdmin = await isSuperAdmin(supabase);
+  const client = superAdmin ? createAdminClient() : supabase;
   
-  let query = supabase
+  let query = client
     .from("orders")
     .select(`
       *,
@@ -366,9 +346,6 @@ export async function getOrders(filter: { status?: string; search?: string } = {
     const tenant = await getCurrentTenant(supabase);
     if (!tenant) throw new Error("Unauthorized");
     query = query.eq("tenant_id", tenant.id);
-  } else {
-    // For super admin, show orders without tenant restriction
-    // This will show all orders including those with null tenant_id
   }
 
   query = query.order("created_at", { ascending: false });
@@ -382,11 +359,69 @@ export async function getOrders(filter: { status?: string; search?: string } = {
   return data;
 }
 
+export async function getCustomers() {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant && !superAdmin) return [];
+
+  const client = superAdmin ? createAdminClient() : supabase;
+  let q = client
+    .from("customers")
+    .select(`
+      *,
+      orders (
+        total_amount,
+        advance_paid,
+        total_with_gst
+      )
+    `);
+
+  if (!superAdmin && tenant?.id) {
+    q = q.eq("tenant_id", tenant.id);
+  }
+
+  const { data, error } = await q;
+  if (error) {
+    console.error("Error fetching customers:", error);
+    return [];
+  }
+  return data || [];
+}
+
+export async function getCustomerDetails(id: string) {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant && !superAdmin) return null;
+
+  const client = superAdmin ? createAdminClient() : supabase;
+  
+  let custQuery = client.from("customers").select("*").eq("id", id);
+  if (!superAdmin && tenant?.id) {
+    custQuery = custQuery.eq("tenant_id", tenant.id);
+  }
+  const { data: customer, error: custErr } = await custQuery.single();
+  if (custErr || !customer) return null;
+
+  let ordsQuery = client.from("orders").select("*").eq("customer_id", id).order("created_at", { ascending: false });
+  if (!superAdmin && tenant?.id) {
+    ordsQuery = ordsQuery.eq("tenant_id", tenant.id);
+  }
+  const { data: orders } = await ordsQuery;
+
+  return {
+    customer,
+    orders: orders || []
+  };
+}
+
 export async function getOrder(id: string): Promise<Order> {
   const supabase = createClient();
   const superAdmin = await isSuperAdmin(supabase);
+  const client = superAdmin ? createAdminClient() : supabase;
   
-  let query = supabase
+  let query = client
     .from("orders")
     .select(`
       *,
@@ -419,7 +454,8 @@ export async function updateOrderStatus(orderId: string, status: string, actualD
     updateData.actual_delivery_date = null;
   }
 
-  let query = supabase
+  const client = superAdmin ? createAdminClient() : supabase;
+  let query = client
     .from("orders")
     .update(updateData)
     .eq("id", orderId);
@@ -479,7 +515,7 @@ export async function updateOrderStatus(orderId: string, status: string, actualD
     if (message) {
       // Fire and forget
       sendWhatsAppMessage({ phone: data.customers.phone, message }).catch(err => 
-        console.error("Async WhatsApp error during status update:", err)
+      console.error("Async WhatsApp error during status update:", err)
       );
     }
   }
@@ -489,24 +525,81 @@ export async function updateOrderStatus(orderId: string, status: string, actualD
 
 export async function assignChallanNumber(orderId: string) {
   const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
   const tenant = await getCurrentTenant(supabase);
-  if (!tenant) throw new Error("Unauthorized");
+  if (!tenant && !superAdmin) throw new Error("Unauthorized");
 
-  const { data: challanNumber, error: rpcError } = await supabase.rpc('generate_document_number', {
-    p_tenant_id: tenant.id,
+  const client = superAdmin ? createAdminClient() : supabase;
+  let tenantId = tenant?.id;
+  if (!tenantId) {
+    const { data: ord } = await client.from("orders").select("tenant_id").eq("id", orderId).single();
+    tenantId = ord?.tenant_id;
+  }
+  if (!tenantId) throw new Error("Tenant not found");
+
+  const { data: challanNumber, error: rpcError } = await client.rpc('generate_document_number', {
+    p_tenant_id: tenantId,
     p_prefix: 'DC'
   });
 
   if (rpcError) throw rpcError;
 
-  const { data, error: updateError } = await supabase
+  let query = client
     .from("orders")
     .update({ 
       challan_number: challanNumber,
       challan_date: new Date().toISOString()
     })
-    .eq("id", orderId)
-    .eq("tenant_id", tenant.id)
+    .eq("id", orderId);
+
+  if (!superAdmin) {
+    query = query.eq("tenant_id", tenantId);
+  }
+
+  const { data, error: updateError } = await query
+    .select(`
+      *,
+      customers (*),
+      tenants (name, city)
+    `)
+    .single();
+
+  if (updateError) throw updateError;
+  return data;
+}
+
+export async function assignInvoiceNumber(orderId: string) {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant && !superAdmin) throw new Error("Unauthorized");
+
+  const client = superAdmin ? createAdminClient() : supabase;
+  let tenantId = tenant?.id;
+  if (!tenantId) {
+    const { data: ord } = await client.from("orders").select("tenant_id").eq("id", orderId).single();
+    tenantId = ord?.tenant_id;
+  }
+  if (!tenantId) throw new Error("Tenant not found");
+
+  const { data: invoiceNumber, error: rpcError } = await client.rpc('generate_invoice_number', {
+    p_tenant_id: tenantId
+  });
+
+  if (rpcError) throw rpcError;
+
+  let query = client
+    .from("orders")
+    .update({ 
+      invoice_number: invoiceNumber 
+    })
+    .eq("id", orderId);
+
+  if (!superAdmin) {
+    query = query.eq("tenant_id", tenantId);
+  }
+
+  const { data, error: updateError } = await query
     .select(`
       *,
       customers (*),
@@ -520,28 +613,33 @@ export async function assignChallanNumber(orderId: string) {
 
 export async function createQuotation(data: QuotationData) {
   const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
   const tenant = await getCurrentTenant(supabase);
-  if (!tenant) throw new Error("Unauthorized");
+  if (!tenant && !superAdmin) throw new Error("Unauthorized");
+
+  const client = superAdmin ? createAdminClient() : supabase;
+  const tenantId = tenant?.id;
+  if (!tenantId) throw new Error("Active shop/tenant not found");
 
   // 1. Get/Create Customer
   let customerId = data.customer_id;
   if (!customerId) {
-    const { data: customer } = await supabase
+    const { data: customer } = await client
       .from("customers")
       .select("id")
       .eq("phone", data.phone || "")
-      .eq("tenant_id", tenant.id)
+      .eq("tenant_id", tenantId)
       .maybeSingle();
 
     if (customer) {
       customerId = customer.id;
     } else {
-      const { data: newCustomer, error: custError } = await supabase
+      const { data: newCustomer, error: custError } = await client
         .from("customers")
         .insert({
           name: data.customerName || data.phone || "Guest",
           phone: data.phone && data.phone.trim() !== "" ? data.phone : null,
-          tenant_id: tenant.id
+          tenant_id: tenantId
         })
         .select("id")
         .single();
@@ -551,16 +649,16 @@ export async function createQuotation(data: QuotationData) {
   }
 
   // 2. Generate Quotation Number
-  const { data: qtnNumber } = await supabase.rpc('generate_document_number', {
-    p_tenant_id: tenant.id,
+  const { data: qtnNumber } = await client.rpc('generate_document_number', {
+    p_tenant_id: tenantId,
     p_prefix: 'QTN'
   });
 
   // 3. Insert Quotation
-  const { data: quotation, error } = await supabase
+  const { data: quotation, error } = await client
     .from("quotations")
     .insert({
-      tenant_id: tenant.id,
+      tenant_id: tenantId,
       customer_id: customerId,
       job_type: data.jobType,
       quantity: data.quantity,
@@ -590,54 +688,69 @@ export async function createQuotation(data: QuotationData) {
 
 export async function getQuotations() {
   const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
   const tenant = await getCurrentTenant(supabase);
-  if (!tenant) throw new Error("Unauthorized");
+  if (!tenant && !superAdmin) throw new Error("Unauthorized");
 
-  const { data, error } = await supabase
+  const client = superAdmin ? createAdminClient() : supabase;
+  let q = client
     .from("quotations")
     .select(`
       *,
       customers (*)
-    `)
-    .eq("tenant_id", tenant.id)
-    .order("created_at", { ascending: false });
+    `);
 
+  if (!superAdmin && tenant?.id) {
+    q = q.eq("tenant_id", tenant.id);
+  }
+
+  const { data, error } = await q.order("created_at", { ascending: false });
   if (error) throw error;
-  return data;
+  return data || [];
 }
 
 export async function getQuotation(id: string) {
   const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
   const tenant = await getCurrentTenant(supabase);
-  if (!tenant) throw new Error("Unauthorized");
+  if (!tenant && !superAdmin) throw new Error("Unauthorized");
 
-  const { data, error } = await supabase
+  const client = superAdmin ? createAdminClient() : supabase;
+  let q = client
     .from("quotations")
     .select(`
       *,
-      customers (*)
+      customers (*),
+      tenants (name, city, phone, gst_number, logo_url)
     `)
-    .eq("id", id)
-    .eq("tenant_id", tenant.id)
-    .single();
+    .eq("id", id);
 
+  if (!superAdmin && tenant?.id) {
+    q = q.eq("tenant_id", tenant.id);
+  }
+
+  const { data, error } = await q.single();
   if (error) throw error;
   return data;
 }
 
 export async function updateQuotationStatus(id: string, status: string) {
   const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
   const tenant = await getCurrentTenant(supabase);
-  if (!tenant) throw new Error("Unauthorized");
+  if (!tenant && !superAdmin) throw new Error("Unauthorized");
 
-  const { data, error } = await supabase
+  const client = superAdmin ? createAdminClient() : supabase;
+  let q = client
     .from("quotations")
     .update({ status })
-    .eq("id", id)
-    .eq("tenant_id", tenant.id)
-    .select()
-    .single();
+    .eq("id", id);
 
+  if (!superAdmin && tenant?.id) {
+    q = q.eq("tenant_id", tenant.id);
+  }
+
+  const { data, error } = await q.select().single();
   if (error) throw error;
   return data;
 }
@@ -645,13 +758,14 @@ export async function updateQuotationStatus(id: string, status: string) {
 export async function updateOrder(id: string, data: OrderData) {
   const supabase = createClient();
   const superAdmin = await isSuperAdmin(supabase);
+  const client = superAdmin ? createAdminClient() : supabase;
   
   // Get tenant context
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let tenant: any;
   if (superAdmin) {
     // For updates, super admin also needs tenant context
-    const { data: existingOrder } = await supabase
+    const { data: existingOrder } = await client
       .from("orders")
       .select("tenant_id")
       .eq("id", id)
@@ -660,7 +774,7 @@ export async function updateOrder(id: string, data: OrderData) {
     if (!existingOrder) throw new Error("Order not found");
     
     // Get tenant details
-    const { data: tenantData } = await supabase
+    const { data: tenantData } = await client
       .from("tenants")
       .select("*")
       .eq("id", existingOrder.tenant_id)
@@ -674,7 +788,7 @@ export async function updateOrder(id: string, data: OrderData) {
 
   // 1. Handle Customer Update/Re-link
   let customerId = null;
-  const { data: currentOrder } = await supabase
+  const { data: currentOrder } = await client
     .from("orders")
     .select("customer_id")
     .eq("id", id)
@@ -685,7 +799,7 @@ export async function updateOrder(id: string, data: OrderData) {
     
     // If phone is provided, check if it belongs to someone else
     if (data.phone && data.phone.trim() !== "") {
-      let customerQuery = supabase
+      let customerQuery = client
         .from("customers")
         .select("id")
         .eq("phone", data.phone);
@@ -701,7 +815,7 @@ export async function updateOrder(id: string, data: OrderData) {
         customerId = existingCustomer.id;
       } else {
         // Phone is same or doesn't exist, update current customer record
-        await supabase
+        await client
           .from("customers")
           .update({
             name: data.customerName,
@@ -711,7 +825,7 @@ export async function updateOrder(id: string, data: OrderData) {
       }
     } else {
       // No phone provided, just update name
-      await supabase
+      await client
         .from("customers")
         .update({
           name: data.customerName,
@@ -736,7 +850,7 @@ export async function updateOrder(id: string, data: OrderData) {
     gst_type = data.isInterState ? 'IGST' : 'CGST_SGST';
   }
 
-  const { data: order, error } = await supabase
+  const { data: order, error } = await client
     .from("orders")
     .update({
       customer_id: customerId, // Update the customer link if it changed
@@ -774,27 +888,38 @@ export async function updateOrder(id: string, data: OrderData) {
 
 export async function searchCustomers(query: string) {
   const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
   const tenant = await getCurrentTenant(supabase);
-  if (!tenant) throw new Error("Unauthorized");
+  if (!tenant && !superAdmin) throw new Error("Unauthorized");
 
-  const { data, error } = await supabase
+  const client = superAdmin ? createAdminClient() : supabase;
+  let q = client
     .from("customers")
-    .select("id, name, phone, gstin")
-    .eq("tenant_id", tenant.id)
+    .select("id, name, phone, gstin");
+
+  if (tenant?.id) {
+    q = q.eq("tenant_id", tenant.id);
+  }
+
+  const { data, error } = await q
     .or(`name.ilike.%${query}%,phone.ilike.%${query}%`)
     .limit(5);
 
-  if (error) throw error;
-  return data;
+  if (error) {
+    console.error("searchCustomers error:", error);
+    return [];
+  }
+  return data || [];
 }
 
 
 export async function addPayment(orderId: string, amount: number, method: string) {
   const supabase = createClient();
   const superAdmin = await isSuperAdmin(supabase);
+  const client = superAdmin ? createAdminClient() : supabase;
   
   // 1. Get current order to find tenant_id and current advance_paid
-  let orderQuery = supabase
+  let orderQuery = client
     .from("orders")
     .select("tenant_id, advance_paid")
     .eq("id", orderId);
@@ -813,20 +938,17 @@ export async function addPayment(orderId: string, amount: number, method: string
     order_id: orderId,
     amount: amount,
     method: method,
+    tenant_id: order.tenant_id
   };
   
-  if (!superAdmin && order.tenant_id) {
-    paymentData.tenant_id = order.tenant_id;
-  }
-  
-  const { error: paymentError } = await supabase
+  const { error: paymentError } = await client
     .from("payments")
     .insert(paymentData);
     
   if (paymentError) throw paymentError;
   
   // 3. Update order advance_paid
-  const { error: updateError } = await supabase
+  const { error: updateError } = await client
     .from("orders")
     .update({ 
       advance_paid: (order.advance_paid || 0) + amount 
@@ -909,14 +1031,21 @@ export async function acceptInvitation(email: string, userId: string, name: stri
 
 export async function updateOrderProof(orderId: string, data: { proof_image_url?: string, proof_status?: string }) {
   const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
   const tenant = await getCurrentTenant(supabase);
-  if (!tenant) throw new Error("Unauthorized");
+  if (!tenant && !superAdmin) throw new Error("Unauthorized");
 
-  const { data: updatedOrder, error } = await supabase
+  const client = superAdmin ? createAdminClient() : supabase;
+  let query = client
     .from("orders")
     .update(data)
-    .eq("id", orderId)
-    .eq("tenant_id", tenant.id)
+    .eq("id", orderId);
+
+  if (!superAdmin && tenant?.id) {
+    query = query.eq("tenant_id", tenant.id);
+  }
+
+  const { data: updatedOrder, error } = await query
     .select(`
       *,
       customers (*),
@@ -1018,13 +1147,15 @@ export async function submitProofResponse(
 
 export async function updateTenantDetails(data: { name?: string, city?: string, phone?: string, gst_number?: string, logo_url?: string, id_prefix?: string }) {
   const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
   const tenant = await getCurrentTenant(supabase);
   if (!tenant) throw new Error("Unauthorized");
 
+  const client = superAdmin ? createAdminClient() : supabase;
   const oldPrefix = tenant.id_prefix;
   const newPrefix = data.id_prefix;
 
-  const { data: updatedTenant, error } = await supabase
+  const { data: updatedTenant, error } = await client
     .from("tenants")
     .update(data)
     .eq("id", tenant.id)
@@ -1035,15 +1166,13 @@ export async function updateTenantDetails(data: { name?: string, city?: string, 
 
   // If the prefix has changed or is being set for the first time, sync all existing order friendly_ids
   if (newPrefix && newPrefix !== oldPrefix) {
-    // We use a regex replacement: replace anything before the first hyphen with the new prefix
-    const { error: syncError } = await supabase.rpc('sync_order_prefixes', {
+    const { error: syncError } = await client.rpc('sync_order_prefixes', {
       p_tenant_id: tenant.id,
       p_new_prefix: newPrefix
     });
 
     if (syncError) {
       console.error("Failed to sync legacy order prefixes:", syncError);
-      // We don't throw here to avoid failing the whole save, but we log it
     }
   }
 
@@ -1052,10 +1181,12 @@ export async function updateTenantDetails(data: { name?: string, city?: string, 
 
 export async function markOnboardingComplete() {
   const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
   const tenant = await getCurrentTenant(supabase);
-  if (!tenant) throw new Error("Unauthorized");
+  if (!tenant) return { success: false };
 
-  const { error } = await supabase
+  const client = superAdmin ? createAdminClient() : supabase;
+  const { error } = await client
     .from("tenants")
     .update({ onboarding_complete: true })
     .eq("id", tenant.id);
@@ -1168,24 +1299,28 @@ export async function createStorefrontOrder(data: OrderData & { slug: string }) 
 
 export async function getTenantIntegrations() {
   const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
   const tenant = await getCurrentTenant(supabase);
-  if (!tenant) throw new Error("Unauthorized");
+  if (!tenant) return [];
 
-  const { data, error } = await supabase
+  const client = superAdmin ? createAdminClient() : supabase;
+  const { data, error } = await client
     .from("tenant_integrations")
     .select("*")
     .eq("tenant_id", tenant.id);
 
   if (error) return [];
-  return data;
+  return data || [];
 }
 
 export async function disconnectIntegration(type: string) {
   const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
   const tenant = await getCurrentTenant(supabase);
-  if (!tenant) throw new Error("Unauthorized");
+  if (!tenant) return { success: false, error: "No active tenant" };
 
-  const { error } = await supabase
+  const client = superAdmin ? createAdminClient() : supabase;
+  const { error } = await client
     .from("tenant_integrations")
     .delete()
     .eq("tenant_id", tenant.id)
@@ -1194,3 +1329,446 @@ export async function disconnectIntegration(type: string) {
   if (error) throw error;
   return { success: true };
 }
+
+// ─── INVENTORY SERVER ACTIONS ──────────────────────────────────────────
+export async function getInventory() {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant && !superAdmin) return [];
+
+  const client = superAdmin ? createAdminClient() : supabase;
+  let q = client.from("inventory").select("*").order("name", { ascending: true });
+  if (tenant?.id) {
+    q = q.eq("tenant_id", tenant.id);
+  }
+  const { data, error } = await q;
+  if (error) {
+    console.error("Error fetching inventory:", error);
+    return [];
+  }
+  return data || [];
+}
+
+export async function addInventoryItem(form: { name: string; quantity: number; unit?: string; low_stock_limit?: number }) {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant) throw new Error("Tenant required to add inventory");
+
+  const client = superAdmin ? createAdminClient() : supabase;
+  const { data, error } = await client.from("inventory").insert({
+    tenant_id: tenant.id,
+    name: form.name,
+    quantity: form.quantity,
+    unit: form.unit || 'Sheets',
+    low_stock_limit: form.low_stock_limit || 10
+  }).select().single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteInventoryItem(id: string) {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const client = superAdmin ? createAdminClient() : supabase;
+
+  const { error } = await client.from("inventory").delete().eq("id", id);
+  if (error) throw error;
+  return true;
+}
+
+export async function updateInventoryStock(id: string, quantity: number, isRestock = false) {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const client = superAdmin ? createAdminClient() : supabase;
+
+  const updateData: any = { quantity };
+  if (isRestock) {
+    updateData.last_restocked_at = new Date().toISOString();
+  }
+
+  const { error } = await client.from("inventory").update(updateData).eq("id", id);
+  if (error) throw error;
+  return true;
+}
+
+// ─── EXPENSES SERVER ACTIONS ───────────────────────────────────────────
+export async function getExpenses() {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant && !superAdmin) return [];
+
+  const client = superAdmin ? createAdminClient() : supabase;
+  let q = client.from("expenses").select("*").order("spent_at", { ascending: false });
+  if (tenant?.id) {
+    q = q.eq("tenant_id", tenant.id);
+  }
+  const { data, error } = await q;
+  if (error) {
+    console.error("Error fetching expenses:", error);
+    return [];
+  }
+  return data || [];
+}
+
+export async function addExpense(form: { description: string; amount: number; category: string; payment_method: string }) {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant) throw new Error("Tenant required to add expense");
+
+  const client = superAdmin ? createAdminClient() : supabase;
+  const { data, error } = await client.from("expenses").insert({
+    tenant_id: tenant.id,
+    description: form.description,
+    amount: form.amount,
+    category: form.category,
+    payment_method: form.payment_method,
+    spent_at: new Date().toISOString()
+  }).select().single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteExpense(id: string) {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const client = superAdmin ? createAdminClient() : supabase;
+
+  const { error } = await client.from("expenses").delete().eq("id", id);
+  if (error) throw error;
+  return true;
+}
+
+// ─── DASHBOARD & BILLING SERVER ACTIONS ────────────────────────────────
+export async function getDashboardData() {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant && !superAdmin) return null;
+
+  const client = superAdmin ? createAdminClient() : supabase;
+
+  let ordersQuery = client
+    .from("orders")
+    .select("*, customers(name)")
+    .order("created_at", { ascending: false });
+
+  let paymentsQuery = client
+    .from("payments")
+    .select("*");
+
+  if (tenant?.id) {
+    ordersQuery = ordersQuery.eq("tenant_id", tenant.id);
+    paymentsQuery = paymentsQuery.eq("tenant_id", tenant.id);
+  }
+
+  const [{ data: dbOrders }, { data: dbPayments }] = await Promise.all([
+    ordersQuery,
+    paymentsQuery
+  ]);
+
+  const orders = dbOrders || [];
+  const payments = dbPayments || [];
+
+  const today = new Date().toISOString().split('T')[0];
+  const todayOrders = orders.filter(o => o.created_at?.startsWith(today));
+  const pendingCount = orders.filter(o => o.status !== 'DELIVERED' && o.status !== 'CANCELLED').length;
+  const totalBalanceDue = orders.reduce((acc, curr) => acc + Number(curr.balance_due || 0), 0);
+
+  return {
+    tenant: tenant || null,
+    orders,
+    payments,
+    todayOrdersCount: todayOrders.length,
+    pendingJobsCount: pendingCount,
+    accountReceivables: totalBalanceDue,
+    recentOrders: orders.slice(0, 6)
+  };
+}
+
+export async function getBillingData() {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant && !superAdmin) return null;
+
+  const client = superAdmin ? createAdminClient() : supabase;
+  let q = client
+    .from("orders")
+    .select("*, customers(name)")
+    .order("created_at", { ascending: false });
+
+  if (tenant?.id) {
+    q = q.eq("tenant_id", tenant.id);
+  }
+
+  const { data: dbOrders, error } = await q;
+  if (error) {
+    console.error("Error fetching billing data:", error);
+    return null;
+  }
+
+  const orders = dbOrders || [];
+  const totalRevenue = orders.reduce((acc, ord) => acc + Number(ord.advance_paid || 0), 0);
+  const outstandingBalance = orders.reduce((acc, ord) => acc + (Number(ord.total_with_gst || ord.total_amount || 0) - Number(ord.advance_paid || 0)), 0);
+  const pendingPayments = orders.filter(ord => (Number(ord.total_with_gst || ord.total_amount || 0) - Number(ord.advance_paid || 0)) > 0.01).length;
+
+  return {
+    tenant: tenant || null,
+    isSuperAdmin: !!superAdmin,
+    orders,
+    totalRevenue: Math.round(totalRevenue * 100) / 100,
+    outstandingBalance: Math.round(outstandingBalance * 100) / 100,
+    pendingPayments
+  };
+}
+
+export async function getTeamData() {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant && !superAdmin) return { members: [], invitations: [] };
+
+  const client = createAdminClient();
+  let profilesQuery = client.from("profiles").select("*");
+  let invitesQuery = client.from("team_invitations").select("*");
+
+  if (tenant?.id) {
+    profilesQuery = profilesQuery.eq("tenant_id", tenant.id);
+    invitesQuery = invitesQuery.eq("tenant_id", tenant.id);
+  }
+
+  const [{ data: dbMembers }, { data: invitationData }] = await Promise.all([
+    profilesQuery,
+    invitesQuery
+  ]);
+
+  return {
+    members: dbMembers || [],
+    invitations: invitationData || []
+  };
+}
+
+export async function getGSTRates() {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant && !superAdmin) return [];
+
+  const client = superAdmin ? createAdminClient() : supabase;
+  let q = client.from("gst_rates").select("*");
+  if (tenant?.id) {
+    q = q.eq("tenant_id", tenant.id);
+  }
+  const { data, error } = await q;
+  if (error) return [];
+  return data || [];
+}
+
+export async function searchGlobal(searchQuery: string) {
+  if (!searchQuery?.trim()) return [];
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant && !superAdmin) return [];
+
+  const client = superAdmin ? createAdminClient() : supabase;
+  const tenantId = tenant?.id;
+
+  let ordersQuery = client
+    .from("orders")
+    .select(`
+      id, 
+      friendly_id, 
+      customers (
+        name
+      )
+    `)
+    .or(`friendly_id.ilike.%${searchQuery}%,instructions.ilike.%${searchQuery}%`)
+    .limit(10);
+
+  let customersQuery = client
+    .from("customers")
+    .select("id, name, phone")
+    .or(`name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`)
+    .limit(5);
+
+  if (tenantId) {
+    ordersQuery = ordersQuery.eq("tenant_id", tenantId);
+    customersQuery = customersQuery.eq("tenant_id", tenantId);
+  }
+
+  const [{ data: orders }, { data: customers }] = await Promise.all([
+    ordersQuery,
+    customersQuery
+  ]);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const combined = [
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...(orders || []).map((o: any) => ({
+      id: o.id,
+      type: "order" as const,
+      title: o.friendly_id || `Order #${o.id.slice(0, 8)}`,
+      subtitle: `Customer: ${o.customers?.name || "Unknown"}`,
+      href: `/dashboard/orders/${o.id}`
+    })),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...(customers || []).map((c: any) => ({
+      id: c.id,
+      type: "customer" as const,
+      title: c.name,
+      subtitle: c.phone || "No phone",
+      href: `/dashboard/customers/${c.id}`
+    }))
+  ];
+
+  return combined;
+}
+
+export async function getOnboardingProgress() {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant) return null;
+
+  const client = superAdmin ? createAdminClient() : supabase;
+  const [{ count: customerCount }, { count: orderCount }, { count: expenseCount }] = await Promise.all([
+    client.from("customers").select("*", { count: 'exact', head: true }).eq('tenant_id', tenant.id),
+    client.from("orders").select("*", { count: 'exact', head: true }).eq('tenant_id', tenant.id),
+    client.from("expenses").select("*", { count: 'exact', head: true }).eq('tenant_id', tenant.id)
+  ]);
+
+  return {
+    tenant,
+    customerCount: customerCount || 0,
+    orderCount: orderCount || 0,
+    expenseCount: expenseCount || 0
+  };
+}
+
+export async function inviteTeamMember(data: { name: string; email: string; phone?: string; role: string }) {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant) throw new Error("No active tenant found");
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const client = superAdmin ? createAdminClient() : supabase;
+  const { data: invite, error } = await client
+    .from('team_invitations')
+    .insert({
+      email: data.email,
+      name: data.name,
+      phone: data.phone || null,
+      role: data.role,
+      tenant_id: tenant.id,
+      invited_by: user.id,
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'PENDING'
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return invite;
+}
+
+export async function updateTeamMember(id: string, data: { name: string; phone?: string; role: string }) {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const client = superAdmin ? createAdminClient() : supabase;
+
+  // Try updating team_invitations
+  const { data: inv } = await client
+    .from('team_invitations')
+    .update({
+      name: data.name,
+      phone: data.phone || null,
+      role: data.role
+    })
+    .eq('id', id)
+    .select()
+    .maybeSingle();
+
+  if (inv) return inv;
+
+  // Else try updating profiles
+  const { data: prof, error: profError } = await client
+    .from('profiles')
+    .update({
+      name: data.name,
+      phone: data.phone || null,
+      role: data.role
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (profError) throw profError;
+  return prof;
+}
+
+export async function deleteTeamMember(id: string) {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const client = superAdmin ? createAdminClient() : supabase;
+
+  await Promise.all([
+    client.from('team_invitations').delete().eq('id', id),
+    client.from('profiles').delete().eq('id', id)
+  ]);
+  return { success: true };
+}
+
+export async function getUserProfile() {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const client = superAdmin ? createAdminClient() : supabase;
+  const { data: profile } = await client
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  const tenant = await getCurrentTenant(supabase);
+
+  return {
+    user,
+    profile,
+    tenant,
+    isSuperAdmin: !!superAdmin
+  };
+}
+
+export async function updateUserProfile(data: { name: string; phone: string }) {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const client = superAdmin ? createAdminClient() : supabase;
+  const { data: profile, error } = await client
+    .from('profiles')
+    .update({
+      name: data.name,
+      phone: data.phone
+    })
+    .eq('id', user.id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return profile;
+}
+

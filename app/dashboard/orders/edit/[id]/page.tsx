@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useRef } from "react";
 import Link from "next/link";
-import { getOrder, updateOrder, searchCustomers } from "@/lib/supabase/actions";
+import { getOrder, updateOrder, searchCustomers, getGSTRates } from "@/lib/supabase/actions";
 import { createClient } from "@/lib/supabase/client";
 import { getCurrentTenant } from "@/lib/tenant";
 import { calculateGST } from "@/lib/gst";
@@ -116,14 +116,11 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     async function init() {
-      const supabase = createClient();
-      const currentTenant = await getCurrentTenant(supabase);
-      if (currentTenant) {
-        const { data: rates } = await supabase
-          .from('gst_rates')
-          .select('*')
-          .eq('tenant_id', currentTenant.id);
+      try {
+        const rates = await getGSTRates();
         setGstRates(rates || []);
+      } catch (err) {
+        console.error("Failed to load GST rates:", err);
       }
     }
     init();

@@ -12,8 +12,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/format";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
-import { getCurrentTenant } from "@/lib/tenant";
+import { getCustomers } from "@/lib/supabase/actions";
 import { useLanguage } from "@/lib/context/LanguageContext";
 
 interface CustomerOrder {
@@ -46,23 +45,7 @@ export default function CustomersPage() {
     async function fetchCustomersData() {
       setLoading(true);
       try {
-        const supabase = createClient();
-        const currentTenant = await getCurrentTenant(supabase);
-        
-        // Fetch customers and their basic order data for calculation (filtered by tenant)
-        const { data, error } = await supabase
-          .from("customers")
-          .select(`
-            *,
-            orders (
-              total_amount,
-              advance_paid,
-              total_with_gst
-            )
-          `)
-          .eq('tenant_id', currentTenant?.id);
-        
-        if (error) throw error;
+        const data = await getCustomers();
 
         // Process data to calculate totals and per-customer stats
         interface OrderSummary {

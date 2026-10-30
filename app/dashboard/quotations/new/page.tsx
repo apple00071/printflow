@@ -18,9 +18,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/utils/format";
-import { createQuotation } from "@/lib/supabase/actions";
-import { createClient } from "@/lib/supabase/client";
-import { getCurrentTenant } from "@/lib/tenant";
+import { createQuotation, searchCustomers } from "@/lib/supabase/actions";
 import { cn } from "@/lib/utils";
 import CustomSelect from "@/components/ui/CustomSelect";
 import CustomDatePicker from "@/components/ui/CustomDatePicker";
@@ -87,22 +85,12 @@ export default function NewQuotationPage() {
   useEffect(() => {
     async function fetchCustomers() {
       if (!searchQuery && !isSearchDropdownOpen) return;
-      
-      const supabase = createClient();
-      const tenant = await getCurrentTenant(supabase);
-      
-      let query = supabase
-        .from("customers")
-        .select("id, name, phone")
-        .eq("tenant_id", tenant?.id)
-        .order("name");
-      
-      if (searchQuery) {
-        query = query.or(`name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
+      try {
+        const data = await searchCustomers(searchQuery || "");
+        setCustomers((data || []).slice(0, 5));
+      } catch (err) {
+        console.error("fetchCustomers error:", err);
       }
-      
-      const { data } = await query.limit(5);
-      setCustomers(data || []);
     }
     
     const timeoutId = setTimeout(fetchCustomers, 300);

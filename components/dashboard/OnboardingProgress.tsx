@@ -11,9 +11,7 @@ import {
   X
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { getCurrentTenant } from "@/lib/tenant";
-import { markOnboardingComplete } from "@/lib/supabase/actions";
+import { markOnboardingComplete, getOnboardingProgress } from "@/lib/supabase/actions";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { cn } from "@/lib/utils";
 
@@ -33,13 +31,18 @@ export default function OnboardingProgress() {
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isDismissed, setIsDismissed] = useState(false);
-  const supabase = createClient();
 
   useEffect(() => {
     async function checkProgress() {
       try {
-        const tenant = await getCurrentTenant(supabase);
-        if (!tenant) return;
+        const data = await getOnboardingProgress();
+        if (!data || !data.tenant) {
+          setIsDismissed(true);
+          setLoading(false);
+          return;
+        }
+
+        const { tenant, customerCount, orderCount, expenseCount } = data;
 
         if (tenant.onboarding_complete) {
            setIsDismissed(true);
@@ -47,22 +50,15 @@ export default function OnboardingProgress() {
            return;
         }
 
-        const { count: customerCount } = await supabase
-          .from("customers")
-          .select("*", { count: 'exact', head: true })
-          .eq('tenant_id', tenant.id);
-
-        const { count: orderCount } = await supabase
-          .from("orders")
-          .select("*", { count: 'exact', head: true })
-          .eq('tenant_id', tenant.id);
-
-        const { count: expenseCount } = await supabase
-          .from("expenses")
-          .select("*", { count: 'exact', head: true })
-          .eq('tenant_id', tenant.id);
-
         const onboardingTasks: Task[] = [
+          ...(!tenant.business_type || !tenant.state ? [{
+            id: "guided-setup",
+            title: "Guided Workspace Setup",
+            subtitle: "Set up your business type, products, and prices",
+            icon: Settings,
+            href: "/onboarding",
+            isCompleted: !!tenant.business_type && !!tenant.state
+          }] : []),
           {
             id: "shop-profile",
             title: "Complete Shop Profile",
@@ -99,7 +95,7 @@ export default function OnboardingProgress() {
       }
     }
     checkProgress();
-  }, [supabase]);
+  }, []);
 
   const handleDismiss = async () => {
      setIsDismissed(true);
@@ -110,7 +106,7 @@ export default function OnboardingProgress() {
      }
   };
 
-  if (loading || isDismissed || progress === 100) return null;
+  if (loading || isDismissed || tasks.length === 0 || progress === 100) return null;
 
   return (
     <div className="bg-[#f0f9f6] rounded-3xl border border-[#dcf2e9] p-8 overflow-hidden relative mb-8">
@@ -155,7 +151,11 @@ export default function OnboardingProgress() {
             <button
               onClick={() => {
                 const nextTask = tasks.find(t => !t.isCompleted);
-                if (nextTask) router.push(nextTask.href);
+                if (nextTask) {
+                  router.push(nextTask.href);
+                } else {
+                  router.push("/onboarding");
+                }
               }}
               className="px-6 py-2.5 bg-[#10b981] text-white rounded-xl text-sm font-bold shadow-lg shadow-green-500/20 hover:scale-[1.02] active:scale-95 transition-all"
             >

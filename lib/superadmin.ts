@@ -7,6 +7,15 @@ export async function isSuperAdmin(supabase?: SupabaseClient) {
   const { data: { user } } = await client.auth.getUser()
   if (!user) return false
 
+  // Allow configuring super admin emails via env var
+  const envSuperAdmins = (process.env.SUPER_ADMIN_EMAILS || '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean)
+  if (user.email && envSuperAdmins.includes(user.email.toLowerCase())) {
+    return true
+  }
+
   // Use admin client to bypass RLS for profile checking
   const adminClient = createAdminClient()
   const { data: profile } = await adminClient

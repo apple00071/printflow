@@ -317,6 +317,21 @@ CREATE TABLE IF NOT EXISTS public.team_invitations (
     accepted_at TIMESTAMPTZ
 );
 
+-- 13. Tenant Integrations Table (Gmail, WhatsApp, etc.)
+CREATE TABLE IF NOT EXISTS public.tenant_integrations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    type TEXT NOT NULL,
+    access_token TEXT,
+    refresh_token TEXT,
+    token_expiry TIMESTAMPTZ,
+    is_active BOOLEAN DEFAULT TRUE,
+    settings JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT tenant_integrations_tenant_type_unique UNIQUE (tenant_id, type)
+);
+
 -- =====================================================================
 -- PERFORMANCE INDEXES
 -- =====================================================================
@@ -581,6 +596,13 @@ DROP POLICY IF EXISTS "Tenant admins can manage invitations" ON public.team_invi
 CREATE POLICY "Tenant admins can manage invitations" ON public.team_invitations FOR ALL USING (
   tenant_id IN (SELECT tenant_id FROM public.profiles WHERE id = auth.uid() AND role = 'ADMIN')
 );
+
+-- Tenant Integrations Policies
+ALTER TABLE public.tenant_integrations ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "tenant_isolation_tenant_integrations" ON public.tenant_integrations;
+CREATE POLICY "tenant_isolation_tenant_integrations" ON public.tenant_integrations
+    FOR ALL USING (tenant_id = get_tenant_id()) WITH CHECK (tenant_id = get_tenant_id());
+
 
 -- Storage Bucket Setup
 INSERT INTO storage.buckets (id, name, public) VALUES ('printflow-files', 'printflow-files', true) ON CONFLICT (id) DO NOTHING;

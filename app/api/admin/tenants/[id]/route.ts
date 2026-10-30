@@ -129,6 +129,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { data: { user } } = await supabase.auth.getUser();
     const adminSupabase = createAdminClient();
 
     // 1. Get all profiles for this tenant
@@ -137,14 +138,31 @@ export async function DELETE(
       .select('id')
       .eq('tenant_id', params.id);
 
-    // 2. Delete auth users first
+    // 2. Delete auth users first (skip current super admin user)
     if (profiles && profiles.length > 0) {
       for (const profile of profiles) {
-        await adminSupabase.auth.admin.deleteUser(profile.id);
+        if (profile.id !== user?.id) {
+          try {
+            await adminSupabase.auth.admin.deleteUser(profile.id);
+          } catch (err) {
+            console.warn("Failed to delete auth user:", profile.id, err);
+          }
+        }
       }
     }
 
-    // 3. Delete tenant (profiles and other data cascade depending on setup)
+    // 3. Delete dependent tenant records first to ensure no foreign key violation
+    await adminSupabase.from('price_table').delete().eq('tenant_id', params.id);
+    await adminSupabase.from('payments').delete().eq('tenant_id', params.id);
+    await adminSupabase.from('orders').delete().eq('tenant_id', params.id);
+    await adminSupabase.from('quotations').delete().eq('tenant_id', params.id);
+    await adminSupabase.from('customers').delete().eq('tenant_id', params.id);
+    await adminSupabase.from('expenses').delete().eq('tenant_id', params.id);
+    await adminSupabase.from('inventory').delete().eq('tenant_id', params.id);
+    await adminSupabase.from('tenant_integrations').delete().eq('tenant_id', params.id);
+    await adminSupabase.from('profiles').delete().eq('tenant_id', params.id);
+
+    // 4. Delete tenant
     const { error } = await adminSupabase
       .from('tenants')
       .delete()

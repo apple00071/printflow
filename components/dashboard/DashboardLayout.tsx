@@ -18,7 +18,8 @@ import {
   Search,
   Bell,
   ChevronDown,
-  X
+  X,
+  ShieldCheck
 } from "lucide-react";
 
 import { Logo } from "@/components/Logo";
@@ -43,21 +44,43 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { language, setLanguage, t } = useLanguage();
   const supabase = createClient();
 
   useEffect(() => {
-    const runSync = async () => {
+    async function checkAdminStatus() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
-        const { data: integration } = await supabase.from("tenant_integrations").select("id").eq("type", "GMAIL").eq("is_active", true).maybeSingle();
-        if (!integration) return;
-        fetch("/api/integrations/gmail/sync").catch(console.error);
-      } catch (err) {
-        console.error("Background sync failed:", err);
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role, tenant_id')
+          .eq('id', user.id)
+          .single();
+        if (profile?.role === 'ADMIN' && !profile?.tenant_id) {
+          setIsSuperAdmin(true);
+        }
+      } catch {
+        // ignore
+      }
+    }
+    checkAdminStatus();
+  }, []);
+
+  useEffect(() => {
+    const runSync = async () => {
+      try {
+        const res = await fetch("/api/integrations/gmail/status");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data?.connected) {
+          fetch("/api/integrations/gmail/sync").catch(console.error);
+        }
+      } catch {
+        // Silently ignore if not configured
       }
     };
     runSync();
@@ -129,6 +152,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </Link>
               );
             })}
+
+            {isSuperAdmin && (
+              <Link
+                href="/admin"
+                className={cn(
+                  "flex items-center h-10 rounded-xl transition-all duration-200 group/nav relative px-2.5 mt-3 border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100",
+                  pathname.startsWith("/admin") && "bg-purple-700 text-white border-purple-700"
+                )}
+              >
+                <ShieldCheck className="w-5 h-5 shrink-0 text-purple-600 group-hover/nav:scale-110 transition-transform" />
+                <span className={cn("ml-3.5 transition-all duration-300 font-semibold text-xs uppercase tracking-wider whitespace-nowrap", isSidebarHovered ? "opacity-100" : "opacity-0")}>
+                  Super Admin
+                </span>
+              </Link>
+            )}
           </nav>
 
           {/* Footer / Sign Out */}

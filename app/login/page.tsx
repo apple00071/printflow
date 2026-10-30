@@ -24,12 +24,16 @@ export default function LoginPage() {
     try {
       let emailToUse = email.trim();
       
-      // If entered as a short username without '@', map default domain
+      // If entered as a short username without '@', resolve dynamically from database
       if (!emailToUse.includes("@")) {
-        if (emailToUse.toLowerCase() === 'apple') {
-          emailToUse = 'apple@admin.com';
-        } else {
-          emailToUse = `${emailToUse.toLowerCase()}@applegraphics.local`;
+        try {
+          const res = await fetch(`/api/auth/resolve-username?username=${encodeURIComponent(emailToUse)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.email) emailToUse = data.email;
+          }
+        } catch {
+          // Keep original input as fallback
         }
       }
 
@@ -66,8 +70,10 @@ export default function LoginPage() {
           .eq('id', user.id)
           .single();
         
-        // Redirect based on role
-        if (profile?.role === 'ADMIN' && !profile?.tenant_id) {
+        // Redirect based on super admin or shop role
+        const isSuperAdminUser = profile?.role === 'ADMIN' && !profile?.tenant_id;
+
+        if (isSuperAdminUser) {
           window.location.href = "/admin";
         } else {
           window.location.href = "/dashboard";

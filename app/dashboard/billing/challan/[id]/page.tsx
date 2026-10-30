@@ -14,7 +14,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils/format";
-import { getOrder } from "@/lib/supabase/actions";
+import { getOrder, assignChallanNumber } from "@/lib/supabase/actions";
 import { createClient } from "@/lib/supabase/client";
 import { getCurrentTenant } from "@/lib/tenant";
 import { useLanguage } from "@/lib/context/LanguageContext";
@@ -32,12 +32,20 @@ export default function DeliveryChallanPage({ params }: { params: { id: string }
       setLoading(true);
       try {
         const supabase = createClient();
-        const [orderData, tenantData] = await Promise.all([
+        const [rawOrder, tenantData] = await Promise.all([
           getOrder(params.id),
           getCurrentTenant(supabase)
         ]);
+        let orderData = rawOrder;
+        if (orderData && !orderData.challan_number) {
+          try {
+            orderData = await assignChallanNumber(params.id);
+          } catch (e) {
+            console.error("Auto assign challan number error:", e);
+          }
+        }
         setOrder(orderData);
-        setTenant(tenantData);
+        setTenant(tenantData || (orderData as any)?.tenants || null);
       } catch (error) {
         console.error("Error fetching challan data:", error);
       } finally {

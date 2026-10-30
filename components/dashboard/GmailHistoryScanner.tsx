@@ -52,25 +52,21 @@ export default function GmailHistoryScanner() {
   useEffect(() => {
     const checkIntegration = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const { data } = await supabase
-          .from("tenant_integrations")
-          .select("id")
-          .eq("type", "GMAIL")
-          .eq("is_active", true)
-          .maybeSingle();
-
-        setIsGmailConnected(!!data);
-      } catch (err) {
-        console.error("Integration check failed:", err);
+        const res = await fetch("/api/integrations/gmail/status");
+        if (res.ok) {
+          const data = await res.json();
+          setIsGmailConnected(!!data?.connected);
+        } else {
+          setIsGmailConnected(false);
+        }
+      } catch {
+        setIsGmailConnected(false);
       } finally {
         setCheckingIntegration(false);
       }
     };
     checkIntegration();
-  }, [supabase]);
+  }, []);
 
   const scanHistory = async () => {
     if (!isGmailConnected) {

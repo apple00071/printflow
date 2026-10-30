@@ -16,8 +16,21 @@ export const createClient = () => {
   return createServerClient(
     supabaseUrl,
     supabaseAnonKey,
-    { cookies: { 
-      get: (name) => cookieStore.get(name)?.value 
-    }}
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
+          } catch {
+            // Ignored when called from Server Component
+          }
+        },
+      },
+    }
   )
 }

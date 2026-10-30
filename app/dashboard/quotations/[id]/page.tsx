@@ -43,7 +43,7 @@ export default function QuotationDetailPage({ params }: { params: { id: string }
           getCurrentTenant(supabase)
         ]);
         setQuotation(quotationData);
-        setTenant(tenantData);
+        setTenant(tenantData || (quotationData as any)?.tenants || null);
       } catch (error) {
         console.error("Error fetching quotation:", error);
       } finally {

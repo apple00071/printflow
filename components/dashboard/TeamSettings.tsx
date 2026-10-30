@@ -11,9 +11,8 @@ import {
   Loader2,
   X
 } from "lucide-react";
-import { createPortal } from 'react-dom';
-import { createClient } from "@/lib/supabase/client";
-import { getCurrentTenant } from "@/lib/tenant";
+import { createPortal } from "react-dom";
+import { getTeamData, inviteTeamMember, updateTeamMember, deleteTeamMember } from "@/lib/supabase/actions";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import { formatDate } from "@/lib/utils/format";
 
@@ -59,74 +58,20 @@ export default function TeamSettings({ hideHeader = false }: TeamSettingsProps) 
 
   async function fetchTeamMembers() {
     try {
-      const supabase = createClient();
-      const currentTenant = await getCurrentTenant(supabase);
-      
-      if (!currentTenant) {
-        setLoading(false);
-        return;
-      }
+      const { members, invitations } = await getTeamData();
 
-      // Test if team_invitations table exists
-      console.log('Testing team_invitations table existence...');
-      const { error: tableError } = await supabase
-        .from('team_invitations')
-        .select('id')
-        .limit(1);
-      
-      if (tableError) {
-        console.error('team_invitations table does not exist:', tableError);
-        console.log('Please run the SQL from database-setup.sql in Supabase dashboard');
-      }
-
-      // Test if profiles table exists
-      console.log('Testing profiles table existence...');
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .limit(1);
-      
-      if (profileError) {
-        console.error('profiles table does not exist:', profileError);
-        console.log('Please run the SQL from database-setup.sql in Supabase dashboard');
-      }
-
-      // Fetch actual team members from database
-      const { data: dbMembers, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('tenant_id', currentTenant.id)
-        .neq('id', (await supabase.auth.getUser()).data.user?.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      // Fetch pending invitations from database
-      const { data: invitationData, error: inviteError } = await supabase
-        .from('team_invitations')
-        .select('*')
-        .eq('tenant_id', currentTenant.id)
-        .eq('status', 'PENDING');
-
-      if (inviteError) {
-        console.error('Error fetching invitations:', inviteError);
-      }
-
-      // Convert database invitations to TeamMember format
-      const pendingMembers = (invitationData || []).map((inv: { id: string; name: string; email: string; phone?: string; role: 'ADMIN' | 'WORKER'; created_at: string }) => ({
+      const pendingMembers = (invitations || []).map((inv: any) => ({
         id: inv.id,
         name: inv.name,
-        username: `PENDING_${inv.email.split('@')[0]}`,
+        username: `PENDING_${inv.email?.split('@')[0] || 'member'}`,
         phone: inv.phone,
         role: inv.role,
         created_at: inv.created_at,
         last_login: undefined
       }));
 
-      // Combine database members and pending invitations
-      const allMembers = [...(dbMembers || []), ...pendingMembers];
+      const allMembers = [...(members || []), ...pendingMembers];
       setTeamMembers(allMembers);
-      console.log('Fetched team members:', allMembers.length, 'Active:', (dbMembers || []).length, 'Pending:', pendingMembers.length);
     } catch (error) {
       console.error("Error fetching team members:", error);
     } finally {
@@ -142,61 +87,20 @@ export default function TeamSettings({ hideHeader = false }: TeamSettingsProps) 
 
     setAddingMember(true);
     try {
-      const supabase = createClient();
-      const currentTenant = await getCurrentTenant(supabase);
-      
-      if (!currentTenant) {
-        alert('No tenant found');
-        return;
-      }
-
-      // Create a pending team member record in the proper table
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        alert('User not authenticated');
-        return;
-      }
-
       if (editingMember) {
-        // Update existing member
-        const { error: updateError } = await supabase
-          .from('team_invitations')
-          .update({
-            name: newMember.name,
-            phone: newMember.phone || null,
-            role: newMember.role,
-          })
-          .eq('id', editingMember.id);
-        
-        if (updateError) {
-          console.error('Member update error:', updateError);
-          alert('Failed to update team member: ' + updateError.message);
-          return;
-        }
-        
+        await updateTeamMember(editingMember.id, {
+          name: newMember.name,
+          phone: newMember.phone || undefined,
+          role: newMember.role,
+        });
         alert('Team member updated successfully');
       } else {
-        // Create new member
-        const { error: memberError } = await supabase
-          .from('team_invitations')
-          .insert({
-            email: newMember.email,
-            name: newMember.name,
-            phone: newMember.phone || null,
-            role: newMember.role,
-            tenant_id: currentTenant.id,
-            invited_by: user.id,
-            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
-            status: 'PENDING'
-          });
-        
-        if (memberError) {
-          console.error('Member creation error:', memberError);
-          alert('Failed to create team invitation: ' + memberError.message);
-          return;
-        }
-        
+        await inviteTeamMember({
+          email: newMember.email,
+          name: newMember.name,
+          phone: newMember.phone || undefined,
+          role: newMember.role,
+        });
         alert(`Team member invitation created for ${newMember.email}!\n\nNext steps:\n1. Send them this link to register: ${window.location.origin}/register?email=${encodeURIComponent(newMember.email)}\n2. Ask them to set their password at that link.\n3. They will be added to your team automatically after signup.`);
       }
 
@@ -208,7 +112,7 @@ export default function TeamSettings({ hideHeader = false }: TeamSettingsProps) 
       
     } catch (error) {
       console.error("Error adding team member:", error);
-      alert('Failed to create team invitation');
+      alert('Failed to save team member: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setAddingMember(false);
     }
@@ -246,36 +150,9 @@ export default function TeamSettings({ hideHeader = false }: TeamSettingsProps) 
   const handleDeleteMember = async (memberId: string) => {
     if (!confirm('Are you sure you want to remove this team member?')) return;
     
-    console.log('Attempting to delete member with ID:', memberId);
-    
     setDeletingMember(memberId);
     try {
-      const supabase = createClient();
-      
-      // First, try deleting from team_invitations (for pending invitations)
-      const { error: inviteError } = await supabase
-        .from('team_invitations')
-        .delete()
-        .eq('id', memberId);
-      
-      if (inviteError) {
-        console.log('Not found in team_invitations, trying profiles table...');
-        // If not found in invitations, try profiles table (for actual members)
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .delete()
-          .eq('id', memberId);
-        
-        if (profileError) {
-          console.error('Error deleting profile:', profileError);
-          alert('Failed to remove team member: ' + profileError.message);
-          return;
-        }
-        console.log('Successfully deleted from profiles');
-      } else {
-        console.log('Successfully deleted from team_invitations');
-      }
-      
+      await deleteTeamMember(memberId);
       alert('Team member removed successfully');
       fetchTeamMembers();
     } catch (error) {

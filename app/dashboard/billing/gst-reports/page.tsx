@@ -54,28 +54,38 @@ export default function GSTReportsPage() {
       const supabase = createClient();
       const currentTenant = await getCurrentTenant(supabase);
 
-      // If tenant could not be loaded, show modal as safe fallback
-      if (!currentTenant) {
+      const { data: { user } } = await supabase.auth.getUser();
+      let isSuperAdmin = false;
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role, tenant_id')
+          .eq('id', user.id)
+          .single();
+        isSuperAdmin = profile?.role === 'ADMIN' && !profile?.tenant_id;
+      }
+
+      // If tenant could not be loaded and user is not super admin, show modal
+      if (!currentTenant && !isSuperAdmin) {
         setShowUpgradeModal(true);
         return;
       }
 
-      setTenant(currentTenant);
+      if (currentTenant) {
+        setTenant(currentTenant);
+      }
 
-      // Read both fields — admin writes to `plan` (lowercase), signup may set `subscription_tier` (uppercase)
-      // Use the most restrictive: if EITHER field says the user isn't on a paid plan, block access.
-      const tier1 = (currentTenant.subscription_tier || '').toString().toUpperCase().trim();
-      const tier2 = (currentTenant.plan || '').toString().toUpperCase().trim();
+      const tier1 = (currentTenant?.subscription_tier || '').toString().toUpperCase().trim();
+      const tier2 = (currentTenant?.plan || '').toString().toUpperCase().trim();
       const PAID = ['PRO', 'BUSINESS', 'ENTERPRISE'];
       const isPaidPlan = PAID.includes(tier1) || PAID.includes(tier2);
 
-      // If the paid plan has an expired trial, treat as FREE
       const isExpiredTrial =
         isPaidPlan &&
-        currentTenant.trial_ends_at &&
+        currentTenant?.trial_ends_at &&
         new Date(currentTenant.trial_ends_at) < new Date();
 
-      if (!isPaidPlan || isExpiredTrial) {
+      if (!isSuperAdmin && (!isPaidPlan || isExpiredTrial)) {
         setShowUpgradeModal(true);
         return;
       }

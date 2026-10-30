@@ -9,8 +9,7 @@ import {
   ArrowUpRight,
   Loader2
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { getCurrentTenant } from "@/lib/tenant";
+import { getInventory, addInventoryItem, updateInventoryStock } from "@/lib/supabase/actions";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import CustomSelect from "@/components/ui/CustomSelect";
 import Portal from "@/components/ui/Portal";
@@ -38,22 +37,11 @@ export default function InventoryPage() {
     low_stock_limit: "10"
   });
 
-  const supabase = createClient();
-
   async function fetchInventory() {
     setLoading(true);
     try {
-      const tenant = await getCurrentTenant(supabase);
-      if (!tenant) return;
-
-      const { data, error } = await supabase
-        .from("inventory")
-        .select("*")
-        .eq("tenant_id", tenant.id)
-        .order("name", { ascending: true });
-
-      if (error) throw error;
-      setItems(data || []);
+      const data = await getInventory();
+      setItems(data as any);
     } catch (err) {
       console.error("Error fetching inventory:", err);
     } finally {
@@ -70,18 +58,12 @@ export default function InventoryPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const tenant = await getCurrentTenant(supabase);
-      if (!tenant) return;
-
-      const { error } = await supabase.from("inventory").insert({
-        tenant_id: tenant.id,
+      await addInventoryItem({
         name: form.name,
         quantity: parseFloat(form.quantity),
         unit: form.unit,
         low_stock_limit: parseFloat(form.low_stock_limit)
       });
-
-      if (error) throw error;
       
       setIsModalOpen(false);
       setForm({ name: "", quantity: "", unit: "Sheets", low_stock_limit: "10" });
@@ -98,15 +80,7 @@ export default function InventoryPage() {
       if(!item) return;
 
       try {
-          const { error } = await supabase
-            .from("inventory")
-            .update({ 
-                quantity: item.quantity + amount,
-                last_restocked_at: amount > 0 ? new Date().toISOString() : item.last_restocked_at 
-            })
-            .eq("id", id);
-          
-          if (error) throw error;
+          await updateInventoryStock(id, item.quantity + amount, amount > 0);
           fetchInventory();
       } catch (err) {
           console.error("Error updating stock:", err);

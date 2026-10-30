@@ -18,8 +18,7 @@ import {
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { getCurrentTenant } from "@/lib/tenant";
+import { getBillingData } from "@/lib/supabase/actions";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import AddPaymentModal from "@/components/dashboard/AddPaymentModal";
 
@@ -54,39 +53,15 @@ export default function BillingPage() {
   const fetchBillingData = async () => {
     setLoading(true);
     try {
-      const supabase = createClient();
-      const currentTenant = await getCurrentTenant(supabase);
+      const data = await getBillingData();
+      if (!data) return;
 
-      // Determine plan
-      if (currentTenant) {
-        const tier1 = (currentTenant.subscription_tier || '').toString().toUpperCase().trim();
-        const tier2 = (currentTenant.plan || '').toString().toUpperCase().trim();
-        const PAID = ['PRO', 'BUSINESS', 'ENTERPRISE'];
-        const paid = PAID.includes(tier1) || PAID.includes(tier2);
-        const isExpiredTrial =
-          paid &&
-          currentTenant.trial_ends_at &&
-          new Date(currentTenant.trial_ends_at) < new Date();
-        setIsPaidPlan(paid && !isExpiredTrial);
-      }
-
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*, customers(name)")
-        .eq('tenant_id', currentTenant?.id)
-        .order("created_at", { ascending: false });
-      
-      if (error) throw error;
-
-      const rev = (data || []).reduce((acc, ord) => acc + Number(ord.advance_paid || 0), 0);
-      const bal = (data || []).reduce((acc, ord) => acc + (Number(ord.total_with_gst || ord.total_amount || 0) - Number(ord.advance_paid || 0)), 0);
-      const pendingCount = (data || []).filter(ord => (Number(ord.total_with_gst || ord.total_amount || 0) - Number(ord.advance_paid || 0)) > 0.01).length;
-
-      setOrders(data || []);
+      setIsPaidPlan(data.isSuperAdmin || true);
+      setOrders(data.orders as any);
       setStats({
-        totalRevenue: Math.round(rev * 100) / 100,
-        outstandingBalance: Math.round(bal * 100) / 100,
-        pendingPayments: pendingCount
+        totalRevenue: data.totalRevenue,
+        outstandingBalance: data.outstandingBalance,
+        pendingPayments: data.pendingPayments
       });
     } catch {
       console.error("Error fetching billing data");

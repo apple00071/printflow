@@ -20,8 +20,7 @@ import { formatCurrency } from "@/lib/utils/format";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import DashboardCharts from "@/components/dashboard/DashboardCharts";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
-import { getCurrentTenant } from "@/lib/tenant";
+import { getDashboardData } from "@/lib/supabase/actions";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import OnboardingProgress from "@/components/dashboard/OnboardingProgress";
@@ -69,49 +68,29 @@ export default function DashboardPage() {
     async function fetchDashboardData() {
       setLoading(true);
       try {
-        const supabase = createClient();
-        const currentTenant = await getCurrentTenant(supabase);
+        const data = await getDashboardData();
 
-        if (!currentTenant) {
+        if (!data || !data.tenant) {
           setLoading(false);
           return;
         }
 
         setTenantInfo({ 
-          name: currentTenant.name, 
-          logo_url: currentTenant.logo_url,
-          orders_this_month: currentTenant.orders_this_month || 0
+          name: data.tenant.name, 
+          logo_url: data.tenant.logo_url,
+          orders_this_month: data.tenant.orders_this_month || 0
         });
 
-        const today = new Date().toISOString().split('T')[0];
-        const sixMonthsAgo = new Date();
-        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+        const dbOrders = data.orders;
+        const dbPayments = data.payments;
 
-        const { data: dbOrders, error: orderError } = await supabase
-          .from("orders")
-          .select("*, customers(name)")
-          .eq('tenant_id', currentTenant.id)
-          .order('created_at', { ascending: false });
-        
-        if (orderError) throw orderError;
-
-        const { data: dbPayments } = await supabase
-            .from("payments")
-            .select("*")
-            .eq('tenant_id', currentTenant.id)
-            .gte('paid_at', sixMonthsAgo.toISOString());
-
-        const todayOrders = (dbOrders || []).filter(o => o.created_at.startsWith(today));
-        const pendingCount = (dbOrders || []).filter(o => o.status !== 'DELIVERED' && o.status !== 'CANCELLED').length;
-        const totalBalanceDue = (dbOrders || []).reduce((acc, curr) => acc + Number(curr.balance_due || 0), 0);
-        
         setStats([
-          { label: t("Daily Orders", "నేటి ఆర్డర్లు"), value: todayOrders.length.toString(), icon: Zap, href: "/dashboard/orders", description: "Orders received today" },
-          { label: t("Pending Jobs", "పెండింగ్ పనులు"), value: pendingCount.toString(), icon: Clock, href: "/dashboard/orders", description: "In production pipeline" },
-          { label: t("Account Receivables", "రావాల్సిన బాకీ"), value: formatCurrency(totalBalanceDue), icon: IndianRupee, href: "/dashboard/billing", description: "Outstanding balance" },
+          { label: t("Daily Orders", "నేటి ఆర్డర్లు"), value: data.todayOrdersCount.toString(), icon: Zap, href: "/dashboard/orders", description: "Orders received today" },
+          { label: t("Pending Jobs", "పెండింగ్ పనులు"), value: data.pendingJobsCount.toString(), icon: Clock, href: "/dashboard/orders", description: "In production pipeline" },
+          { label: t("Account Receivables", "రావాల్సిన బాకీ"), value: formatCurrency(data.accountReceivables), icon: IndianRupee, href: "/dashboard/billing", description: "Outstanding balance" },
         ]);
 
-        setRecentOrders((dbOrders || []).slice(0, 6));
+        setRecentOrders(data.recentOrders);
 
         // Charts
         const jobGroups = (dbOrders || []).reduce((acc: Record<string, number>, curr) => {

@@ -13,8 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
-import { createClient } from "@/lib/supabase/client";
-import { getCurrentTenant } from "@/lib/tenant";
+import { getCustomerDetails } from "@/lib/supabase/actions";
 import { useLanguage } from "@/lib/context/LanguageContext";
 
 interface Customer {
@@ -46,30 +45,11 @@ export default function CustomerProfilePage({ params }: { params: { id: string }
     async function fetchCustomerData() {
       setLoading(true);
       try {
-        const supabase = createClient();
-        const currentTenant = await getCurrentTenant(supabase);
-        
-        // 1. Fetch Customer (filtered by tenant)
-        const { data: cust, error: custErr } = await supabase
-          .from("customers")
-          .select("*")
-          .eq("id", params.id)
-          .eq('tenant_id', currentTenant?.id)
-          .single();
-        
-        if (custErr) throw custErr;
-        setCustomer(cust);
-
-        // 2. Fetch Customer Orders (filtered by tenant)
-        const { data: ords, error: ordsErr } = await supabase
-          .from("orders")
-          .select("*")
-          .eq("customer_id", params.id)
-          .eq('tenant_id', currentTenant?.id)
-          .order("created_at", { ascending: false });
-        
-        if (ordsErr) throw ordsErr;
-        setOrders(ords || []);
+        const result = await getCustomerDetails(params.id);
+        if (result) {
+          setCustomer(result.customer);
+          setOrders(result.orders as any);
+        }
       } catch {
         console.error("Error fetching customer profile");
       } finally {

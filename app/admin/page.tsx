@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Building2, TrendingUp, CreditCard, BarChart3, LogOut, Plus, UserCheck, Zap, Power, Trash2, MoreHorizontal, Search, Copy, Check } from "lucide-react";
+import { Building2, TrendingUp, CreditCard, BarChart3, LogOut, Plus, UserCheck, Zap, Power, Trash2, MoreHorizontal, Search, Copy, Check, ShieldAlert, Shield, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -33,6 +33,7 @@ interface Tenant {
 export default function AdminDashboard() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isUnauthorized, setIsUnauthorized] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createFormData, setCreateFormData] = useState({
     name: '',
@@ -45,7 +46,19 @@ export default function AdminDashboard() {
   });
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'tenants' | 'subscriptions'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'tenants' | 'subscriptions' | 'admins'>('overview');
+  interface AdminUser {
+    id: string;
+    name: string;
+    username: string;
+    email: string;
+    created_at: string;
+  }
+  const [admins, setAdmins] = useState<AdminUser[]>([]);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [adminFormData, setAdminFormData] = useState({ name: '', email: '', password: '' });
+  const [isAdminCreating, setIsAdminCreating] = useState(false);
+  const [adminCreateError, setAdminCreateError] = useState('');
   const [searchTerm, setSearchTerm] = useState("");
   const [showActionsModal, setShowActionsModal] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
@@ -62,7 +75,45 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchTenants();
+    fetchAdmins();
   }, []);
+
+  async function fetchAdmins() {
+    try {
+      const response = await fetch('/api/admin/admins');
+      if (response.ok) {
+        const data = await response.json();
+        setAdmins(data);
+      }
+    } catch (error) {
+      console.error('Error fetching admins:', error);
+    }
+  }
+
+  async function handleCreateAdmin() {
+    setIsAdminCreating(true);
+    setAdminCreateError('');
+    try {
+      const response = await fetch('/api/admin/admins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(adminFormData),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setShowAdminModal(false);
+        setAdminFormData({ name: '', email: '', password: '' });
+        alert(`Super Admin created successfully!\nEmail: ${data.admin.email}\nPassword: ${data.admin.tempPassword}`);
+        await fetchAdmins();
+      } else {
+        setAdminCreateError(data.error || 'Failed to create admin');
+      }
+    } catch {
+      setAdminCreateError('Network error. Please try again.');
+    } finally {
+      setIsAdminCreating(false);
+    }
+  }
 
   async function fetchTenants() {
     try {
@@ -70,6 +121,8 @@ export default function AdminDashboard() {
       if (response.ok) {
         const data = await response.json();
         setTenants(data);
+      } else if (response.status === 401) {
+        setIsUnauthorized(true);
       }
     } catch (error) {
       console.error('Error fetching tenants:', error);
@@ -216,6 +269,30 @@ export default function AdminDashboard() {
       (tenants.filter(t => (t.plan || t.subscription_tier || '').toUpperCase() === 'BUSINESS').length * 999),
   };
 
+  if (isUnauthorized) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-sm border border-gray-100 text-center space-y-4">
+          <div className="w-14 h-14 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto">
+            <ShieldAlert className="w-7 h-7" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 tracking-tight">Super Admin Access Required</h2>
+          <p className="text-xs text-gray-500 leading-relaxed">
+            This portal is restricted to platform Super Admins. To grant access, add your email to <code className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-[11px] font-mono">SUPER_ADMIN_EMAILS</code> in your environment variables or update your database profile role.
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/dashboard"
+              className="inline-block bg-primary text-white px-5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider hover:bg-primary/90 transition-all shadow-sm"
+            >
+              Return to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -229,6 +306,14 @@ export default function AdminDashboard() {
             <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
               <div className="flex items-center gap-1 sm:gap-3">
                 <Link 
+                  href="/dashboard"
+                  className="flex items-center justify-center p-2 sm:px-3 sm:py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all font-normal text-xs sm:text-sm border border-transparent hover:border-blue-100"
+                  title="Shop Dashboard"
+                >
+                  <Building2 className="w-4 h-4 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Shop Dashboard</span>
+                </Link>
+                <Link 
                   href="/admin/analytics"
                   className="flex items-center justify-center p-2 sm:px-3 sm:py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all font-normal text-xs sm:text-sm border border-transparent hover:border-blue-100"
                   title="Analytics"
@@ -238,6 +323,13 @@ export default function AdminDashboard() {
                 </Link>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowAdminModal(true)}
+                  className="bg-purple-600 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl hover:bg-purple-700 transition-all flex items-center text-xs sm:text-sm font-normal active:scale-95 shadow-sm"
+                >
+                  <Shield className="w-4 h-4 mr-1 sm:mr-2" />
+                  + Add Admin
+                </button>
                 <button
                   onClick={() => setShowCreateModal(true)}
                   className="bg-blue-600 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl hover:bg-blue-700 transition-all flex items-center text-xs sm:text-sm font-normal active:scale-95"
@@ -262,17 +354,17 @@ export default function AdminDashboard() {
       <div className="bg-white border-b sticky top-0 z-10 overflow-x-auto no-scrollbar">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-6 sm:space-x-12 min-w-max">
-            {['overview', 'tenants', 'subscriptions'].map((tab) => (
+            {['overview', 'tenants', 'subscriptions', 'admins'].map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab as 'overview' | 'tenants' | 'subscriptions')}
+                onClick={() => setActiveTab(tab as 'overview' | 'tenants' | 'subscriptions' | 'admins')}
                 className={`py-4 px-1 border-b-[3px] font-normal text-xs sm:text-sm uppercase tracking-widest transition-all whitespace-nowrap ${
                   activeTab === tab
                     ? 'border-blue-600 text-blue-600 shadow-[0_2px_0_0_rgba(37,99,235,0.1)]'
                     : 'border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-200'
                 }`}
               >
-                {tab === 'tenants' ? `Tenants (${tenants.length})` : tab}
+                {tab === 'tenants' ? `Tenants (${tenants.length})` : tab === 'admins' ? `Admins (${admins.length})` : tab}
               </button>
             ))}
           </nav>
@@ -678,6 +770,69 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {/* Admins Tab */}
+        {activeTab === 'admins' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-4 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/30">
+              <div>
+                <h2 className="text-base sm:text-lg font-normal text-gray-900">Platform Super Admins ({admins.length})</h2>
+                <p className="text-[10px] text-gray-400 font-normal uppercase tracking-widest mt-0.5">Root Administrators with Global Platform Access</p>
+              </div>
+              <button
+                onClick={() => setShowAdminModal(true)}
+                className="bg-purple-600 text-white px-4 py-2 sm:py-2.5 rounded-xl hover:bg-purple-700 transition-all flex items-center text-xs sm:text-sm font-normal active:scale-95 whitespace-nowrap"
+              >
+                <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+                Add Super Admin
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-100">
+                <thead className="bg-gray-50/50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-[10px] font-normal text-gray-400 uppercase tracking-widest">Admin User</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-normal text-gray-400 uppercase tracking-widest">Email</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-normal text-gray-400 uppercase tracking-widest">Role</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-normal text-gray-400 uppercase tracking-widest">Access Scope</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-normal text-gray-400 uppercase tracking-widest">Created Date</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-50">
+                  {admins.map((admin) => (
+                    <tr key={admin.id} className="hover:bg-purple-50/30 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-medium text-sm mr-3">
+                            {admin.name?.charAt(0)?.toUpperCase() || 'A'}
+                          </div>
+                          <div>
+                            <div className="text-sm font-normal text-gray-900">{admin.name}</div>
+                            {admin.username && <div className="text-xs text-gray-400">@{admin.username}</div>}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{admin.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-normal bg-purple-50 text-purple-700 border border-purple-100">
+                          <Shield className="w-3 h-3 mr-1" />
+                          SUPER ADMIN
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-normal">
+                        Global Platform Owner (All Tenants)
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-400 font-normal">
+                        {admin.created_at ? new Date(admin.created_at).toLocaleDateString() : 'N/A'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Create Tenant Modal */}
@@ -998,6 +1153,114 @@ export default function AdminDashboard() {
             {copied && (
               <p className="text-[10px] text-green-600 text-center mt-4 font-normal animate-pulse">✓ Details copied to clipboard</p>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Create Admin Modal */}
+      {showAdminModal && (
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity duration-300"
+          onClick={() => setShowAdminModal(false)}
+        >
+          <div 
+            className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden transform transition-transform"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 border-b flex justify-between items-center bg-gray-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
+                  <Shield className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-normal text-gray-900">Add Platform Super Admin</h3>
+                  <p className="text-xs text-gray-500">Grants full global access across all tenants</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowAdminModal(false)}
+                className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <Plus className="w-5 h-5 rotate-45" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {adminCreateError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs">
+                  {adminCreateError}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-normal text-gray-700 uppercase tracking-wider mb-1.5">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. John Doe"
+                  value={adminFormData.name}
+                  onChange={(e) => setAdminFormData({ ...adminFormData, name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm font-normal"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-normal text-gray-700 uppercase tracking-wider mb-1.5">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="admin@example.com"
+                  value={adminFormData.email}
+                  onChange={(e) => setAdminFormData({ ...adminFormData, email: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm font-normal"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-normal text-gray-700 uppercase tracking-wider mb-1.5">
+                  Temporary Password (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Leave blank to auto-generate"
+                  value={adminFormData.password}
+                  onChange={(e) => setAdminFormData({ ...adminFormData, password: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm font-normal"
+                />
+                <p className="text-[11px] text-gray-400 mt-1">If blank, a secure random password will be created.</p>
+              </div>
+
+              <div className="pt-4 flex items-center justify-end gap-3 border-t">
+                <button
+                  type="button"
+                  onClick={() => setShowAdminModal(false)}
+                  className="px-4 py-2.5 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isAdminCreating || !adminFormData.email}
+                  onClick={handleCreateAdmin}
+                  className="px-5 py-2.5 bg-purple-600 text-white rounded-xl text-xs font-normal hover:bg-purple-700 transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isAdminCreating ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Shield className="w-3.5 h-3.5" />
+                      Create Admin
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

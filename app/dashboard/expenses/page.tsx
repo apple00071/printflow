@@ -12,8 +12,7 @@ import {
   Loader2,
   Trash2
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { getCurrentTenant } from "@/lib/tenant";
+import { getExpenses, addExpense, deleteExpense as deleteExpenseAction } from "@/lib/supabase/actions";
 import { formatCurrency } from "@/lib/utils/format";
 import { useLanguage } from "@/lib/context/LanguageContext";
 import CustomSelect from "@/components/ui/CustomSelect";
@@ -46,22 +45,11 @@ export default function ExpensesPage() {
     payment_method: "CASH"
   });
 
-  const supabase = createClient();
-
   async function fetchExpenses() {
     setLoading(true);
     try {
-      const tenant = await getCurrentTenant(supabase);
-      if (!tenant) return;
-
-      const { data, error } = await supabase
-        .from("expenses")
-        .select("*")
-        .eq("tenant_id", tenant.id)
-        .order("spent_at", { ascending: false });
-
-      if (error) throw error;
-      setExpenses(data || []);
+      const data = await getExpenses();
+      setExpenses(data as any);
     } catch (err) {
       console.error("Error fetching expenses:", err);
     } finally {
@@ -78,19 +66,12 @@ export default function ExpensesPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const tenant = await getCurrentTenant(supabase);
-      if (!tenant) return;
-
-      const { error } = await supabase.from("expenses").insert({
-        tenant_id: tenant.id,
+      await addExpense({
         category: form.category,
         amount: parseFloat(form.amount),
-        spent_at: new Date(form.spent_at).toISOString(),
         description: form.description,
         payment_method: form.payment_method
       });
-
-      if (error) throw error;
       
       setIsModalOpen(false);
       setForm({
@@ -112,8 +93,7 @@ export default function ExpensesPage() {
     if (!confirm(t("Are you sure you want to delete this expense?", "మీరు ఈ ఖర్చును తొలగించాలనుకుంటున్నారా?", "क्या आप इस खर्च को हटाना चाहते हैं?"))) return;
     
     try {
-      const { error } = await supabase.from("expenses").delete().eq("id", id);
-      if (error) throw error;
+      await deleteExpenseAction(id);
       fetchExpenses();
     } catch (err) {
       console.error("Error deleting expense:", err);

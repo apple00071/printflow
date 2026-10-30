@@ -4,10 +4,8 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { X, Loader2, IndianRupee, CreditCard, Banknote, Landmark } from "lucide-react";
 import { useLanguage } from "@/lib/context/LanguageContext";
-import { addPayment } from "@/lib/supabase/actions";
+import { addPayment, getOrders } from "@/lib/supabase/actions";
 import { formatCurrency } from "@/lib/utils/format";
-import { createClient } from "@/lib/supabase/client";
-import { getCurrentTenant } from "@/lib/tenant";
 import Toast from "@/components/ui/Toast";
 import { useToast } from "@/hooks/useToast";
 import CustomSelect from "@/components/ui/CustomSelect";
@@ -49,32 +47,32 @@ export default function AddPaymentModal({ orderId, balanceDue, onSuccess, onClos
   useEffect(() => {
     if (!orderId) {
       const fetchOrders = async () => {
-        const supabase = createClient();
-        const tenant = await getCurrentTenant(supabase);
-        
-        const { data } = await supabase
-          .from("orders")
-          .select("id, friendly_id, total_amount, total_with_gst, advance_paid, customers(name)")
-          .eq("tenant_id", tenant?.id)
-          .order("created_at", { ascending: false });
-        
-        const unpaid = (data || [])
-          .map((o: { id: string; friendly_id?: string; total_amount: number; total_with_gst?: number; advance_paid: number; customers: unknown }) => {
-            const total = Number(o.total_with_gst || o.total_amount || 0);
-            return {
-              id: o.id,
-              friendly_id: o.friendly_id,
-              total_amount: o.total_amount,
-              total_with_gst: o.total_with_gst,
-              advance_paid: o.advance_paid,
-              balance: Math.round((total - Number(o.advance_paid || 0)) * 100) / 100,
-              customers: Array.isArray(o.customers) ? o.customers[0] : o.customers
-            };
-          })
-          .filter(o => o.balance > 0);
-        
-        setAvailableOrders(unpaid);
-        setFetchingOrders(false);
+        try {
+          const orders = await getOrders();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const unpaid = (orders || [])
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .map((o: any) => {
+              const total = Number(o.total_with_gst || o.total_amount || 0);
+              return {
+                id: o.id,
+                friendly_id: o.friendly_id,
+                total_amount: o.total_amount,
+                total_with_gst: o.total_with_gst,
+                advance_paid: o.advance_paid,
+                balance: Math.round((total - Number(o.advance_paid || 0)) * 100) / 100,
+                customers: Array.isArray(o.customers) ? o.customers[0] : o.customers
+              };
+            })
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .filter((o: any) => o.balance > 0);
+          
+          setAvailableOrders(unpaid);
+        } catch (err) {
+          console.error("fetchOrders error:", err);
+        } finally {
+          setFetchingOrders(false);
+        }
       };
       fetchOrders();
     }

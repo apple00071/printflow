@@ -11,8 +11,7 @@ import {
   Command as CommandIcon 
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { getCurrentTenant } from "@/lib/tenant";
+import { searchGlobal } from "@/lib/supabase/actions";
 
 interface SearchResult {
   id: string;
@@ -33,7 +32,6 @@ export default function CommandPalette({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const supabase = createClient();
 
   const handleSearch = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim()) {
@@ -43,60 +41,14 @@ export default function CommandPalette({
 
     setLoading(true);
     try {
-      const tenant = await getCurrentTenant(supabase);
-      if (!tenant) return;
-
-      // Search Orders (Improved partial matching across ID and Customer Name)
-      const { data: orders } = await supabase
-        .from("orders")
-        .select(`
-          id, 
-          friendly_id, 
-          customers!inner (
-            name
-          )
-        `)
-        .eq("tenant_id", tenant.id)
-        .or(`friendly_id.ilike.%${searchQuery}%,customers.name.ilike.%${searchQuery}%`)
-        .limit(10);
-
-      // Search Customers
-      const { data: customers } = await supabase
-        .from("customers")
-        .select("id, name, phone")
-        .eq("tenant_id", tenant.id)
-        .or(`name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`)
-        .limit(5);
-
-      const combined: SearchResult[] = [
-        ...(orders || []).map(o => {
-          // Handle nested customer object reliably
-          const customerName = (o.customers as any)?.name || "Unknown Customer";
-          
-          return {
-            id: o.id,
-            type: "order" as const,
-            title: o.friendly_id || `Order #${o.id.slice(0, 8)}`,
-            subtitle: `Customer: ${customerName}`,
-            href: `/dashboard/orders/${o.id}`
-          };
-        }),
-        ...(customers || []).map(c => ({
-          id: c.id,
-          type: "customer" as const,
-          title: c.name,
-          subtitle: c.phone || "No phone",
-          href: `/dashboard/customers/${c.id}`
-        }))
-      ];
-
+      const combined = await searchGlobal(searchQuery);
       setResults(combined);
     } catch (err) {
       console.error("Search error:", err);
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {

@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { useRef } from "react";
 import Link from "next/link";
-import { createOrder, searchCustomers } from "@/lib/supabase/actions";
+import { createOrder, searchCustomers, getGSTRates, getInventory } from "@/lib/supabase/actions";
 import { createClient } from "@/lib/supabase/client";
 import { getCurrentTenant } from "@/lib/tenant";
 import { calculateGST } from "@/lib/gst";
@@ -141,26 +141,22 @@ export default function NewOrderPage() {
 
   useEffect(() => {
     async function init() {
-      const supabase = createClient();
-      const currentTenant = await getCurrentTenant(supabase);
-      if (currentTenant) {
-        const { data: rates } = await supabase
-          .from('gst_rates')
-          .select('*')
-          .eq('tenant_id', currentTenant.id);
+      try {
+        const [rates, inv] = await Promise.all([
+          getGSTRates(),
+          getInventory()
+        ]);
         setGstRates(rates || []);
         
-        const defaultRate = rates?.find(r => r.is_default);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const defaultRate = rates?.find((r: any) => r.is_default);
         if (defaultRate) {
           setFormData(prev => ({ ...prev, gstRate: defaultRate.rate }));
         }
 
-        const { data: inv } = await supabase
-          .from('inventory')
-          .select('id, name, unit, quantity')
-          .eq('tenant_id', currentTenant.id)
-          .order('name');
         setInventoryItems(inv || []);
+      } catch (err) {
+        console.error("Init error:", err);
       }
     }
     init();
