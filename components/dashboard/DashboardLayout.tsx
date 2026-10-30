@@ -16,7 +16,6 @@ import {
   Package,
   Plus,
   Search,
-  Bell,
   ChevronDown,
   X,
   ShieldCheck
@@ -27,6 +26,7 @@ import { useLanguage } from "@/lib/context/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import CommandPalette from "./CommandPalette";
+import NotificationCenter from "./NotificationCenter";
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -225,10 +225,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 ))}
              </div>
 
-             <button className="relative p-2 text-slate-400 hover:text-[#1e3a5f] hover:bg-slate-50 rounded-full transition-all hover:scale-110 group/bell">
-                <Bell className="w-5 h-5 transition-transform group-active/bell:scale-90" />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-[#f97316] rounded-full border-2 border-white"></span>
-             </button>
+             <NotificationCenter />
           </div>
         </header>
 

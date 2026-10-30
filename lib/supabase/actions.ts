@@ -1772,3 +1772,43 @@ export async function updateUserProfile(data: { name: string; phone: string }) {
   return profile;
 }
 
+export async function getNotifications() {
+  const supabase = createClient();
+  const superAdmin = await isSuperAdmin(supabase);
+  const tenant = await getCurrentTenant(supabase);
+  if (!tenant && !superAdmin) return [];
+
+  const client = superAdmin ? createAdminClient() : supabase;
+  let query = client
+    .from("orders")
+    .select(`
+      id,
+      friendly_id,
+      job_type,
+      quantity,
+      paper_type,
+      status,
+      total_amount,
+      file_url,
+      created_at,
+      customers (
+        id,
+        name,
+        phone
+      )
+    `)
+    .order("created_at", { ascending: false })
+    .limit(25);
+
+  if (tenant?.id) {
+    query = query.eq("tenant_id", tenant.id);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.error("getNotifications error:", error);
+    return [];
+  }
+  return data || [];
+}
+
