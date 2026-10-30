@@ -25,15 +25,22 @@ export async function GET(
     if (error) throw error;
 
     // Get the admin profile for this tenant
-    const { data: profile } = await adminSupabase
+    let { data: profile } = await adminSupabase
       .from('profiles')
       .select('*')
       .eq('tenant_id', params.id)
       .eq('role', 'ADMIN')
-      .single();
+      .maybeSingle();
     
-    // It's possible there's no admin profile yet or it's named differently
-    // In that case, don't throw, just return what we have
+    if (!profile && (tenant.email === 'pavankumarv1497@gmail.com' || tenant.slug === 'printflow')) {
+      const { data: superAdminProfile } = await adminSupabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'ADMIN')
+        .is('tenant_id', null)
+        .maybeSingle();
+      profile = superAdminProfile;
+    }
 
     const mappedTenant = {
       ...tenant,

@@ -29,7 +29,10 @@ export async function GET() {
 
     // Map the column names for frontend compatibility and manually join profiles
     const mappedTenants = tenants.map(tenant => {
-      const adminProfile = profiles.find(p => p.tenant_id === tenant.id && p.role === 'ADMIN');
+      let adminProfile = profiles.find(p => p.tenant_id === tenant.id && p.role === 'ADMIN');
+      if (!adminProfile && (tenant.email === 'pavankumarv1497@gmail.com' || tenant.slug === 'printflow')) {
+        adminProfile = profiles.find(p => (p.role === 'ADMIN' && !p.tenant_id) || p.username === 'pavan');
+      }
       
       return {
         ...tenant,
